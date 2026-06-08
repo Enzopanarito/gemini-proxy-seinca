@@ -22,7 +22,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing prompt' });
     }
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const geminiBody = {
       contents: [{ parts: [{ text: prompt }] }]
@@ -36,13 +36,13 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    // Si Gemini devuelve error, convertirlo a string legible
     if (!response.ok || data.error) {
-      const errMsg = data.error?.message || data.error?.status || JSON.stringify(data.error) || 'Error de Gemini API';
+      const errMsg = data.error?.message || data.error?.status || JSON.stringify(data.error) || 'Gemini API error';
       return res.status(response.status).json({ error: errMsg });
     }
 
-    return res.status(200).json(data);
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || JSON.stringify(data);
+    return res.status(200).json({ text });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
