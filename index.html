@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEINCA COTIZ - Gemini AI</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; background: #1a1a2e; color: #eee; }
+  h1 { color: #4fc3f7; }
+  textarea { width: 100%; padding: 12px; background: #16213e; color: #eee; border: 1px solid #4fc3f7; border-radius: 8px; font-size: 16px; }
+  button { margin-top: 10px; padding: 12px 24px; background: #4fc3f7; color: #000; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; }
+  button:hover { background: #0288d1; color: #fff; }
+  #response { margin-top: 20px; padding: 16px; background: #16213e; border-radius: 8px; border-left: 4px solid #4fc3f7; white-space: pre-wrap; min-height: 60px; }
+  #status { color: #f9a825; margin-top: 8px; }
+</style>
+</head>
+<body>
+<h1>SEINCA COTIZ - Asistente Gemini</h1>
+<p>Escribe tu pregunta y presiona Enviar:</p>
+<textarea id="prompt" rows="4" placeholder="Escribe tu pregunta aqui..."></textarea>
+<br>
+<button onclick="sendPrompt()">Enviar a Gemini</button>
+<div id="status"></div>
+<div id="response"></div>
+
+<script>
+async function sendPrompt() {
+  const prompt = document.getElementById('prompt').value.trim();
+  if (!prompt) { alert('Por favor escribe una pregunta.'); return; }
+  document.getElementById('status').textContent = 'Consultando Gemini...';
+  document.getElementById('response').textContent = '';
+  try {
+    const res = await fetch('/api/gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+    const data = await res.json();
+    if (data.error) {
+      document.getElementById('status').textContent = 'Error:';
+      document.getElementById('response').textContent = typeof data.error === 'string' ? data.error : JSON.stringify(data.error, null, 2);
+    } else {
+      document.getElementById('status').textContent = 'Respuesta de Gemini:';
+      document.getElementById('response').textContent = data.text || JSON.stringify(data, null, 2);
+    }
+  } catch (e) {
+    document.getElementById('status').textContent = 'Error de conexion:';
+    document.getElementById('response').textContent = e.message;
+  }
+}
+</script>
+</body>
+</html>
