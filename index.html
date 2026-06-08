@@ -5,90 +5,510 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SEINCA - Software de Licitaciones y APU</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root { --primary: #b91c1c; --secondary: #1e293b; --bg: #f1f5f9; --border: #cbd5e1; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; gap: 20px; color: #0f172a; }
         .panel-control { width: 50vw; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); height: 90vh; overflow-y: auto; }
+        .panel-control h3 { color: var(--primary); border-bottom: 2px solid var(--bg); padding-bottom: 10px; margin-top: 0; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
         .form-group { margin-bottom: 12px; }
-        label { display: block; font-size: 11px; font-weight: 600; color: var(--secondary); text-transform: uppercase; }
-        input, textarea { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; border: none; border-radius: 4px; color: white; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
-        .btn-ai { background: #6d28d9; } .btn-add { background: var(--primary); } .btn-pdf { background: #047857; }
+        label { display: block; font-size: 11px; font-weight: 600; color: var(--secondary); margin-bottom: 3px; text-transform: uppercase; }
+        input, textarea, select { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; font-family: inherit; font-size: 13px; }
+        button { width: 100%; padding: 10px; border: none; border-radius: 4px; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; margin-bottom: 10px; }
+        button:hover { opacity: 0.9; }
+        .btn-ai { background: #6d28d9; } .btn-add { background: var(--primary); } .btn-pdf { background: #047857; } .btn-save { background: #0284c7; }
+        .status-box { background-color: #f0fdf4; border: 1px solid #86efac; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 12px; color: #166534; font-weight: bold; text-align: center; }
+        .section-title { background: var(--secondary); color: white; padding: 6px 10px; font-size: 12px; font-weight: 600; margin-top: 15px; display: flex; justify-content: space-between; align-items: center;}
         .apu-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 10px; }
         .apu-table th, .apu-table td { border: 1px solid var(--border); padding: 5px; }
+        .apu-table th { background: #f8fafc; color: #475569; }
+        .apu-table input { padding: 4px; border: none; border-bottom: 1px solid transparent; background: transparent; width: 100%; box-sizing: border-box; }
+        .apu-table input:focus { border-bottom: 1px solid var(--primary); outline: none; }
         .num { text-align: right; }
+        .btn-del { background: #ef4444; color: white; border: none; padding: 2px 5px; cursor: pointer; border-radius: 3px; width: auto; margin: 0; }
         .panel-preview { flex-grow: 1; height: 90vh; overflow-y: auto; display: flex; flex-direction: column; align-items: center; }
-        #loading { display: none; text-align: center; color: #6d28d9; font-weight: bold; margin-bottom: 10px; }
+        .pdf-page { background: white; width: 215.9mm; min-height: 279.4mm; padding: 15mm; box-sizing: border-box; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-bottom: 20mm; font-family: Arial, sans-serif; position: relative; display: flex; flex-direction: column; }
+        .doc-header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid var(--primary); padding-bottom: 10px; margin-bottom: 15px; }
+        .logo-box { width: 180px; height: 60px; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #999; }
+        .logo-box img { max-width: 100%; max-height: 100%; }
+        .doc-header-text { text-align: right; }
+        .doc-header-text h1 { margin: 0; font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 24px; color: #000; }
+        .doc-header-text p { margin: 2px 0; font-size: 10px; color: #555; }
+        .doc-title { text-align: center; font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: bold; margin-bottom: 15px; text-transform: uppercase; }
+        .info-table { width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 15px; border: 1px solid #000; }
+        .info-table td { border: 1px solid #000; padding: 5px; }
+        .info-table .bg { background: #f1f5f9; font-weight: bold; width: 15%; }
+        .main-table { width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 15px; }
+        .main-table th, .main-table td { border: 1px solid #000; padding: 5px; vertical-align: top; }
+        .main-table th { background: var(--secondary); color: white; text-align: center; }
+        .main-table tr { break-inside: avoid; page-break-inside: avoid; }
+        .firmas-box { display: flex; justify-content: space-around; text-align: center; font-size: 11px; margin-top: auto; padding-top: 40px; break-inside: avoid; page-break-inside: avoid; }
+        .firma-line { border-top: 1px solid #000; width: 200px; padding-top: 5px; }
+        .apu-sheet-table { width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 10px; }
+        .apu-sheet-table th, .apu-sheet-table td { border: 1px solid #000; padding: 4px; }
+        .apu-sheet-table th { background: #e2e8f0; text-align: left; }
+        .apu-sheet-summary { display: flex; justify-content: flex-end; font-size: 10px; margin-top: 10px; }
+        .apu-sheet-summary table { width: 40%; border-collapse: collapse; }
+        .apu-sheet-summary td { padding: 4px; border: 1px solid #000; }
+        .apu-sheet-summary .bold { font-weight: bold; background: #f1f5f9; }
+        #loading { display: none; text-align: center; color: var(--primary); font-size: 12px; font-weight: bold; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-<div class="panel-control">
-    <h3>1. Configuración de Obra</h3>
-    <div class="grid-2">
-        <input type="text" id="g_obra" placeholder="Nombre de la Obra" oninput="actualizarExpediente()">
-        <input type="text" id="g_cliente" placeholder="Contratante" oninput="actualizarExpediente()">
-    </div>
-    
-    <h3>2. Generador IA (Gemini 2.5)</h3>
-    <textarea id="ia_desc" rows="3" placeholder="Describe la partida..."></textarea>
-    <button class="btn-ai" onclick="analizarPartidaIA()">🤖 Generar APU (Conexión Directa v2.5)</button>
-    <div id="loading">Consultando Gemini 2.5 Flash...</div>
+    <div class="panel-control" data-html2canvas-ignore="true">
+        
+        <div class="grid-2">
+            <button class="btn-save" onclick="guardarDatos()">&#128190; Guardar Proyecto JSON</button>
+            <button onclick="document.getElementById('file-upload').click()" style="background:#d97706">&#128194; Cargar Proyecto</button>
+            <input type="file" id="file-upload" accept=".json" style="display:none" onchange="cargarDatos(event)">
+        </div>
+        
+        <h3>1. Datos Generales de la Obra</h3>
+        
+        <div class="status-box">
+            <i class="fas fa-check-circle"></i> Servidor Vercel Activo: gemini-proxy-seinca.vercel.app
+        </div>
+        
+        <div class="form-group"><label>Logo de la Empresa</label><input type="file" id="logo-input" accept="image/*" onchange="cargarLogo(event)"></div>
+        <div class="grid-2">
+            <div class="form-group"><label>Nombre de la Obra</label><input type="text" id="g_obra" oninput="actualizarExpediente()"></div>
+            <div class="form-group"><label>Contratante</label><input type="text" id="g_cliente" oninput="actualizarExpediente()"></div>
+            <div class="form-group"><label>Ubicacion</label><input type="text" id="g_ubicacion" oninput="actualizarExpediente()"></div>
+            <div class="form-group"><label>Fecha</label><input type="date" id="g_fecha" oninput="actualizarExpediente()"></div>
+        </div>
 
-    <h3>3. Editor APU</h3>
-    <input type="text" id="apu_desc" placeholder="Descripción">
-    <div class="grid-2">
-        <input type="number" id="apu_rend" placeholder="Rendimiento" oninput="calcularAPU()">
-        <input type="number" id="apu_fcas" placeholder="FCAS (%)" value="250" oninput="calcularAPU()">
-    </div>
-    <table class="apu-table" id="t_mat"><thead><tr><th>Mat</th><th>Cant</th><th>P.Unit</th></tr></thead><tbody></tbody></table>
-    <div style="text-align:right;"><strong>Total: USD <span id="apu_total_final">0.00</span></strong></div>
-    <button class="btn-add" onclick="guardarPartidaEnPresupuesto()">➕ Agregar al Presupuesto</button>
-</div>
+        <h3>2. Generador de Partidas con IA</h3>
+        <div class="form-group">
+            <label>Descripcion detallada (Incluye medidas para el computo metrico)</label>
+            <textarea id="ia_desc" rows="3" placeholder="Ej: Construccion de muro de bloques de concreto de 15cm. Medidas: 3m de alto por 3000m de largo."></textarea>
+        </div>
+        <button class="btn-ai" onclick="analizarPartidaIA()">&#129302; Generar APU, Computos y Rendimientos</button>
+        <div id="loading">El Ingeniero IA esta procesando estructuras y costos a traves del Proxy...</div>
 
-<div class="panel-preview">
-    <button class="btn-pdf" onclick="exportarExpedientePDF()">📄 Exportar PDF</button>
-    <div id="expediente-pdf" style="background:white; padding:20mm; width:210mm;">
-        <h1 id="doc_obra_title">Proyecto</h1>
-        <table id="doc_tabla_presupuesto" style="width:100%; border-collapse:collapse; border:1px solid #000;"></table>
+        <h3>3. Editor de Analisis de Precio Unitario (APU)</h3>
+        <div class="grid-3">
+            <div class="form-group"><label>Norma COVENIN</label><input type="text" id="apu_covenin"></div>
+            <div class="form-group"><label>Unidad</label><input type="text" id="apu_und"></div>
+            <div class="form-group"><label>Cantidad (Computo)</label><input type="number" id="apu_cant" step="0.01" value="1"></div>
+        </div>
+        <div class="grid-3">
+            <div class="form-group"><label>Rendimiento Diario</label><input type="number" id="apu_rend" step="0.01" value="1" oninput="calcularAPU()"></div>
+            <div class="form-group"><label>FCAS (%)</label><input type="number" id="apu_fcas" step="0.01" value="250" oninput="calcularAPU()"></div>
+            <div class="form-group"><label>Admin/Imprev/Util (%)</label><input type="text" value="15 / 5 / 10" disabled></div>
+        </div>
+        <div class="form-group"><label>Descripcion Tecnica Final</label><textarea id="apu_desc" rows="2"></textarea></div>
+
+        <div class="section-title">A. MATERIALES <button onclick="agregarFila('mat')" style="width:auto; padding:2px 8px; margin:0; background:white; color:black; font-size:10px;">+ Fila</button></div>
+        <table class="apu-table" id="t_mat">
+            <thead><tr><th>Descripcion</th><th>Und</th><th>Cant</th><th>P.Unit</th><th>Total</th><th></th></tr></thead>
+            <tbody></tbody>
+            <tfoot><tr><th colspan="4" class="num">Subtotal Materiales:</th><th id="sub_mat" class="num">0.00</th><th></th></tr></tfoot>
+        </table>
+
+        <div class="section-title">B. EQUIPOS <button onclick="agregarFila('eq')" style="width:auto; padding:2px 8px; margin:0; background:white; color:black; font-size:10px;">+ Fila</button></div>
+        <table class="apu-table" id="t_eq">
+            <thead><tr><th>Descripcion</th><th>Cant</th><th>Tarifa/Dia</th><th>Costo/Und</th><th></th></tr></thead>
+            <tbody></tbody>
+            <tfoot><tr><th colspan="3" class="num">Subtotal Equipos:</th><th id="sub_eq" class="num">0.00</th><th></th></tr></tfoot>
+        </table>
+
+        <div class="section-title">C. MANO DE OBRA <button onclick="agregarFila('mo')" style="width:auto; padding:2px 8px; margin:0; background:white; color:black; font-size:10px;">+ Fila</button></div>
+        <table class="apu-table" id="t_mo">
+            <thead><tr><th>Cargo</th><th>Cant</th><th>Jornal/Dia</th><th>Costo/Und (c/FCAS)</th><th></th></tr></thead>
+            <tbody></tbody>
+            <tfoot><tr><th colspan="3" class="num">Subtotal M.O.:</th><th id="sub_mo" class="num">0.00</th><th></th></tr></tfoot>
+        </table>
+
+        <div style="background:#f8fafc; padding:15px; border:1px solid var(--border); border-radius:4px; margin-top:15px; text-align:right;">
+            <strong>PRECIO UNITARIO TOTAL: USD <span id="apu_total_final" style="color:var(--primary); font-size:18px;">0.00</span></strong>
+        </div>
+
+        <button class="btn-add" onclick="guardarPartidaEnPresupuesto()" style="margin-top:15px;">&#10133; Agregar Partida al Presupuesto Final</button>
+
     </div>
-</div>
+
+    <div class="panel-preview">
+        <button class="btn-pdf" onclick="exportarExpedientePDF()" style="width:80%; margin-bottom:15px;">&#128196; Exportar Expediente Completo (Presupuesto + APUs)</button>
+        
+        <div id="expediente-pdf">
+            
+            <div class="pdf-page" id="page-presupuesto">
+                <div class="doc-header">
+                    <div class="logo-box" id="render-logo">LOGOTIPO SEINCA</div>
+                    <div class="doc-header-text">
+                        <h1>SEINCA</h1>
+                        <p>SERVICIOS INTEGRALES<br>RIF: J-297575472</p>
+                    </div>
+                </div>
+                
+                <div class="doc-title">PRESUPUESTO GENERAL DE OBRA</div>
+                
+                <table class="info-table">
+                    <tr><td class="bg">OBRA:</td><td colspan="3" id="doc_obra"></td></tr>
+                    <tr><td class="bg">CLIENTE:</td><td id="doc_cliente"></td><td class="bg" style="width:10%">FECHA:</td><td id="doc_fecha" style="width:20%"></td></tr>
+                    <tr><td class="bg">UBICACION:</td><td colspan="3" id="doc_ubicacion"></td></tr>
+                </table>
+
+                <table class="main-table">
+                    <thead>
+                        <tr><th width="5%">N</th><th width="12%">COVENIN</th><th width="45%">DESCRIPCION</th><th width="5%">UND</th><th width="8%">CANT</th><th width="10%">P.UNIT</th><th width="15%">TOTAL</th></tr>
+                    </thead>
+                    <tbody id="doc_tabla_presupuesto"></tbody>
+                </table>
+
+                <div style="display:flex; justify-content:flex-end;">
+                    <table style="width: 300px; font-size:10px; border-collapse:collapse;" border="1">
+                        <tr><td style="background:#f1f5f9; font-weight:bold; text-align:right;">SUB-TOTAL:</td><td id="doc_subtotal" class="num">0.00</td></tr>
+                        <tr><td style="background:#f1f5f9; font-weight:bold; text-align:right;">I.V.A (16%):</td><td id="doc_iva" class="num">0.00</td></tr>
+                        <tr><td style="background:#1e293b; color:white; font-weight:bold; text-align:right;">TOTAL GENERAL:</td><td id="doc_total" class="num" style="font-weight:bold;">0.00</td></tr>
+                    </table>
+                </div>
+
+                <div class="firmas-box">
+                    <div><div class="firma-line"></div><strong>Ing. Jesus Fandino</strong><br>Representante Legal - SEINCA</div>
+                    <div><div class="firma-line"></div><strong>Aprobado por:</strong><br>Ente Contratante</div>
+                </div>
+            </div>
+
+            <div id="paginas-apus"></div>
+
+        </div>
+    </div>
 
 <script>
     let proyecto = { partidas: [] };
+    const formato = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    let currentLogo = "";
+
+    function actualizarExpediente() {
+        document.getElementById('doc_obra').innerText = document.getElementById('g_obra').value;
+        document.getElementById('doc_cliente').innerText = document.getElementById('g_cliente').value;
+        document.getElementById('doc_ubicacion').innerText = document.getElementById('g_ubicacion').value;
+        document.getElementById('doc_fecha').innerText = document.getElementById('g_fecha').value;
+    }
+
+    function cargarLogo(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentLogo = e.target.result;
+                document.getElementById('render-logo').innerHTML = `<img src="${currentLogo}">`;
+                document.getElementById('render-logo').style.border = 'none';
+            }
+            reader.readAsDataURL(file);
+        }
+    }
 
     async function analizarPartidaIA() {
-        const desc = document.getElementById('ia_desc').value;
-        if(!desc) return;
+        const desc = document.getElementById('ia_desc').value.trim();
+        if (!desc) {
+            alert("Describe la partida primero.");
+            return;
+        }
+
         document.getElementById('loading').style.display = 'block';
-        
+
+        const promptTemplate = `Actua como Ingeniero Civil Computista en Venezuela. Analiza la obra: "${desc}".
+
+Necesito que determines el APU de forma practica y respondas SOLO JSON valido, sin markdown, sin explicacion adicional.
+
+Reglas:
+1. Identifica medidas y calcula el computo metrico exacto.
+2. Si es muro, normalmente usa m2 = alto x largo.
+3. Si es losa, normalmente usa m2 = largo x ancho.
+4. Si es excavacion o concreto, normalmente usa m3.
+5. Si no hay medidas suficientes, usa cantidad 1 y explica en descripcion_tecnica.
+6. Genera materiales, equipos y mano de obra coherentes.
+7. Asigna precios unitarios referenciales en USD.
+8. No devuelvas texto fuera del JSON.
+
+Formato exacto:
+{
+  "covenin": "E.123",
+  "unidad": "m2",
+  "cantidad": 9000,
+  "rendimiento": 15,
+  "descripcion_tecnica": "Texto profesional",
+  "materiales": [
+    { "desc": "Bloque de concreto 15 cm", "und": "und", "cant": 12.5, "precio": 0.45 }
+  ],
+  "equipos": [
+    { "desc": "Mezcladora", "cant": 1, "tarifa": 25 }
+  ],
+  "mo": [
+    { "cargo": "Albanil", "cant": 1, "jornal": 30 }
+  ]
+}`;
+
         try {
-                            const response = await fetch('/api/gemini', {
+            const response = await fetch('https://gemini-proxy-seinca.vercel.app/api/gemini', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ prompt: prompt })
+                body: JSON.stringify({ prompt: promptTemplate })
             });
-            const data = await response.json();
-            const ai = JSON.parse(data.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, ''));
-            
-            document.getElementById('apu_desc').value = ai.descripcion_tecnica;
-            document.getElementById('apu_rend').value = ai.rendimiento;
-            // Lógica de renderizado abreviada para brevedad
-            alert("Partida cargada exitosamente.");
-        } catch(e) { alert("Error IA: " + e.message); } finally { document.getElementById('loading').style.display = 'none'; }
+
+            const result = await response.json();
+
+            if (!response.ok || result.error) {
+                throw new Error(result.error || 'Error desconocido del proxy.');
+            }
+
+            if (!result.ok || !result.data) {
+                throw new Error('El proxy no devolvio data valida.');
+            }
+
+            const ai = result.data;
+
+            document.getElementById('apu_covenin').value = ai.covenin || '';
+            document.getElementById('apu_und').value = ai.unidad || '';
+            document.getElementById('apu_cant').value = Number(ai.cantidad || 1);
+            document.getElementById('apu_rend').value = Number(ai.rendimiento || 1);
+            document.getElementById('apu_desc').value = ai.descripcion_tecnica || desc;
+
+            renderTablaInputs('t_mat', Array.isArray(ai.materiales) ? ai.materiales : [], 'mat');
+            renderTablaInputs('t_eq', Array.isArray(ai.equipos) ? ai.equipos : [], 'eq');
+            renderTablaInputs('t_mo', Array.isArray(ai.mo) ? ai.mo : [], 'mo');
+
+            calcularAPU();
+        } catch (e) {
+            alert("Error en la conexion con tu proxy Vercel: " + e.message);
+            console.error('Error analizarPartidaIA:', e);
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+        }
     }
 
-    function calcularAPU() { /* Lógica existente */ }
-    function guardarPartidaEnPresupuesto() { 
-        proyecto.partidas.push({ desc: document.getElementById('apu_desc').value, total: document.getElementById('apu_total_final').innerText });
+    function renderTablaInputs(idTabla, datos, tipo) {
+        const tbody = document.querySelector(`#${idTabla} tbody`);
+        tbody.innerHTML = '';
+
+        datos.forEach(d => {
+            let html = `<tr><td><input type="text" class="desc" value="${(d.desc || d.cargo || '').toString().replace(/"/g, '&quot;')}"></td>`;
+
+            if (tipo === 'mat') {
+                html += `<td><input type="text" class="und" value="${(d.und || '').toString().replace(/"/g, '&quot;')}"></td>`;
+                html += `<td><input type="number" step="0.01" class="cant num" value="${Number(d.cant || 0)}" oninput="calcularAPU()"></td>`;
+                html += `<td><input type="number" step="0.01" class="precio num" value="${Number(d.precio || 0)}" oninput="calcularAPU()"></td>`;
+                html += `<td class="num parci">0.00</td>
+                         <td class="center"><button class="btn-del" onclick="this.closest('tr').remove(); calcularAPU()">X</button></td></tr>`;
+            }
+
+            if (tipo === 'eq') {
+                html += `<td><input type="number" step="0.01" class="cant num" value="${Number(d.cant || 0)}" oninput="calcularAPU()"></td>`;
+                html += `<td><input type="number" step="0.01" class="precio num" value="${Number(d.tarifa || 0)}" oninput="calcularAPU()"></td>`;
+                html += `<td class="num parci">0.00</td>
+                         <td class="center"><button class="btn-del" onclick="this.closest('tr').remove(); calcularAPU()">X</button></td></tr>`;
+            }
+
+            if (tipo === 'mo') {
+                html += `<td><input type="number" step="0.01" class="cant num" value="${Number(d.cant || 0)}" oninput="calcularAPU()"></td>`;
+                html += `<td><input type="number" step="0.01" class="precio num" value="${Number(d.jornal || 0)}" oninput="calcularAPU()"></td>`;
+                html += `<td class="num parci">0.00</td>
+                         <td class="center"><button class="btn-del" onclick="this.closest('tr').remove(); calcularAPU()">X</button></td></tr>`;
+            }
+
+            tbody.insertAdjacentHTML('beforeend', html);
+        });
+    }
+
+    function agregarFila(tipo) {
+        const tbody = document.querySelector(`#t_${tipo} tbody`);
+        let html = `<tr><td><input type="text" class="desc"></td>`;
+        if (tipo === 'mat') html += `<td><input type="text" class="und"></td>`;
+        html += `<td><input type="number" step="0.01" class="cant num" value="0" oninput="calcularAPU()"></td>
+                 <td><input type="number" step="0.01" class="precio num" value="0" oninput="calcularAPU()"></td>
+                 <td class="num parci">0.00</td><td class="center"><button class="btn-del" onclick="this.closest('tr').remove(); calcularAPU()">X</button></td></tr>`;
+        tbody.insertAdjacentHTML('beforeend', html);
+    }
+
+    function calcularAPU() {
+        const rend = parseFloat(document.getElementById('apu_rend').value) || 1;
+        const fcas = (parseFloat(document.getElementById('apu_fcas').value) || 0) / 100;
+
+        let tMat = 0, tEq = 0, tMo = 0;
+
+        document.querySelectorAll('#t_mat tbody tr').forEach(r => {
+            const p = (parseFloat(r.querySelector('.cant').value) || 0) * (parseFloat(r.querySelector('.precio').value) || 0);
+            r.querySelector('.parci').innerText = formato.format(p); tMat += p;
+        });
+
+        document.querySelectorAll('#t_eq tbody tr').forEach(r => {
+            const p = ((parseFloat(r.querySelector('.cant').value) || 0) * (parseFloat(r.querySelector('.precio').value) || 0)) / rend;
+            r.querySelector('.parci').innerText = formato.format(p); tEq += p;
+        });
+
+        document.querySelectorAll('#t_mo tbody tr').forEach(r => {
+            const p = (((parseFloat(r.querySelector('.cant').value) || 0) * (parseFloat(r.querySelector('.precio').value) || 0)) * (1 + fcas)) / rend;
+            r.querySelector('.parci').innerText = formato.format(p); tMo += p;
+        });
+
+        document.getElementById('sub_mat').innerText = formato.format(tMat);
+        document.getElementById('sub_eq').innerText = formato.format(tEq);
+        document.getElementById('sub_mo').innerText = formato.format(tMo);
+
+        const costoDirecto = tMat + tEq + tMo;
+        const precioUnitario = costoDirecto * (1 + 0.15 + 0.05 + 0.10);
+        document.getElementById('apu_total_final').innerText = formato.format(precioUnitario);
+
+        return { tMat, tEq, tMo, costoDirecto, precioUnitario };
+    }
+
+    function guardarPartidaEnPresupuesto() {
+        const calc = calcularAPU();
+
+        const getDatos = (id, isMat) => Array.from(document.querySelectorAll(`#${id} tbody tr`)).map(r => {
+            return isMat
+            ? { desc: r.querySelector('.desc').value, und: r.querySelector('.und').value, cant: r.querySelector('.cant').value, precio: r.querySelector('.precio').value, total: r.querySelector('.parci').innerText }
+            : { desc: r.querySelector('.desc').value, cant: r.querySelector('.cant').value, precio: r.querySelector('.precio').value, total: r.querySelector('.parci').innerText };
+        });
+
+        const partida = {
+            item: proyecto.partidas.length + 1,
+            covenin: document.getElementById('apu_covenin').value,
+            desc: document.getElementById('apu_desc').value,
+            und: document.getElementById('apu_und').value,
+            cant: parseFloat(document.getElementById('apu_cant').value),
+            rend: document.getElementById('apu_rend').value,
+            fcas: document.getElementById('apu_fcas').value,
+            pu: calc.precioUnitario,
+            total: parseFloat(document.getElementById('apu_cant').value) * calc.precioUnitario,
+            apu_data: {
+                mat: getDatos('t_mat', true), eq: getDatos('t_eq', false), mo: getDatos('t_mo', false),
+                tMat: calc.tMat, tEq: calc.tEq, tMo: calc.tMo, cd: calc.costoDirecto
+            }
+        };
+
+        proyecto.partidas.push(partida);
         renderizarPresupuesto();
-    }
-    function renderizarPresupuesto() { document.getElementById('doc_tabla_presupuesto').innerHTML = proyecto.partidas.map(p => `<tr><td>${p.desc}</td><td>${p.total}</td></tr>`).join(''); }
-    function exportarExpedientePDF() { html2pdf().from(document.getElementById('expediente-pdf')).save(); }
-    function actualizarExpediente() { document.getElementById('doc_obra_title').innerText = document.getElementById('g_obra').value; }
-</script>
+        renderizarHojasAPU();
 
+        document.getElementById('ia_desc').value = '';
+        document.getElementById('apu_covenin').value = '';
+        document.getElementById('apu_desc').value = '';
+        document.querySelector('#t_mat tbody').innerHTML = '';
+        document.querySelector('#t_eq tbody').innerHTML = '';
+        document.querySelector('#t_mo tbody').innerHTML = '';
+        calcularAPU();
+    }
+
+    function renderizarPresupuesto() {
+        const tbody = document.getElementById('doc_tabla_presupuesto');
+        let subtotal = 0;
+        tbody.innerHTML = proyecto.partidas.map(p => {
+            subtotal += p.total;
+            return `<tr><td class="center">${p.item}</td><td class="center">${p.covenin}</td><td>${p.desc}</td><td class="center">${p.und}</td><td class="num">${formato.format(p.cant)}</td><td class="num">${formato.format(p.pu)}</td><td class="num"><strong>${formato.format(p.total)}</strong></td></tr>`;
+        }).join('');
+
+        const iva = subtotal * 0.16;
+        document.getElementById('doc_subtotal').innerText = formato.format(subtotal);
+        document.getElementById('doc_iva').innerText = formato.format(iva);
+        document.getElementById('doc_total').innerText = formato.format(subtotal + iva);
+    }
+
+    function renderizarHojasAPU() {
+        const container = document.getElementById('paginas-apus');
+        container.innerHTML = '';
+
+        proyecto.partidas.forEach(p => {
+            const logoHtml = currentLogo ? `<img src="${currentLogo}">` : `LOGOTIPO SEINCA`;
+            const header = `
+                <div class="doc-header">
+                    <div class="logo-box">${logoHtml}</div>
+                    <div class="doc-header-text"><h1>SEINCA</h1><p>SERVICIOS INTEGRALES<br>RIF: J-297575472</p></div>
+                </div>
+                <div class="doc-title">ANALISIS DE PRECIO UNITARIO (APU)</div>
+                <table class="info-table">
+                    <tr><td class="bg">PARTIDA N:</td><td>${p.item}</td><td class="bg">COVENIN:</td><td>${p.covenin}</td></tr>
+                    <tr><td class="bg">DESCRIPCION:</td><td colspan="3">${p.desc}</td></tr>
+                    <tr><td class="bg">UNIDAD:</td><td>${p.und}</td><td class="bg">CANTIDAD:</td><td>${formato.format(p.cant)}</td></tr>
+                    <tr><td class="bg">RENDIMIENTO:</td><td>${p.rend} Und/Dia</td><td class="bg">FCAS:</td><td>${p.fcas}%</td></tr>
+                </table>
+            `;
+
+            const rowsMat = p.apu_data.mat.map(m => `<tr><td>${m.desc}</td><td class="center">${m.und}</td><td class="num">${m.cant}</td><td class="num">${m.precio}</td><td class="num">${m.total}</td></tr>`).join('');
+            const rowsEq = p.apu_data.eq.map(e => `<tr><td>${e.desc}</td><td class="num">${e.cant}</td><td class="num">${e.precio}</td><td class="num">${e.total}</td></tr>`).join('');
+            const rowsMo = p.apu_data.mo.map(m => `<tr><td>${m.desc}</td><td class="num">${m.cant}</td><td class="num">${m.precio}</td><td class="num">${m.total}</td></tr>`).join('');
+
+            const page = document.createElement('div');
+            page.className = 'pdf-page';
+            page.style.pageBreakBefore = 'always';
+
+            page.innerHTML = `
+                ${header}
+                <table class="apu-sheet-table">
+                    <thead><tr><th colspan="5">A. MATERIALES</th></tr><tr><th width="50%">Descripcion</th><th>Und</th><th>Cant</th><th>P.Unit</th><th>Total</th></tr></thead>
+                    <tbody>${rowsMat}</tbody>
+                    <tfoot><tr><td colspan="4" class="num bold">Subtotal Materiales:</td><td class="num bold">${formato.format(p.apu_data.tMat)}</td></tr></tfoot>
+                </table>
+
+                <table class="apu-sheet-table">
+                    <thead><tr><th colspan="4">B. EQUIPOS</th></tr><tr><th width="60%">Descripcion</th><th>Cant</th><th>Tarifa/Dia</th><th>Costo/Und</th></tr></thead>
+                    <tbody>${rowsEq}</tbody>
+                    <tfoot><tr><td colspan="3" class="num bold">Subtotal Equipos:</td><td class="num bold">${formato.format(p.apu_data.tEq)}</td></tr></tfoot>
+                </table>
+
+                <table class="apu-sheet-table">
+                    <thead><tr><th colspan="4">C. MANO DE OBRA</th></tr><tr><th width="60%">Cargo</th><th>Cant</th><th>Jornal/Dia</th><th>Costo/Und</th></tr></thead>
+                    <tbody>${rowsMo}</tbody>
+                    <tfoot><tr><td colspan="3" class="num bold">Subtotal Mano de Obra:</td><td class="num bold">${formato.format(p.apu_data.tMo)}</td></tr></tfoot>
+                </table>
+
+                <div class="apu-sheet-summary">
+                    <table>
+                        <tr><td>COSTO DIRECTO:</td><td class="num">${formato.format(p.apu_data.cd)}</td></tr>
+                        <tr><td>Administracion (15%):</td><td class="num">${formato.format(p.apu_data.cd * 0.15)}</td></tr>
+                        <tr><td>Imprevistos (5%):</td><td class="num">${formato.format(p.apu_data.cd * 0.05)}</td></tr>
+                        <tr><td>Utilidad (10%):</td><td class="num">${formato.format(p.apu_data.cd * 0.10)}</td></tr>
+                        <tr><td class="bold">PRECIO UNITARIO:</td><td class="num bold">${formato.format(p.pu)}</td></tr>
+                    </table>
+                </div>
+            `;
+            container.appendChild(page);
+        });
+    }
+
+    function exportarExpedientePDF() {
+        const elemento = document.getElementById('expediente-pdf');
+        html2pdf().set({
+            margin: [0, 0, 0, 0],
+            filename: 'Expediente_Tecnico_SEINCA.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
+            pagebreak: { mode: 'css' }
+        }).from(elemento).save();
+    }
+
+    function guardarDatos() {
+        const data = {
+            general: { obra: document.getElementById('g_obra').value, cliente: document.getElementById('g_cliente').value, ubicacion: document.getElementById('g_ubicacion').value, fecha: document.getElementById('g_fecha').value },
+            partidas: proyecto.partidas
+        };
+        const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = 'Proyecto_APU.json'; a.click();
+    }
+
+    function cargarDatos(e) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const data = JSON.parse(ev.target.result);
+            document.getElementById('g_obra').value = data.general.obra || '';
+            document.getElementById('g_cliente').value = data.general.cliente || '';
+            document.getElementById('g_ubicacion').value = data.general.ubicacion || '';
+            document.getElementById('g_fecha').value = data.general.fecha || '';
+            actualizarExpediente();
+            proyecto.partidas = data.partidas || [];
+            renderizarPresupuesto();
+            renderizarHojasAPU();
+        };
+        reader.readAsText(e.target.files[0]);
+    }
+</script>
 </body>
 </html>
