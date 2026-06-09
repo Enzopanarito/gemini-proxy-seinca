@@ -13,8 +13,7 @@ export default async function handler(req, res) {
     const { prompt } = req.body;
     if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
 
-    // CAMBIO: Usando gemini-2.0-flash (Modelo estable y disponible)
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
     
     const response = await fetch(url, {
       method: 'POST',
@@ -30,9 +29,40 @@ export default async function handler(req, res) {
               unidad: { type: "string" },
               cantidad: { type: "number" },
               descripcion_tecnica: { type: "string" },
-              materiales: { type: "array", items: { type: "object", properties: { descripcion: { type: "string" }, unidad: { type: "string" }, cantidad: { type: "number" }, precio: { type: "number" } } } },
-              equipos: { type: "array", items: { type: "object", properties: { descripcion: { type: "string" }, cantidad: { type: "number" }, tarifa: { type: "number" } } } },
-              mo: { type: "array", items: { type: "object", properties: { cargo: { type: "string" }, cantidad: { type: "number" }, jornal: { type: "number" } } } }
+              materiales: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    descripcion: { type: "string" },
+                    unidad: { type: "string" },
+                    cantidad: { type: "number" },
+                    precio: { type: "number" }
+                  }
+                }
+              },
+              equipos: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    descripcion: { type: "string" },
+                    cantidad: { type: "number" },
+                    tarifa: { type: "number" }
+                  }
+                }
+              },
+              mo: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    cargo: { type: "string" },
+                    cantidad: { type: "number" },
+                    jornal: { type: "number" }
+                  }
+                }
+              }
             },
             required: ["covenin", "unidad", "cantidad", "descripcion_tecnica", "materiales", "equipos", "mo"]
           }
@@ -41,7 +71,10 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error?.message || 'Error al conectar con Gemini 2.0');
+    if (!response.ok) {
+      console.error('Error desde API Google:', data);
+      throw new Error(data.error?.message || 'Error al conectar con Gemini 1.5');
+    }
 
     const text = data.candidates[0].content.parts[0].text;
     return res.status(200).json({ ok: true, data: JSON.parse(text) });
