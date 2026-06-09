@@ -42,7 +42,17 @@ export default async function handler(req, res) {
     }
 
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || JSON.stringify(data);
-    return res.status(200).json({ text });
+        // Parse JSON from Gemini response
+        let parsedData;
+        try {
+                // Remove markdown code blocks if present
+                const cleanText = text.replace(/```json\s*/g, '').replace(/```\s*$/g, '').trim();
+                parsedData = JSON.parse(cleanText);
+              } catch (parseError) {
+                return res.status(500).json({ error: 'Failed to parse JSON from Gemini: ' + text });
+              }
+    
+    return res.status(200).json({  ok: true, data: parsedData });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
