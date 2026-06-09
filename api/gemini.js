@@ -27,6 +27,50 @@ export default async function handler(req, res) {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ 
       model: "gemini-1.5-flash",      generationConfig: {
+                responseSchema: {
+          type: "object",
+          properties: {
+            apu: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  codigo: { type: "string" },
+                  descripcion: { type: "string" },
+                  unidad: { type: "string" },
+                  materiales: { type: "array" },
+                  manoDeObra: { type: "array" },
+                  equipos: { type: "array" },
+                  precioUnitario: { type: "number" }
+                }
+              }
+            },
+            computos: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  item: { type: "string" },
+                  descripcion: { type: "string" },
+                  unidad: { type: "string" },
+                  cantidad: { type: "number" }
+                }
+              }
+            },
+            rendimientos: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  actividad: { type: "string" },
+                  rendimiento: { type: "string" },
+                  unidad: { type: "string" }
+                }
+              }
+            }
+          },
+          required: ["apu", "computos", "rendimientos"]
+        },
         responseMimeType: "application/json"
       }
     });
