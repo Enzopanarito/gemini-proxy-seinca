@@ -24,8 +24,12 @@ export default async function handler(req, res) {
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
     const geminiBody = {
-      contents: [{ parts: [{ text: prompt }] }]
-    };
+  const geminiBody = {
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: {
+      response_mime_type: "application/json"
+    }
+  };    };
 
     const response = await fetch(url, {
       method: 'POST',
@@ -40,19 +44,10 @@ export default async function handler(req, res) {
       return res.status(response.status).json({ error: errMsg });
     }
 
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || JSON.stringify(data);
-        // Parse JSON from Gemini response
-        let parsedData;
-        try {
-                // Remove markdown code blocks if present
-                const cleanText = text.replace(/```json\s*/g, '').replace(/```\s*$/g, '').trim();
-                parsedData = JSON.parse(cleanText);
-              } catch (parseError) {
-                return res.status(500).json({ error: 'Failed to parse JSON from Gemini: ' + text });
-              }
-    
-    return res.status(200).json({  ok: true, data: parsedData });
-  } catch (error) {
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || JSON.stringify(data);
+    } catch (error) {
     return res.status(500).json({ error: error.message });
   }
 }
+    const parsedData = JSON.parse(text);
+    return res.status(200).json({ ok: true, data: parsedData });
