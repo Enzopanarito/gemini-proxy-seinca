@@ -14,20 +14,22 @@ export default async function handler(req, res) {
     if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
 
     // Prompt reforzado con tabla de referencia de precios
-    const reinforcedPrompt = `Actúa como Ingeniero Civil experto en costos en Venezuela.
-Analiza la siguiente obra: "${prompt}".
+    // Prompt MAESTRO nivel ingeniería profesional internacional
+    const reinforcedPrompt = `Actúa como Ingeniero Civil Senior y Consultor Internacional en Ingeniería de Costos, especializado en el mercado venezolano y normas COVENIN.
+Tu objetivo: Generar un Análisis de Precios Unitarios (APU) profesional para: "${prompt}".
 
-TABLA DE REFERENCIA DE COSTOS (USA ESTOS RANGOS):
-- Materiales: Bloque arcilla (0.45-0.60 USD), Cemento (8-10 USD/saco), Arena (20-30 USD/m3).
-- Equipos: Mezcladora (20-40 USD/día), Vibrador (15-25 USD/día).
-- Mano de Obra: Albañil (25-40 USD/día), Ayudante (15-25 USD/día).
-
-INSTRUCCIONES CRÍTICAS:
-1. NO USES VALORES EN 0. Debes elegir un valor dentro de los rangos anteriores.
-2. Si un insumo no está en la tabla, estima un valor de mercado realista en USD.
-3. El resultado debe ser un JSON estricto que cumpla con el esquema definido.
+REGLAS DE CÁLCULO OBLIGATORIAS:
+1. CALCULA TODO: Realiza cálculos matemáticos precisos de áreas, volúmenes, rendimientos y cantidades.
+2. APLICA FACTORES DE DESPERDICIO: Añade 5-10% de desperdicio a materiales según el tipo.
+3. USA RENDIMIENTOS REALES: Basa los cálculos en cuadrillas tipo (ej: 1 albañil + 1 ayudante).
+4. PRECIOS DE MERCADO VENEZOLANO (USD): 
+   - Materiales: Bloque arcilla 0.45-0.60 USD, Cemento 8-10 USD/saco, Arena 20-30 USD/m³, Cabilla #3 2.80 USD/unidad
+   - Equipos: Mezcladora 20-40 USD/día, Vibrador 15-25 USD/día, Andamios 3-5 USD/día
+   - Mano de Obra: Albañil especializado 30-40 USD/día, Albañil 25-35 USD/día, Ayudante 15-25 USD/día
+5. CERO TOLERANCIA A VALORES NULOS: PROHIBIDO generar valores en 0. Si no conoces un precio exacto, estima un valor de mercado lógico fundamentado.
+6. CANTIDADES PRECISAS: Calcula cantidades exactas basándote en la descripción de la obra y rendimientos estándar.
+7. FORMATO JSON ESTRICTO: Respeta el esquema solicitado completamente.
 `;
-
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
@@ -36,7 +38,7 @@ INSTRUCCIONES CRÍTICAS:
       body: JSON.stringify({
         contents: [{ parts: [{ text: reinforcedPrompt }] }],
         generationConfig: {
-          temperature: 0.7,
+          temperature: 00.27,
           responseMimeType: "application/json",
           responseSchema: {
             type: "object",
