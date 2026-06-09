@@ -26,90 +26,59 @@ export default async function handler(req, res) {
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",      generationConfig: {
-                responseSchema: {
+      model: "gemini-1.5-flash", 
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: {
           type: "object",
           properties: {
-            apu: {
+            covenin: { type: "string" },
+            unidad: { type: "string" },
+            cantidad: { type: "number" },
+            materiales: {
               type: "array",
               items: {
                 type: "object",
                 properties: {
-                  codigo: { type: "string" },
                   descripcion: { type: "string" },
                   unidad: { type: "string" },
-                  materiales: { type: "array" {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        descripcion: { type: "string" },
-                        unidad: { type: "string" },
-                        cantidad: { type: "number" },
-                        precioUnitario: { type: "number" }
-                      }
-                    }
-                  },
-                  manoDeObra: { type: "array" {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        cargo: { type: "string" },
-                        cantidad: { type: "number" },
-                        jornal: { type: "number" }
-                      }
-                    }
-                  },
-                  equipos: { type: "array" {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        descripcion: { type: "string" },
-                        cantidad: { type: "number" },
-                        tarifa: { type: "number" }
-                      }
-                    }
-                  },
-                  precioUnitario: { type: "number" }
+                  cantidad: { type: "number" },
+                  precio: { type: "number" }
                 }
               }
             },
-            computos: {
+            equipos: {
               type: "array",
               items: {
                 type: "object",
                 properties: {
-                  item: { type: "string" },
                   descripcion: { type: "string" },
-                  unidad: { type: "string" },
-                  cantidad: { type: "number" }
+                  cantidad: { type: "number" },
+                  tarifa: { type: "number" }
                 }
               }
             },
-            rendimientos: {
+            mo: {
               type: "array",
               items: {
                 type: "object",
                 properties: {
-                  actividad: { type: "string" },
-                  rendimiento: { type: "string" },
-                  unidad: { type: "string" }
+                  cargo: { type: "string" },
+                  cantidad: { type: "number" },
+                  jornal: { type: "number" }
                 }
               }
             }
           },
-          required: ["apu", "computos", "rendimientos"]
-        },
-        responseMimeType: "application/json"
+          required: ["covenin", "unidad", "cantidad", "materiales", "equipos", "mo"]
+        }
       }
     });
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
-    
+
     const parsedData = JSON.parse(text);
     return res.status(200).json({ ok: true, data: parsedData });
   } catch (error) {
