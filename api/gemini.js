@@ -38,9 +38,40 @@ export default async function handler(req, res) {
                   codigo: { type: "string" },
                   descripcion: { type: "string" },
                   unidad: { type: "string" },
-                  materiales: { type: "array" },
-                  manoDeObra: { type: "array" },
-                  equipos: { type: "array" },
+                  materiales: { type: "array" {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        descripcion: { type: "string" },
+                        unidad: { type: "string" },
+                        cantidad: { type: "number" },
+                        precioUnitario: { type: "number" }
+                      }
+                    }
+                  },
+                  manoDeObra: { type: "array" {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        cargo: { type: "string" },
+                        cantidad: { type: "number" },
+                        jornal: { type: "number" }
+                      }
+                    }
+                  },
+                  equipos: { type: "array" {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        descripcion: { type: "string" },
+                        cantidad: { type: "number" },
+                        tarifa: { type: "number" }
+                      }
+                    }
+                  },
                   precioUnitario: { type: "number" }
                 }
               }
