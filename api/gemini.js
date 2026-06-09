@@ -13,8 +13,11 @@ export default async function handler(req, res) {
     const { prompt } = req.body;
     if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
 
-    // Endpoint actualizado a gemini-2.5-flash    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;    
- const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    // Endpoint actualizado a gemini-2.5-flash
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    
+    const response = await fetch(url, {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
@@ -38,9 +41,7 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
-    if (!response.ok) {
-      return res.status(response.status).json({ error: data.error?.message || 'Error en la API de Google' });
-    }
+    if (!response.ok) throw new Error(data.error?.message || 'Error en la API de Google');
 
     const text = data.candidates[0].content.parts[0].text;
     return res.status(200).json({ ok: true, data: JSON.parse(text) });
