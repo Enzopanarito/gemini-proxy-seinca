@@ -13,7 +13,8 @@ export default async function handler(req, res) {
     const { prompt } = req.body;
     if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // Endpoint actualizado a gemini-3-flash-preview
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
     
     const response = await fetch(url, {
       method: 'POST',
@@ -72,8 +73,7 @@ export default async function handler(req, res) {
 
     const data = await response.json();
     if (!response.ok) {
-      console.error('Error desde API Google:', data);
-      throw new Error(data.error?.message || 'Error al conectar con Gemini 1.5');
+      throw new Error(data.error?.message || 'Error al conectar con Gemini 3 Flash Preview');
     }
 
     const text = data.candidates[0].content.parts[0].text;
