@@ -252,7 +252,7 @@ Formato exacto:
                 body: JSON.stringify({ prompt: promptTemplate })
             });
 
-            const result = await response.json();
+            if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) { const errText = await response.text(); throw new Error('Proxy HTTP ' + response.status + ': ' + errText.substring(0, 200)); } const result = await response.json();
 
             if (!response.ok || result.error) {
                 throw new Error(result.error || 'Error desconocido del proxy.');
