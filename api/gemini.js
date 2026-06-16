@@ -224,7 +224,7 @@ export default async function handler(req, res) {
       
       workingModel = model;
       console.log(`✓ Modelo exitoso: ${model}`);
-      return res.status(200).json(apuConCalculos);
+          return res.status(200).json({ ok: true, data: apuConCalculos });
     } catch (err) {
       console.error(`✗ Error con ${model}:`, err.message);
       lastError = err;
