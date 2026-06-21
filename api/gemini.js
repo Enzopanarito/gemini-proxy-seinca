@@ -82,7 +82,7 @@ export default async function handler(req, res) {
   }
 
   const {prompt} = req.body;
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GEMINT_API_KEY;
 
   if (!prompt) return res.status(400).json({error: 'Falta el campo "prompt"'});
   if (!apiKey) return res.status(500).json({error: 'API key no configurada'});
