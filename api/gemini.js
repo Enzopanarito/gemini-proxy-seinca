@@ -1,5 +1,5 @@
 // SEINCA - API Proxy Gemini APU (OPTIMIZADO)
-const MODEL_FALLBACK_LIST = ['gemini-2.0-flash', 'gemini-1.5-flash'];
+const MODEL_FALLBACK_LIST = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash-latest'];
 let workingModel = null;
 
 function calcularParciales(apu) {
@@ -46,7 +46,7 @@ ESTRUCTURA:
 Devuelve SOLO el JSON:`;
 
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
