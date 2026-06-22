@@ -24,16 +24,13 @@ async function getAvailableModels(apiKey) {
       .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
       .map(m => m.name.replace('models/', ''))
       .filter(name => name.startsWith('gemini'));
-    // Ordenar por prioridad: 2.5 > 2.0 > 1.5
     const sorted = [];
     for (const pattern of MODEL_PRIORITY_PATTERNS) {
       const matching = models.filter(m => pattern.test(m));
-      // Preferir modelos -flash sobre otros dentro del mismo grupo
       const flash = matching.filter(m => m.includes('flash'));
       const others = matching.filter(m => !m.includes('flash'));
       sorted.push(...flash, ...others);
     }
-    // Agregar cualquier modelo restante no cubierto por los patrones
     const remaining = models.filter(m => !sorted.includes(m));
     sorted.push(...remaining);
     detectedModels = sorted.length > 0 ? sorted : MODEL_FALLBACK_LIST;
@@ -68,20 +65,52 @@ function calcularParciales(apu) {
 
 async function callGemini(model, prompt, apiKey) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 segundos para 2.5
-  const optimizedPrompt = `ERES INGENIERO CIVIL SENIOR VENEZOLANO - GENERA APU JSON COMPLETO
-Para: "${prompt}"
-TERMINOLOGIA: Cabillas (acero refuerzo), Concreto armado, Friso, Pego, Boquilla, Paneteo, Arrocillo, Sabieta, Mezcladora trompo, Oficial, Ayudante, Vibradora.
-PRECIOS USD 2026 VE: Cemento $9/saco, Cabillas 3/8"=$5.50, 1/2"=$9, Bloques 15cm=$0.70, Arena=$25/m3, Piedra=$30/m3, Albanil=$35/dia, Ayudante=$22/dia.
-REGLAS:
-1. NO valores en 0
-2. Cantidades exactas + 5-10% desperdicio
-3. rdto = unidades/dia (cuadrilla 8hrs)
-4. Descripcion tecnica completa con procesos, materiales, dimensiones
-5. JSON puro (sin markdown)
-ESTRUCTURA:
-{"covenin":"codigo","unidad":"m2|m3|ml|kg|und","computo":NUM,"rdto":NUM,"fc_ar":NUM,"admn_imprvt":"15/5/10","descripcion":"TEXTO EXHAUSTIVO","materiales":[{"desc":"...","unid":"...","cant":XX,"precio":XX,"parcial":XX}],"equipos":[{"desc":"...","cant":XX,"tarifa":XX,"parcial":XX}],"mo":[{"cargo":"...","cant":XX,"jornal":XX,"parcial":XX}]}
-Devuelve SOLO el JSON:`;
+  const timeoutId = setTimeout(() => controller.abort(), 55000); // 55 segundos para analisis profundo
+
+  const optimizedPrompt = `Eres un INGENIERO CALCULISTA VENEZOLANO DE ELITE con 30 anos de experiencia en proyectos de construccion. Tu especialidad es elaborar Analisis de Precios Unitarios (APU) completos, detallados y tecnicamente impecables.
+
+PARTIDA SOLICITADA POR EL USUARIO: "${prompt}"
+
+== PASO 1: REFORMULA EL ENUNCIADO ==
+Reescribe el enunciado de forma TECNICA Y PROFESIONAL como apareceria en un pliego de condiciones tecnicas o memoria descriptiva de proyecto. El campo "descripcion" del JSON DEBE contener esta version mejorada, NO el texto original del usuario.
+
+== PASO 2: INVESTIGACION Y DESCOMPOSICION TOTAL ==
+Actua como un ingeniero calculista que debe ejecutar esta obra desde cero. Descompone la partida en TODOS sus elementos constructivos necesarios. No te limites solo a lo que menciona el usuario. Piensa en la secuencia constructiva completa:
+
+- Si hay PAREDES DE BLOQUES: incluye fundacion corrida (excavacion, concreto, cabillas), columnas de confinamiento (cabillas longitudinales + estribos + alambre de amarre + concreto + encofrado), vigas de riostre inferiores, vigas de amarre superiores (cabillas + estribos + concreto + encofrado), bloques, pego (mortero de pega), friso en ambas caras, boquilla, agua para curado.
+- Si hay LOSAS: incluye encofrado (formaleta), cabillas positivas y negativas, estribos, concreto, vibradora, curado, desencofrado.
+- Si hay ACABADOS: friso fino, masilla, pintura base, pintura caucho 2 manos.
+- Si hay PINTURA: lija, sellador, pintura base, pintura final 2 manos.
+- Si hay ESTRUCTURAS DE CONCRETO: cemento, arena, piedra, agua, encofrado, vibrado, curado.
+
+== PASO 3: CALCULO METRICO VENEZOLANO ==
+Calcula las cantidades usando el sistema metrico. Aplica desperdicios:
+- Bloques: +5%, Cabillas: +10%, Cemento: +5%, Arena/Piedra: +15%, Pintura: +10%
+- rdto = rendimiento de la cuadrilla por dia (unidades ejecutadas en 8 horas)
+
+== PASO 4: TERMINOLOGIA VENEZOLANA OBLIGATORIA ==
+Usa siempre: Cabillas (NO varillas), Friso (NO repello), Pego (NO mortero de pega simple), Boquilla, Paneteo, Arrocillo, Sabieta, Bloque 15cm / Bloque 20cm, Mezcladora trompo, Oficial albanil, Ayudante de albanileria, Maestro de obra, Vibradora electrica.
+
+== PASO 5: TABLA DE PRECIOS USD VENEZUELA 2026 ==
+Materiales: Cemento Portland $9.00/saco(42.5kg), Cabilla 3/8" $5.50/ml, Cabilla 1/2" $9.00/ml, Cabilla 5/8" $14.00/ml, Cabilla 3/4" $20.00/ml, Alambre recocido #18 $3.00/kg, Bloque de concreto 15cm $0.70/und, Bloque de concreto 20cm $1.10/und, Arena lavada $25.00/m3, Piedra triturada $30.00/m3, Agua $2.00/m3, Pintura caucho mate $40.00/galon, Pintura base (sellador) $25.00/galon, Friso (mortero seco) $8.00/saco, Pego (adhesivo) $10.00/saco, Tabla encofrado $4.00/und, Puntal metalico $3.00/dia.
+Mano de Obra: Oficial albanil $35.00/dia, Ayudante de albanileria $22.00/dia, Maestro de obra $45.00/dia, Pintor oficial $35.00/dia, Carpintero encofrador $38.00/dia.
+Equipos: Mezcladora trompo $25.00/dia, Vibradora electrica $20.00/dia, Andamio tubular $5.00/dia/modulo, Carretilla $2.00/dia, Nivel de burbuja $2.00/dia.
+
+== REGLAS CRITICAS ==
+1. NINGUN valor en 0 (ni cant, ni precio, ni parcial, ni rdto, ni computo)
+2. Incluir TODOS los elementos constructivos necesarios aunque el usuario no los mencione
+3. El campo "descripcion" debe ser el enunciado MEJORADO y PROFESIONAL (no el texto del usuario)
+4. Unidades correctas: m2 (areas), m3 (volumenes), ml (longitudes), kg (pesos), und (unidades)
+5. fc_ar = factor de armado (normalmente entre 1.0 y 1.3 segun complejidad)
+6. admn_imprvt = siempre "15/5/10" (Administracion 15% / Imprevistos 5% / Utilidad 10%)
+7. Codigo COVENIN venezolano apropiado para la partida
+8. Retornar EXCLUSIVAMENTE JSON puro, SIN markdown, SIN explicaciones, SIN texto adicional
+
+== ESTRUCTURA JSON REQUERIDA ==
+{"covenin":"CODIGO_COVENIN","unidad":"m2","computo":NUM,"rdto":NUM,"fc_ar":NUM,"admn_imprvt":"15/5/10","descripcion":"DESCRIPCION TECNICA MEJORADA Y PROFESIONAL QUE REEMPLAZA EL TEXTO DEL USUARIO","materiales":[{"desc":"nombre del material","unid":"und/saco/m3/kg/ml","cant":XX,"precio":XX,"parcial":XX}],"equipos":[{"desc":"nombre del equipo","cant":XX,"tarifa":XX,"parcial":XX}],"mo":[{"cargo":"cargo del obrero","cant":XX,"jornal":XX,"parcial":XX}]}
+
+Devuelve UNICAMENTE el JSON, comenzando con { y terminando con }`;
+
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
       method: 'POST',
@@ -94,7 +123,7 @@ Devuelve SOLO el JSON:`;
           {category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE'},
           {category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE'}
         ],
-        generationConfig: {temperature: 0.3, maxOutputTokens: 8000}
+        generationConfig: {temperature: 0.2, maxOutputTokens: 8000}
       }),
       signal: controller.signal
     });
@@ -120,10 +149,8 @@ export default async function handler(req, res) {
   if (!prompt) return res.status(400).json({error: 'Falta el campo "prompt"'});
   if (!apiKey) return res.status(500).json({error: 'API key no configurada'});
 
-  // Autodetectar modelos disponibles para esta API key
   const availableModels = await getAvailableModels(apiKey);
 
-  // Si ya tenemos un modelo que funciono, intentarlo primero
   const modelsToTry = workingModel
     ? [workingModel, ...availableModels.filter(m => m !== workingModel)]
     : availableModels;
@@ -150,7 +177,7 @@ export default async function handler(req, res) {
       lastError = err;
       if (model === workingModel) {
         workingModel = null;
-        detectedModels = null; // Forzar re-deteccion
+        detectedModels = null;
       }
     }
   }
