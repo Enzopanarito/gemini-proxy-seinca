@@ -28,7 +28,7 @@
         .apu-table input { padding: 4px; border: none; border-bottom: 1px solid transparent; background: transparent; width: 100%; box-sizing: border-box; }
         .apu-table input:focus { border-bottom: 1px solid var(--primary); outline: none; }
         .num { text-align: right; }
-        .btn-del { background: #ef4444; color: white; border: none; padding: 2px 5px; cursor: pointer; border-radius: 3px; width: auto; margin: 0; }
+        .btn-edit { background: #3b82f6; color: white; border: none; padding: 2px 5px; cursor: pointer; border-radius: 3px; width: auto; margin: 0; font-size: 13px; } .btn-del { background: #ef4444; color: white; border: none; padding: 2px 5px; cursor: pointer; border-radius: 3px; width: auto; margin: 0; }
         .panel-preview { flex-grow: 1; height: 90vh; overflow-y: auto; display: flex; flex-direction: column; align-items: center; }
         .pdf-page { background: white; width: 215.9mm; min-height: 279.4mm; padding: 15mm; box-sizing: border-box; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-bottom: 20mm; font-family: Arial, sans-serif; position: relative; display: flex; flex-direction: column; }
         .doc-header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid var(--primary); padding-bottom: 10px; margin-bottom: 15px; }
@@ -396,12 +396,12 @@ Formato exacto:
         calcularAPU();
     }
 
-    function renderizarPresupuesto() {
+    function eliminarPartida(i) { if(!confirm('Eliminar esta partida del presupuesto?')) return; proyecto.partidas.splice(i, 1); proyecto.partidas.forEach((p,idx) => p.item = idx+1); renderizarPresupuesto(); renderizarHojasAPU(); } function editarPartida(i) { const p = proyecto.partidas[i]; document.getElementById('ia_desc').value = p.desc; document.getElementById('apu_covenin').value = p.covenin || ''; document.getElementById('apu_und').value = p.und; document.getElementById('apu_cant').value = p.cant; document.getElementById('apu_rend').value = p.rend || 1; document.getElementById('apu_fcas').value = p.fc_ar || 1; proyecto.partidas.splice(i, 1); proyecto.partidas.forEach((p2,idx) => p2.item = idx+1); renderizarPresupuesto(); renderizarHojasAPU(); mostrarVistaPrevia(p.apu_data); } function renderizarPresupuesto() {
         const tbody = document.getElementById('doc_tabla_presupuesto');
         let subtotal = 0;
-        tbody.innerHTML = proyecto.partidas.map(p => {
+        tbody.innerHTML = proyecto.partidas.map((p, i) => {
             subtotal += p.total;
-            return `<tr><td class="center">${p.item}</td><td class="center">${p.covenin}</td><td>${p.desc}</td><td class="center">${p.und}</td><td class="num">${formato.format(p.cant)}</td><td class="num">${formato.format(p.pu)}</td><td class="num"><strong>${formato.format(p.total)}</strong></td></tr>`;
+            return `<tr><td class="center">${p.item}</td><td class="center">${p.covenin}</td><td>${p.desc}</td><td class="center">${p.und}</td><td class="num">${formato.format(p.cant)}</td><td class="num">${formato.format(p.pu)}</td><td class="num"><strong>${formato.format(p.total)}</strong></td><td class="center" style="white-space:nowrap"><button class="btn-edit" onclick="editarPartida(${i})" title="Editar">&#9998;</button> <button class="btn-del" onclick="eliminarPartida(${i})" title="Eliminar">&#128465;</button></td></tr>`;
         }).join('');
 
         const iva = subtotal * 0.16;
@@ -441,7 +441,7 @@ Formato exacto:
             page.innerHTML = `
                 ${header}
                 <table class="apu-sheet-table">
-                    <thead><tr><th colspan="5">A. MATERIALES</th></tr><tr><th width="50%">Descripcion</th><th>Und</th><th>Cant</th><th>P.Unit</th><th>Total</th></tr></thead>
+                    <thead><tr><th colspan="5">A. MATERIALES</th></tr><tr><th width="50%">Descripcion</th><th>Und</th><th>Cant</th><th>P.Unit</th><th>TOTAL</th><th>ACC.</th></tr></thead>
                     <tbody>${rowsMat}</tbody>
                     <tfoot><tr><td colspan="4" class="num bold">Subtotal Materiales:</td><td class="num bold">${formato.format(p.apu_data.tMat)}</td></tr></tfoot>
                 </table>
