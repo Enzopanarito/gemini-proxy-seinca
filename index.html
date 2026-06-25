@@ -98,7 +98,7 @@
         <div class="grid-3">
             <div class="form-group"><label>Rendimiento Diario</label><input type="number" id="apu_rend" step="0.01" value="1" oninput="calcularAPU()"></div>
             <div class="form-group"><label>FCAS (%)</label><input type="number" id="apu_fcas" step="0.01" value="250" oninput="calcularAPU()"></div>
-            <div class="form-group"><label>Admin/Imprev/Util (%)</label><input type="text" value="15 / 5 / 10" disabled></div>
+            <div class="form-group"><label>Admin/Imprev/Util (%)</label><input type="text" value="15 / 15 / 30" id="apu_admn" placeholder="Admin / Imprev / Util" title="Editable: Admin% / Imprevistos% / Utilidad%" oninput="calcularAPU()"></div>
         </div>
         <div class="form-group"><label>Descripcion Tecnica Final</label><textarea id="apu_desc" rows="2"></textarea></div>
 
@@ -352,10 +352,10 @@ Formato exacto:
         document.getElementById('sub_mo').innerText = formato.format(tMo);
 
         const costoDirecto = tMat + tEq + tMo;
-        const precioUnitario = costoDirecto * (1 + 0.15 + 0.05 + 0.10);
+        const _admn = document.getElementById('apu_admn'); const _parts = _admn ? _admn.value.split('/').map(v=>parseFloat(v.trim())/100) : [0.15,0.15,0.30]; const _pAdm = _parts[0]||0.15, _pImp = _parts[1]||0.15, _pUti = _parts[2]||0.30; const precioUnitario = costoDirecto * (1 + _pAdm + _pImp + _pUti);
         document.getElementById('apu_total_final').innerText = formato.format(precioUnitario);
 
-        return { tMat, tEq, tMo, costoDirecto, precioUnitario };
+        return { tMat, tEq, tMo, costoDirecto, precioUnitario, pAdm: _pAdm, pImp: _pImp, pUti: _pUti };
     }
 
     function guardarPartidaEnPresupuesto() {
@@ -379,7 +379,7 @@ Formato exacto:
             total: parseFloat(document.getElementById('apu_cant').value) * calc.precioUnitario,
             apu_data: {
                 mat: getDatos('t_mat', true), eq: getDatos('t_eq', false), mo: getDatos('t_mo', false),
-                tMat: calc.tMat, tEq: calc.tEq, tMo: calc.tMo, cd: calc.costoDirecto
+                tMat: calc.tMat, tEq: calc.tEq, tMo: calc.tMo, cd: calc.costoDirecto, pAdm: calc.pAdm||0.15, pImp: calc.pImp||0.15, pUti: calc.pUti||0.30
             }
         };
 
@@ -461,9 +461,9 @@ Formato exacto:
                 <div class="apu-sheet-summary">
                     <table>
                         <tr><td>COSTO DIRECTO:</td><td class="num">${formato.format(p.apu_data.cd)}</td></tr>
-                        <tr><td>Administracion (15%):</td><td class="num">${formato.format(p.apu_data.cd * 0.15)}</td></tr>
-                        <tr><td>Imprevistos (5%):</td><td class="num">${formato.format(p.apu_data.cd * 0.05)}</td></tr>
-                        <tr><td>Utilidad (10%):</td><td class="num">${formato.format(p.apu_data.cd * 0.10)}</td></tr>
+                        <tr><td>Administracion (${Math.round(_pAdm*100)}%):</td><td class="num">${formato.format(p.apu_data.cd * (p.apu_data.pAdm||0.15))}</td></tr>
+                        <tr><td>Imprevistos (${Math.round((p.apu_data.pImp||0.15)*100)}%):</td><td class="num">${formato.format(p.apu_data.cd * (p.apu_data.pImp||0.15))}</td></tr>
+                        <tr><td>Utilidad (${Math.round((p.apu_data.pUti||0.30)*100)}%):</td><td class="num">${formato.format(p.apu_data.cd * (p.apu_data.pUti||0.30))}</td></tr>
                         <tr><td class="bold">PRECIO UNITARIO:</td><td class="num bold">${formato.format(p.pu)}</td></tr>
                     </table>
                 </div>
