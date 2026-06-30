@@ -266,7 +266,7 @@ Formato exacto:
 
             document.getElementById('apu_covenin').value = ai.covenin || '';
             document.getElementById('apu_und').value = ai.unidad || '';
-            document.getElementById('apu_cant').value = Number(ai.cantidad || 1);
+            document.getElementById('apu_cant').value = Number(ai.computo || ai.cantidad || 1);
             document.getElementById('apu_rend').value = Number(ai.rendimiento || 1);
             document.getElementById('apu_desc').value = ai.descripcion_tecnica || desc;
 
