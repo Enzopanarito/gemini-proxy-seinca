@@ -60,6 +60,7 @@ function calcularParciales(apu) {
   apu.subtotal_equipos = parseFloat(subEq.toFixed(2));
   apu.subtotal_mo = parseFloat(subMO.toFixed(2));
   apu.total_general = parseFloat((subMat + subEq + subMO).toFixed(2));
+    apu.descripcion_tecnica = apu.descripcion || '';
   return apu;
 }
 
