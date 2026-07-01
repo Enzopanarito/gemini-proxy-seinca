@@ -401,7 +401,7 @@ Formato exacto:
         let subtotal = 0;
         tbody.innerHTML = proyecto.partidas.map((p, i) => {
             subtotal += p.total;
-            return `<tr><td class="center">${p.item}</td><td class="center">${p.covenin}</td><td>${p.desc}</td><td class="center">${p.und}</td><td class="num">${formato.format(p.cant)}</td><td class="num">${formatoUSD.format(p.pu)}</td><td class="num"><strong>${formatoUSD.format(p.total)}</strong></td><td class="center" style="white-space:nowrap"><button class="btn-edit" onclick="editarPartida(${i})" title="Editar">&#9998;</button> <button class="btn-del" onclick="eliminarPartida(${i})" title="Eliminar">&#128465;</button></td></tr>`;
+            return `<tr><td class="center">${p.item}</td><td class="center">${p.covenin}</td><td>${p.desc}</td><td class="center">${p.und}</td><td class="num">${p.cant.toFixed(2)}</td><td class="num">${formatoUSD.format(p.pu)}</td><td class="num"><strong>${formatoUSD.format(p.total)}</strong></td><td class="center" style="white-space:nowrap"><button class="btn-edit" onclick="editarPartida(${i})" title="Editar">&#9998;</button> <button class="btn-del" onclick="eliminarPartida(${i})" title="Eliminar">&#128465;</button></td></tr>`;
         }).join('');
 
         const iva = subtotal * 0.16;
@@ -425,7 +425,7 @@ Formato exacto:
                 <table class="info-table">
                     <tr><td class="bg">PARTIDA N:</td><td>${p.item}</td><td class="bg">COVENIN:</td><td>${p.covenin}</td></tr>
                     <tr><td class="bg">DESCRIPCION:</td><td colspan="3">${p.desc}</td></tr>
-                    <tr><td class="bg">UNIDAD:</td><td>${p.und}</td><td class="bg">CANTIDAD:</td><td>${formato.format(p.cant)}</td></tr>
+                    <tr><td class="bg">UNIDAD:</td><td>${p.und}</td><td class="bg">CANTIDAD:</td><td>${p.cant.toFixed(2)}</td></tr>
                     <tr><td class="bg">RENDIMIENTO:</td><td>${p.rend} Und/Dia</td><td class="bg">FCAS:</td><td>${p.fcas}%</td></tr>
                 </table>
             `;
