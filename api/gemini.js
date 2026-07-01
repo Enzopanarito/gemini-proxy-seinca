@@ -74,6 +74,7 @@ PARTIDA SOLICITADA POR EL USUARIO: "${prompt}"
 
 == PASO 1: REFORMULA EL ENUNCIADO ==
 Reescribe el enunciado de forma TECNICA Y PROFESIONAL como apareceria en un pliego de condiciones tecnicas o memoria descriptiva de proyecto. El campo "descripcion" del JSON DEBE contener esta version mejorada, NO el texto original del usuario.
+CRITICO: Mantén los valores numericos EXACTOS del usuario (dimensiones, medidas, cantidades). Si el usuario escribe '3000m de largo', la descripcion DEBE decir '3000.00 metros de longitud', NO cambies los numeros.
 
 == PASO 2: INVESTIGACION Y DESCOMPOSICION TOTAL ==
 Actua como un ingeniero calculista que debe ejecutar esta obra desde cero. Descompone la partida en TODOS sus elementos constructivos necesarios. No te limites solo a lo que menciona el usuario. Piensa en la secuencia constructiva completa:
@@ -106,6 +107,7 @@ Equipos: Mezcladora trompo $25.00/dia, Vibradora electrica $20.00/dia, Andamio t
 6. admn_imprvt = siempre "15/5/10" (Administracion 15% / Imprevistos 5% / Utilidad 10%)
 7. Codigo COVENIN venezolano apropiado para la partida
 8. Retornar EXCLUSIVAMENTE JSON puro, SIN markdown, SIN explicaciones, SIN texto adicional
+9. NUNCA modifiques los valores numericos del usuario: si dice '3000m' el JSON debe tener computo:3000, y la descripcion debe decir '3000.00 metros', JAMAS '10m' u otro numero diferente
 
 == ESTRUCTURA JSON REQUERIDA ==
 {"covenin":"CODIGO_COVENIN","unidad":"m2","computo":NUM,"rdto":NUM,"fc_ar":NUM,"admn_imprvt":"15/5/10","descripcion":"DESCRIPCION TECNICA MEJORADA Y PROFESIONAL QUE REEMPLAZA EL TEXTO DEL USUARIO","materiales":[{"desc":"nombre del material","unid":"und/saco/m3/kg/ml","cant":XX,"precio":XX,"parcial":XX}],"equipos":[{"desc":"nombre del equipo","cant":XX,"tarifa":XX,"parcial":XX}],"mo":[{"cargo":"cargo del obrero","cant":XX,"jornal":XX,"parcial":XX}]}
