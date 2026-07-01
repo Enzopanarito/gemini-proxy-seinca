@@ -181,7 +181,7 @@
 
 <script>
     let proyecto = { partidas: [] };
-    const formato = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const formato = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
     let currentLogo = "";
 
     function actualizarExpediente() {
