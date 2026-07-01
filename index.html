@@ -266,7 +266,7 @@ Formato exacto:
 
             document.getElementById('apu_covenin').value = ai.covenin || '';
             document.getElementById('apu_und').value = ai.unidad || '';
-            document.getElementById('apu_cant').value = Number(ai.computo || ai.cantidad || 1);
+            const _txtUsuario = document.getElementById('ia_desc').value; const _numMatch = _txtUsuario.match(/(\d+(?:[.,]\d+)?)/g); const _cantUser = _numMatch ? Math.max(..._numMatch.map(n=>parseFloat(n.replace(',','.')))) : 1; const _computoFinal = (Number(ai.computo||0) > 1) ? Number(ai.computo) : ((Number(ai.cantidad||0) > 1) ? Number(ai.cantidad) : _cantUser); document.getElementById('apu_cant').value = _computoFinal;
             document.getElementById('apu_rend').value = Number(ai.rendimiento || 1);
             document.getElementById('apu_desc').value = ai.descripcion_tecnica || desc;
 
