@@ -181,7 +181,7 @@
 
 <script>
     let proyecto = { partidas: [] };
-    const formato = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+    const formato = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); const formatoUSD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
     let currentLogo = "";
 
     function actualizarExpediente() {
@@ -334,26 +334,26 @@ Formato exacto:
 
         document.querySelectorAll('#t_mat tbody tr').forEach(r => {
             const p = (parseFloat(r.querySelector('.cant').value) || 0) * (parseFloat(r.querySelector('.precio').value) || 0);
-            r.querySelector('.parci').innerText = formato.format(p); tMat += p;
+            r.querySelector('.parci').innerText = formatoUSD.format(p); tMat += p;
         });
 
         document.querySelectorAll('#t_eq tbody tr').forEach(r => {
             const p = ((parseFloat(r.querySelector('.cant').value) || 0) * (parseFloat(r.querySelector('.precio').value) || 0)) / rend;
-            r.querySelector('.parci').innerText = formato.format(p); tEq += p;
+            r.querySelector('.parci').innerText = formatoUSD.format(p); tEq += p;
         });
 
         document.querySelectorAll('#t_mo tbody tr').forEach(r => {
             const p = (((parseFloat(r.querySelector('.cant').value) || 0) * (parseFloat(r.querySelector('.precio').value) || 0)) * (1 + fcas)) / rend;
-            r.querySelector('.parci').innerText = formato.format(p); tMo += p;
+            r.querySelector('.parci').innerText = formatoUSD.format(p); tMo += p;
         });
 
-        document.getElementById('sub_mat').innerText = formato.format(tMat);
-        document.getElementById('sub_eq').innerText = formato.format(tEq);
-        document.getElementById('sub_mo').innerText = formato.format(tMo);
+        document.getElementById('sub_mat').innerText = formatoUSD.format(tMat);
+        document.getElementById('sub_eq').innerText = formatoUSD.format(tEq);
+        document.getElementById('sub_mo').innerText = formatoUSD.format(tMo);
 
         const costoDirecto = tMat + tEq + tMo;
         const _admn = document.getElementById('apu_admn'); const _parts = _admn ? _admn.value.split('/').map(v=>parseFloat(v.trim())/100) : [0.15,0.15,0.30]; const _pAdm = _parts[0]||0.15, _pImp = _parts[1]||0.15, _pUti = _parts[2]||0.30; const precioUnitario = costoDirecto * (1 + _pAdm + _pImp + _pUti);
-        document.getElementById('apu_total_final').innerText = formato.format(precioUnitario);
+        document.getElementById('apu_total_final').innerText = formatoUSD.format(precioUnitario);
 
         return { tMat, tEq, tMo, costoDirecto, precioUnitario, pAdm: _pAdm, pImp: _pImp, pUti: _pUti };
     }
@@ -401,13 +401,13 @@ Formato exacto:
         let subtotal = 0;
         tbody.innerHTML = proyecto.partidas.map((p, i) => {
             subtotal += p.total;
-            return `<tr><td class="center">${p.item}</td><td class="center">${p.covenin}</td><td>${p.desc}</td><td class="center">${p.und}</td><td class="num">${formato.format(p.cant)}</td><td class="num">${formato.format(p.pu)}</td><td class="num"><strong>${formato.format(p.total)}</strong></td><td class="center" style="white-space:nowrap"><button class="btn-edit" onclick="editarPartida(${i})" title="Editar">&#9998;</button> <button class="btn-del" onclick="eliminarPartida(${i})" title="Eliminar">&#128465;</button></td></tr>`;
+            return `<tr><td class="center">${p.item}</td><td class="center">${p.covenin}</td><td>${p.desc}</td><td class="center">${p.und}</td><td class="num">${formato.format(p.cant)}</td><td class="num">${formatoUSD.format(p.pu)}</td><td class="num"><strong>${formatoUSD.format(p.total)}</strong></td><td class="center" style="white-space:nowrap"><button class="btn-edit" onclick="editarPartida(${i})" title="Editar">&#9998;</button> <button class="btn-del" onclick="eliminarPartida(${i})" title="Eliminar">&#128465;</button></td></tr>`;
         }).join('');
 
         const iva = subtotal * 0.16;
-        document.getElementById('doc_subtotal').innerText = formato.format(subtotal);
-        document.getElementById('doc_iva').innerText = formato.format(iva);
-        document.getElementById('doc_total').innerText = formato.format(subtotal + iva);
+        document.getElementById('doc_subtotal').innerText = formatoUSD.format(subtotal);
+        document.getElementById('doc_iva').innerText = formatoUSD.format(iva);
+        document.getElementById('doc_total').innerText = formatoUSD.format(subtotal + iva);
     }
 
     function renderizarHojasAPU() {
@@ -443,28 +443,28 @@ Formato exacto:
                 <table class="apu-sheet-table">
                     <thead><tr><th colspan="5">A. MATERIALES</th></tr><tr><th width="50%">Descripcion</th><th>Und</th><th>Cant</th><th>P.Unit</th><th>TOTAL</th><th>ACC.</th></tr></thead>
                     <tbody>${rowsMat}</tbody>
-                    <tfoot><tr><td colspan="4" class="num bold">Subtotal Materiales:</td><td class="num bold">${formato.format(p.apu_data.tMat)}</td></tr></tfoot>
+                    <tfoot><tr><td colspan="4" class="num bold">Subtotal Materiales:</td><td class="num bold">${formatoUSD.format(p.apu_data.tMat)}</td></tr></tfoot>
                 </table>
 
                 <table class="apu-sheet-table">
                     <thead><tr><th colspan="4">B. EQUIPOS</th></tr><tr><th width="60%">Descripcion</th><th>Cant</th><th>Tarifa/Dia</th><th>Costo/Und</th></tr></thead>
                     <tbody>${rowsEq}</tbody>
-                    <tfoot><tr><td colspan="3" class="num bold">Subtotal Equipos:</td><td class="num bold">${formato.format(p.apu_data.tEq)}</td></tr></tfoot>
+                    <tfoot><tr><td colspan="3" class="num bold">Subtotal Equipos:</td><td class="num bold">${formatoUSD.format(p.apu_data.tEq)}</td></tr></tfoot>
                 </table>
 
                 <table class="apu-sheet-table">
                     <thead><tr><th colspan="4">C. MANO DE OBRA</th></tr><tr><th width="60%">Cargo</th><th>Cant</th><th>Jornal/Dia</th><th>Costo/Und</th></tr></thead>
                     <tbody>${rowsMo}</tbody>
-                    <tfoot><tr><td colspan="3" class="num bold">Subtotal Mano de Obra:</td><td class="num bold">${formato.format(p.apu_data.tMo)}</td></tr></tfoot>
+                    <tfoot><tr><td colspan="3" class="num bold">Subtotal Mano de Obra:</td><td class="num bold">${formatoUSD.format(p.apu_data.tMo)}</td></tr></tfoot>
                 </table>
 
                 <div class="apu-sheet-summary">
                     <table>
-                        <tr><td>COSTO DIRECTO:</td><td class="num">${formato.format(p.apu_data.cd)}</td></tr>
-                        <tr><td>Administracion (${Math.round(_pAdm*100)}%):</td><td class="num">${formato.format(p.apu_data.cd * (p.apu_data.pAdm||0.15))}</td></tr>
-                        <tr><td>Imprevistos (${Math.round((p.apu_data.pImp||0.15)*100)}%):</td><td class="num">${formato.format(p.apu_data.cd * (p.apu_data.pImp||0.15))}</td></tr>
-                        <tr><td>Utilidad (${Math.round((p.apu_data.pUti||0.30)*100)}%):</td><td class="num">${formato.format(p.apu_data.cd * (p.apu_data.pUti||0.30))}</td></tr>
-                        <tr><td class="bold">PRECIO UNITARIO:</td><td class="num bold">${formato.format(p.pu)}</td></tr>
+                        <tr><td>COSTO DIRECTO:</td><td class="num">${formatoUSD.format(p.apu_data.cd)}</td></tr>
+                        <tr><td>Administracion (${Math.round(_pAdm*100)}%):</td><td class="num">${formatoUSD.format(p.apu_data.cd * (p.apu_data.pAdm||0.15))}</td></tr>
+                        <tr><td>Imprevistos (${Math.round((p.apu_data.pImp||0.15)*100)}%):</td><td class="num">${formatoUSD.format(p.apu_data.cd * (p.apu_data.pImp||0.15))}</td></tr>
+                        <tr><td>Utilidad (${Math.round((p.apu_data.pUti||0.30)*100)}%):</td><td class="num">${formatoUSD.format(p.apu_data.cd * (p.apu_data.pUti||0.30))}</td></tr>
+                        <tr><td class="bold">PRECIO UNITARIO:</td><td class="num bold">${formatoUSD.format(p.pu)}</td></tr>
                     </table>
                 </div>
             `;
