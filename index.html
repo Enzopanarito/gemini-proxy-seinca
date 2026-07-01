@@ -536,52 +536,43 @@ Formato exacto:
             document.getElementById('apu_cant').value = p.cant || 1;
         };
 
-    // === FIX: Extraer computo real del texto del usuario cuando AI devuelve computo=1 ===
-    window.extraerComputoDesdeTexto = function(txt) {
-            if (!txt) return 1;
-            var t = txt.toLowerCase();
-            var dimMatch = t.match(/(\d+(?:[.,]\d+)?)\s*(?:m|metros?)?\s*(?:de\s*(?:alto|altura|largo|longitud|ancho|anch)|x|por|\xd7)\s*(\d+(?:[.,]\d+)?)/i);
-            if (dimMatch) {
-                        var d1 = parseFloat(dimMatch[1].replace(',','.'));
-                        var d2 = parseFloat(dimMatch[2].replace(',','.'));
-                        return Math.round(d1 * d2 * 100) / 100;
-                    }
-            var nums = t.match(/(\d+(?:[.,]\d+)?)/g);
-            return nums ? Math.max.apply(null, nums.map(function(n){ return parseFloat(n.replace(',','.')); })) : 1;
-        };
-
-    // === FIX: Hook en guardarPartidaEnPresupuesto para corregir cant cuando = 1 ===
-    var _guardarOriginal = window.guardarPartidaEnPresupuesto;
-    window.guardarPartidaEnPresupuesto = function() {
-            var cantEl = document.getElementById('apu_cant');
-            var cantActual = parseFloat(cantEl.value) || 0;
-            if (cantActual <= 1) {
-                        var txt = (document.getElementById('ia_desc') || {}).value || '';
-                        var computoCalculado = window.extraerComputoDesdeTexto(txt);
-                        if (computoCalculado > 1) cantEl.value = computoCalculado;
-                    }
-               if (typeof _guardarOriginal === 'function') {
-                           _guardarOriginal();
-                           var ultima = proyecto.partidas[proyecto.partidas.length - 1];
-                           if (ultima) ultima.apu_data = getDatosTablas();
-                       }
-        };
-
-    // === getDatosTablas: captura estado actual de las tablas APU para guardar en la partida ===
-    function getDatosTablas() {
-            function leerTabla(id, tipo) {
-                        var rows = document.querySelectorAll('#' + id + ' tbody tr');
-                        return Array.from(rows).map(function(r) {
-                                        var ins = r.querySelectorAll('input');
-                                        if (tipo === 'mat') return { desc: ins[0]?ins[0].value:'', unid: ins[1]?ins[1].value:'', cant: parseFloat(ins[2]?ins[2].value:0)||0, precio: parseFloat(ins[3]?ins[3].value:0)||0 };
-                                        if (tipo === 'eq')  return { desc: ins[0]?ins[0].value:'', cant: parseFloat(ins[1]?ins[1].value:0)||0, tarifa: parseFloat(ins[2]?ins[2].value:0)||0 };
-                                        if (tipo === 'mo')  return { cargo: ins[0]?ins[0].value:'', cant: parseFloat(ins[1]?ins[1].value:0)||0, jornal: parseFloat(ins[2]?ins[2].value:0)||0 };
-                                        return {};
-                                    });
-                    }
-            return { mat: leerTabla('t_mat','mat'), eq: leerTabla('t_eq','eq'), mo: leerTabla('t_mo','mo') };
-        }
-        };
+// === FIX: funciones auxiliares para presupuesto ===
+function getDatosTablas() {
+    function leerTabla(id, tipo) {
+        var rows = document.querySelectorAll('#' + id + ' tbody tr');
+        return Array.from(rows).map(function(r) {
+            var ins = r.querySelectorAll('input');
+            if (tipo === 'mat') return {desc:ins[0]?ins[0].value:'',unid:ins[1]?ins[1].value:'',cant:parseFloat(ins[2]?ins[2].value:0)||0,precio:parseFloat(ins[3]?ins[3].value:0)||0};
+            if (tipo === 'eq')  return {desc:ins[0]?ins[0].value:'',cant:parseFloat(ins[1]?ins[1].value:0)||0,tarifa:parseFloat(ins[2]?ins[2].value:0)||0};
+            if (tipo === 'mo')  return {cargo:ins[0]?ins[0].value:'',cant:parseFloat(ins[1]?ins[1].value:0)||0,jornal:parseFloat(ins[2]?ins[2].value:0)||0};
+            return {};
+        });
+    }
+    return {mat:leerTabla('t_mat','mat'),eq:leerTabla('t_eq','eq'),mo:leerTabla('t_mo','mo')};
+}
+function extraerNumerosDesdTexto(txt) {
+    if (!txt) return 1;
+    var partes = txt.match(/[0-9]+(?:[.,][0-9]+)?/g);
+    if (!partes || partes.length === 0) return 1;
+    var nums = partes.map(function(s){ return parseFloat(s.replace(',','.')); }).filter(function(n){ return n > 0; });
+    if (nums.length >= 2) { return Math.round(nums[0] * nums[1] * 100) / 100; }
+    return Math.max.apply(null, nums) || 1;
+}
+var _guardarOriginal2 = window.guardarPartidaEnPresupuesto;
+window.guardarPartidaEnPresupuesto = function() {
+    var cantEl = document.getElementById('apu_cant');
+    if (cantEl && parseFloat(cantEl.value) <= 1) {
+        var iaDesc = document.getElementById('ia_desc');
+        var txt = iaDesc ? iaDesc.value : '';
+        var n = extraerNumerosDesdTexto(txt);
+        if (n > 1) cantEl.value = n;
+    }
+    if (typeof _guardarOriginal2 === 'function') {
+        _guardarOriginal2();
+        var last = proyecto.partidas[proyecto.partidas.length - 1];
+        if (last) last.apu_data = getDatosTablas();
+    }
+};
 </script>
 </body>
 </html>
