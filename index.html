@@ -365,8 +365,9 @@
             cant: cant,
             rend: parseFloat(document.getElementById('apu_rend').value)||1,
             fcas: parseFloat(document.getElementById('apu_fcas').value)||0,
-            pu: calc.precioUnitario,
-            total: cant * calc.precioUnitario,
+                    const factorTipo = document.getElementById('tipo_cliente').value === 'PUBLICO' ? 4 : 1;
+            pu: calc.precioUnitario * factorTipo,
+            total: cant * calc.precioUnitario * factorTipo,
             apu_data: {
                 mat: getDatosTabla('t_mat'), 
                 eq: getDatosTabla('t_eq'), 
