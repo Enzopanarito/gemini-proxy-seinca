@@ -238,7 +238,8 @@
         document.getElementById('loading').style.display = 'block';
 
         try {
-            const response = await fetch('/api/gemini', {
+            // URL corregida hacia el proxy Vercel de producción
+            const response = await fetch('https://gemini-proxy-seinca.vercel.app/api/gemini', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
@@ -250,7 +251,8 @@
             
             const result = await response.json();
             
-            if(!result.ok) throw new Error(result.error);
+            if(!result.ok) throw new Error(result.error || "Error en la respuesta del servidor");
+            
             const ai = result.data;
 
             document.getElementById('apu_covenin').value = ai.covenin || '';
@@ -263,10 +265,12 @@
             renderTablaInputs('t_eq', ai.equipos || [], 'eq');
             renderTablaInputs('t_mo', ai.mo || [], 'mo');
 
-            // Timeout vital para que el DOM se actualice antes del cálculo
+            // Timeout vital para asegurar que el DOM esté listo antes de calcular
             setTimeout(() => calcularAPU(), 100);
+            
         } catch (e) { 
-            alert("Error en la conexión con la IA: " + e.message + ". Puedes llenar los datos manualmente."); 
+            console.error(e);
+            alert("Error en la conexión con el Proxy SEINCA: " + e.message); 
         } finally { 
             document.getElementById('loading').style.display = 'none'; 
         }
