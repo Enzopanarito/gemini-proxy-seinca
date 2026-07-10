@@ -1,598 +1,1637 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SEINCA - Software de Licitaciones y APU</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <style>
-        :root { --primary: #b91c1c; --secondary: #1e293b; --bg: #f1f5f9; --border: #cbd5e1; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; gap: 20px; color: #0f172a; }
-        
-        /* PANEL IZQUIERDO: CONTROLES Y APU */
-        .panel-control { width: 50vw; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); height: 90vh; overflow-y: auto; }
-        .panel-control h3 { color: var(--primary); border-bottom: 2px solid var(--bg); padding-bottom: 10px; margin-top: 0; }
-        
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-        .form-group { margin-bottom: 12px; }
-        label { display: block; font-size: 11px; font-weight: 600; color: var(--secondary); margin-bottom: 3px; text-transform: uppercase; }
-        input, textarea, select { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; font-family: inherit; font-size: 13px; }
-        
-        button { width: 100%; padding: 10px; border: none; border-radius: 4px; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; margin-bottom: 10px; }
-        button:hover { opacity: 0.9; }
-        .btn-ai { background: #6d28d9; } .btn-add { background: var(--primary); } .btn-pdf { background: #047857; } .btn-save { background: #0284c7; }
-        .btn-action { padding: 4px 8px; margin: 2px; border-radius: 4px; border: none; color: white; cursor: pointer; font-size: 11px; }
-        .btn-edit { background: #f59e0b; } .btn-delete { background: #ef4444; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>SEINCA | Presupuestos y APU</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+  <style>
+    :root {
+      --primary: #b91c1c;
+      --primary-dark: #7f1d1d;
+      --secondary: #172033;
+      --muted: #64748b;
+      --bg: #e9eef5;
+      --surface: #ffffff;
+      --surface-soft: #f8fafc;
+      --border: #cbd5e1;
+      --success: #047857;
+      --warning: #b45309;
+      --info: #0369a1;
+      --danger: #dc2626;
+      --shadow: 0 14px 36px rgba(15, 23, 42, 0.12);
+    }
 
-        /* TABLAS INTERNAS DEL APU */
-        .section-title { background: var(--secondary); color: white; padding: 6px 10px; font-size: 12px; font-weight: 600; margin-top: 15px; display: flex; justify-content: space-between; align-items: center;}
-        .apu-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 10px; }
-        .apu-table th, .apu-table td { border: 1px solid var(--border); padding: 5px; }
-        .apu-table th { background: #f8fafc; color: #475569; }
-        .apu-table input { padding: 4px; border: none; border-bottom: 1px solid transparent; background: transparent; width: 100%; box-sizing: border-box; }
-        .apu-table input:focus { border-bottom: 1px solid var(--primary); outline: none; }
-        .num { text-align: right; }
-        .center { text-align: center; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Inter', sans-serif;
+      color: #0f172a;
+      background: var(--bg);
+    }
 
-        /* PANEL DERECHO: VISTA PREVIA DEL DOCUMENTO */
-        .panel-preview { flex-grow: 1; height: 90vh; overflow-y: auto; display: flex; flex-direction: column; align-items: center; }
-        
-        /* HOJAS DEL EXPEDIENTE (PDF) */
-        .pdf-page { background: white; width: 215.9mm; min-height: 279.4mm; padding: 15mm; box-sizing: border-box; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-bottom: 20mm; font-family: Arial, sans-serif; position: relative; display: flex; flex-direction: column; }
-        .page-break { page-break-before: always; } /* Regla clave para separar APUs en el PDF */
-        
-        .doc-header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid var(--primary); padding-bottom: 10px; margin-bottom: 15px; }
-        .logo-box { width: 180px; height: 60px; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #999; }
-        .logo-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
-        .doc-header-text { text-align: right; }
-        .doc-header-text h1 { margin: 0; font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 24px; color: #000; }
-        .doc-header-text p { margin: 2px 0; font-size: 10px; color: #555; }
-        
-        .doc-title { text-align: center; font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: bold; margin-bottom: 15px; text-transform: uppercase; }
-        
-        .info-table { width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 15px; border: 1px solid #000; }
-        .info-table td { border: 1px solid #000; padding: 5px; }
-        .info-table .bg { background: #f1f5f9; font-weight: bold; width: 15%; }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
 
-        .main-table { width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 15px; }
-        .main-table th, .main-table td { border: 1px solid #000; padding: 5px; vertical-align: top; }
-        .main-table th { background: var(--secondary); color: white; text-align: center; }
+    .app-shell {
+      display: grid;
+      grid-template-columns: minmax(520px, 46vw) minmax(620px, 1fr);
+      gap: 18px;
+      padding: 18px;
+      min-height: 100vh;
+    }
 
-        .firmas-box { display: flex; justify-content: space-around; text-align: center; font-size: 11px; margin-top: auto; padding-top: 40px; }
-        .firma-line { border-top: 1px solid #000; width: 200px; padding-top: 5px; }
+    .panel-control,
+    .panel-preview {
+      min-height: calc(100vh - 36px);
+      border-radius: 14px;
+    }
 
-        /* ESTILOS ESPECÍFICOS PARA LA HOJA DE APU */
-        .apu-sheet-table { width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 10px; }
-        .apu-sheet-table th, .apu-sheet-table td { border: 1px solid #000; padding: 4px; }
-        .apu-sheet-table th { background: #e2e8f0; text-align: left; }
-        .apu-sheet-summary { display: flex; justify-content: flex-end; font-size: 10px; margin-top: 10px; }
-        .apu-sheet-summary table { width: 40%; border-collapse: collapse; }
-        .apu-sheet-summary td { padding: 4px; border: 1px solid #000; }
-        .apu-sheet-summary .bold { font-weight: bold; background: #f1f5f9; }
+    .panel-control {
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      overflow-y: auto;
+      max-height: calc(100vh - 36px);
+    }
 
-        #loading { display: none; text-align: center; color: var(--primary); font-size: 12px; font-weight: bold; margin-bottom: 10px; }
-        
-        /* CLASES DE IMPRESIÓN / EXPORTACIÓN */
-        @media print { 
-            .no-print { display: none !important; } 
-            .panel-control { display: none !important; }
-            .panel-preview { width: 100%; height: auto; overflow: visible; display: block; }
-            body { background: white; padding: 0; margin: 0; }
-            .pdf-page { box-shadow: none; margin: 0; }
-        }
-    </style>
+    .panel-preview {
+      overflow-y: auto;
+      max-height: calc(100vh - 36px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand-bar h1 {
+      margin: 0;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 24px;
+      color: var(--secondary);
+      letter-spacing: -0.5px;
+    }
+
+    .brand-bar p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .status-pill {
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: #ecfdf5;
+      color: #065f46;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .toolbar,
+    .grid-2,
+    .grid-3,
+    .grid-4 {
+      display: grid;
+      gap: 10px;
+    }
+
+    .toolbar { grid-template-columns: repeat(3, 1fr); }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+    .section-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-top: 16px;
+      background: var(--surface);
+    }
+
+    .section-card h2 {
+      margin: 0 0 14px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 15px;
+      color: var(--primary);
+      letter-spacing: 0.1px;
+    }
+
+    .section-card h2 span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      margin-right: 7px;
+      font-size: 12px;
+    }
+
+    .form-group { margin-bottom: 11px; }
+    label {
+      display: block;
+      margin-bottom: 4px;
+      color: #334155;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.45px;
+      text-transform: uppercase;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 9px 10px;
+      color: #0f172a;
+      background: #fff;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      font-size: 12px;
+    }
+
+    textarea { resize: vertical; min-height: 74px; line-height: 1.4; }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--info);
+      box-shadow: 0 0 0 3px rgba(3, 105, 161, 0.12);
+    }
+
+    .hint {
+      margin: -3px 0 10px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.45;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 7px;
+      padding: 10px 12px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 11px;
+      transition: transform 0.15s, opacity 0.15s;
+    }
+
+    .btn:hover { opacity: 0.92; transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+    .btn-primary { background: var(--primary); }
+    .btn-ai { background: #5b21b6; }
+    .btn-save { background: var(--info); }
+    .btn-load { background: var(--warning); }
+    .btn-pdf { background: var(--success); }
+    .btn-neutral { background: #475569; }
+    .btn-danger { background: var(--danger); }
+
+    .btn-inline {
+      width: auto;
+      padding: 5px 8px;
+      margin: 0;
+      font-size: 10px;
+      border-radius: 5px;
+    }
+
+    .loading-box,
+    .notice-box {
+      display: none;
+      margin-top: 10px;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .loading-box {
+      background: #f5f3ff;
+      border: 1px solid #c4b5fd;
+      color: #5b21b6;
+      font-weight: 700;
+    }
+
+    .notice-box {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1e40af;
+    }
+
+    .audit-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .audit-card {
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 9px;
+      background: var(--surface-soft);
+      min-height: 72px;
+    }
+
+    .audit-card strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 10px;
+      text-transform: uppercase;
+      color: #475569;
+    }
+
+    .audit-card p,
+    .audit-card ul {
+      margin: 0;
+      padding-left: 15px;
+      font-size: 10px;
+      line-height: 1.4;
+      color: #334155;
+    }
+
+    .resource-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+      padding: 7px 9px;
+      background: var(--secondary);
+      color: #fff;
+      border-radius: 6px 6px 0 0;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .apu-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 10px;
+      margin-bottom: 8px;
+    }
+
+    .apu-table th,
+    .apu-table td {
+      border: 1px solid var(--border);
+      padding: 5px;
+      vertical-align: middle;
+    }
+
+    .apu-table th {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 700;
+    }
+
+    .apu-table input {
+      border: 0;
+      border-bottom: 1px solid transparent;
+      border-radius: 0;
+      padding: 4px;
+      background: transparent;
+      font-size: 10px;
+    }
+
+    .apu-table input:focus {
+      box-shadow: none;
+      border-bottom-color: var(--primary);
+    }
+
+    .num { text-align: right; }
+    .center { text-align: center; }
+
+    .totals-box {
+      margin-top: 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--surface-soft);
+    }
+
+    .totals-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 7px 12px;
+      font-size: 11px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .totals-row:last-child { border-bottom: 0; }
+    .totals-row.final {
+      background: var(--secondary);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .preview-toolbar {
+      width: min(215.9mm, 100%);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: rgba(233, 238, 245, 0.96);
+      backdrop-filter: blur(5px);
+      padding: 0 0 10px;
+    }
+
+    .pdf-page {
+      background: #fff;
+      width: 215.9mm;
+      min-height: 279.4mm;
+      padding: 12mm 13mm;
+      box-shadow: 0 8px 28px rgba(15, 23, 42, 0.16);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      font-family: Arial, sans-serif;
+      color: #000;
+      page-break-after: always;
+      break-after: page;
+      overflow: hidden;
+    }
+
+    .pdf-page:last-child { page-break-after: auto; break-after: auto; }
+    .pdf-page.compact { padding: 9mm 11mm; }
+    .pdf-page.compact .apu-sheet-table { font-size: 7.6px; }
+    .pdf-page.compact .apu-sheet-table th,
+    .pdf-page.compact .apu-sheet-table td { padding: 2.5px 3px; }
+    .pdf-page.compact .doc-header { margin-bottom: 8px; }
+    .pdf-page.compact .info-table { margin-bottom: 7px; }
+
+    .doc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 20px;
+      border-bottom: 3px solid var(--primary);
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+
+    .logo-box {
+      width: 165px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      color: #777;
+      font-size: 9px;
+    }
+
+    .logo-box img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .doc-header-text { text-align: right; }
+    .doc-header-text h1 {
+      margin: 0;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .doc-header-text p { margin: 2px 0 0; font-size: 9px; color: #4b5563; }
+    .doc-title {
+      text-align: center;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 800;
+      font-size: 14px;
+      margin-bottom: 11px;
+      text-transform: uppercase;
+    }
+
+    .info-table,
+    .main-table,
+    .apu-sheet-table,
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .info-table { font-size: 8.8px; margin-bottom: 11px; }
+    .info-table td { border: 1px solid #111; padding: 4px 5px; }
+    .info-table .bg { background: #e5e7eb; font-weight: 700; width: 14%; }
+
+    .main-table { font-size: 8.2px; margin-bottom: 10px; }
+    .main-table th,
+    .main-table td { border: 1px solid #111; padding: 4px; vertical-align: top; }
+    .main-table th { background: var(--secondary); color: #fff; text-align: center; }
+
+    .apu-sheet-table { font-size: 8.1px; margin-bottom: 7px; }
+    .apu-sheet-table th,
+    .apu-sheet-table td { border: 1px solid #111; padding: 3.5px 4px; }
+    .apu-sheet-table th { background: #e5e7eb; text-align: left; }
+    .apu-sheet-table thead { display: table-header-group; }
+    .apu-sheet-table tr { page-break-inside: avoid; break-inside: avoid; }
+
+    .summary-wrap { display: flex; justify-content: flex-end; margin-top: 4px; }
+    .summary-table { width: 46%; font-size: 8.5px; }
+    .summary-table td { border: 1px solid #111; padding: 4px; }
+    .summary-table .bold { font-weight: 700; background: #e5e7eb; }
+    .summary-table .contract { background: var(--secondary); color: #fff; font-weight: 700; }
+
+    .apu-notes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 7px;
+      font-size: 7.3px;
+      line-height: 1.35;
+    }
+
+    .apu-note {
+      border: 1px solid #9ca3af;
+      padding: 4px;
+      min-height: 34px;
+    }
+
+    .apu-note strong { display: block; margin-bottom: 2px; }
+    .signatures {
+      display: flex;
+      justify-content: space-around;
+      gap: 25px;
+      text-align: center;
+      font-size: 9px;
+      margin-top: auto;
+      padding-top: 28px;
+    }
+
+    .signature-line { width: 185px; border-top: 1px solid #111; padding-top: 4px; }
+    .doc-footer {
+      margin-top: 7px;
+      padding-top: 5px;
+      border-top: 1px solid #d1d5db;
+      display: flex;
+      justify-content: space-between;
+      color: #6b7280;
+      font-size: 7px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 35px 10px;
+      color: #64748b;
+      font-size: 11px;
+    }
+
+    @media (max-width: 1250px) {
+      .app-shell { grid-template-columns: 1fr; }
+      .panel-control, .panel-preview { max-height: none; min-height: 0; }
+      .panel-preview { overflow: visible; }
+    }
+
+    @media (max-width: 720px) {
+      .app-shell { padding: 8px; gap: 10px; }
+      .panel-control { padding: 12px; }
+      .toolbar, .grid-2, .grid-3, .grid-4, .audit-grid { grid-template-columns: 1fr; }
+      .pdf-page { width: 100%; min-height: auto; padding: 8mm; }
+      .preview-toolbar { width: 100%; }
+    }
+
+    @media print {
+      @page { size: letter portrait; margin: 0; }
+      body { background: #fff; }
+      .no-print, .panel-control, .preview-toolbar { display: none !important; }
+      .app-shell { display: block; padding: 0; }
+      .panel-preview { display: block; max-height: none; overflow: visible; }
+      .pdf-page { box-shadow: none; margin: 0; width: 215.9mm; min-height: 279.4mm; }
+    }
+  </style>
 </head>
 <body>
-
-    <div class="panel-control no-print" data-html2canvas-ignore="true">
-        
-        <div class="grid-2">
-            <button class="btn-save" onclick="guardarDatos()">💾 Guardar Proyecto JSON</button>
-            <button onclick="document.getElementById('file-upload').click()" style="background:#d97706">📂 Cargar Proyecto</button>
-            <input type="file" id="file-upload" accept=".json" style="display:none" onchange="cargarDatos(event)">
+  <main class="app-shell">
+    <section class="panel-control no-print" aria-label="Panel de edición">
+      <div class="brand-bar">
+        <div>
+          <h1>SEINCA</h1>
+          <p>Software de licitaciones, presupuestos y APU para Venezuela</p>
         </div>
-        
-        <h3>1. Datos Generales de la Obra</h3>
-        <div class="form-group"><label>Logo de la Empresa</label><input type="file" id="logo-input" accept="image/*" onchange="cargarLogo(event)"></div>
-        <div class="grid-2">
-            <div class="form-group"><label>Nombre de la Obra</label><input type="text" id="g_obra" oninput="actualizarExpediente()"></div>
-            <div class="form-group"><label>Contratante</label><input type="text" id="g_cliente" oninput="actualizarExpediente()"></div>
-            <div class="form-group"><label>Ubicación</label><input type="text" id="g_ubicacion" oninput="actualizarExpediente()"></div>
-            <div class="form-group"><label>Fecha</label><input type="date" id="g_fecha" oninput="actualizarExpediente()"></div>
-        </div>
+        <div class="status-pill" id="system-status">Motor IA listo</div>
+      </div>
 
-        <h3>2. Generador de Partidas con IA</h3>
+      <div class="toolbar">
+        <button type="button" class="btn btn-save" id="btn-save-project">Guardar proyecto</button>
+        <button type="button" class="btn btn-load" id="btn-load-project">Cargar proyecto</button>
+        <button type="button" class="btn btn-neutral" id="btn-new-project">Nuevo proyecto</button>
+        <input type="file" id="file-upload" accept="application/json,.json" hidden>
+      </div>
+
+      <section class="section-card">
+        <h2><span>1</span>Datos generales</h2>
+        <div class="form-group">
+          <label for="logo-input">Logo de la empresa</label>
+          <input type="file" id="logo-input" accept="image/png,image/jpeg,image/webp,image/svg+xml">
+        </div>
         <div class="grid-2">
-            <div class="form-group">
-                <label>Tipo de Cliente</label>
-                <select id="ia_cliente">
-                    <option value="PRIVADO">Privado (Estándar)</option>
-                    <option value="ESTADO">Público / Estado (+300% Estructura)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Altura de Ejecución (Metros sobre nivel de piso)</label>
-                <input type="number" id="ia_altura" value="0" min="0" step="0.5">
-            </div>
+          <div class="form-group">
+            <label for="g_obra">Nombre de la obra</label>
+            <input type="text" id="g_obra" maxlength="250" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="g_cliente">Contratante</label>
+            <input type="text" id="g_cliente" maxlength="200" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="g_ubicacion">Ubicación</label>
+            <input type="text" id="g_ubicacion" maxlength="250" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="g_fecha">Fecha</label>
+            <input type="date" id="g_fecha">
+          </div>
+        </div>
+      </section>
+
+      <section class="section-card">
+        <h2><span>2</span>Generador de APU con IA</h2>
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="ia_cliente">Tipo de cliente</label>
+            <select id="ia_cliente">
+              <option value="PRIVADO">Privado · factor contractual 1,00x</option>
+              <option value="ESTADO">Estado · factor contractual 3,00x</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="ia_altura">Altura de ejecución (m)</label>
+            <input type="number" id="ia_altura" value="0" min="0" max="300" step="0.5">
+          </div>
         </div>
         <div class="form-group">
-            <label>Descripción detallada (Incluye medidas para el cómputo métrico)</label>
-            <textarea id="ia_desc" rows="3" placeholder="Ej: Construcción de muro de bloques de concreto de 15cm..."></textarea>
+          <label for="ia_desc">Descripción y medidas</label>
+          <textarea id="ia_desc" rows="5" maxlength="12000" placeholder="Ejemplo: Construcción de pared de bloques de concreto de 15 cm, 18,00 m de longitud por 3,20 m de altura, con columnas cada 3,00 m..."></textarea>
         </div>
-        <button class="btn-ai" onclick="analizarPartidaIA()">🤖 Generar APU, Cómputos y Rendimientos</button>
-        <div id="loading">El Ingeniero IA está procesando estructuras y costos...</div>
+        <p class="hint">Incluye dimensiones, alcance, calidad, condiciones de acceso y cualquier precio cotizado. La IA propone; tú conservas el control final.</p>
+        <button type="button" class="btn btn-ai" id="btn-ai">Generar APU profesional</button>
+        <div class="loading-box" id="loading">Analizando cómputos, cuadrilla, rendimiento, recursos, altura y criterio COVENIN…</div>
+        <div class="notice-box" id="ai-notice"></div>
+      </section>
 
-        <h3>3. Editor de Análisis de Precio Unitario (APU)</h3>
-        <div class="grid-3">
-            <div class="form-group"><label>Norma COVENIN</label><input type="text" id="apu_covenin"></div>
-            <div class="form-group"><label>Unidad</label><input type="text" id="apu_und"></div>
-            <div class="form-group"><label>Cantidad (Cómputo)</label><input type="number" id="apu_cant" step="0.01" value="1"></div>
+      <section class="section-card">
+        <h2><span>3</span>Editor técnico del APU</h2>
+        <div class="grid-4">
+          <div class="form-group">
+            <label for="apu_covenin">Referencia COVENIN</label>
+            <input type="text" id="apu_covenin" maxlength="80">
+          </div>
+          <div class="form-group">
+            <label for="apu_und">Unidad</label>
+            <input type="text" id="apu_und" maxlength="20" value="und">
+          </div>
+          <div class="form-group">
+            <label for="apu_cant">Cantidad total</label>
+            <input type="number" id="apu_cant" min="0" step="0.0001" value="1">
+          </div>
+          <div class="form-group">
+            <label for="apu_rend">Rendimiento diario</label>
+            <input type="number" id="apu_rend" min="0.0001" step="0.0001" value="1">
+          </div>
         </div>
         <div class="grid-3">
-            <div class="form-group"><label>Rendimiento Diario</label><input type="number" id="apu_rend" step="0.01" value="1" oninput="calcularAPU()"></div>
-            <div class="form-group"><label>FCAS (%)</label><input type="number" id="apu_fcas" step="0.01" value="250" oninput="calcularAPU()"></div>
-            <div class="form-group"><label>Admin/Imprev/Util (%)</label><input type="text" value="15 / 5 / 10" disabled></div>
+          <div class="form-group">
+            <label for="apu_fcas">FCAS (%)</label>
+            <input type="number" id="apu_fcas" min="0" max="1000" step="0.01" value="250">
+          </div>
+          <div class="form-group">
+            <label for="apu_factor">Factor cliente</label>
+            <input type="text" id="apu_factor" value="1,00x" disabled>
+          </div>
+          <div class="form-group">
+            <label>Indirectos</label>
+            <input type="text" value="15% / 5% / 10%" disabled>
+          </div>
         </div>
-        <div class="form-group"><label>Descripción Técnica Final</label><textarea id="apu_desc" rows="2"></textarea></div>
+        <div class="form-group">
+          <label for="apu_desc">Descripción técnica</label>
+          <textarea id="apu_desc" rows="4" maxlength="5000"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="apu_memoria">Memoria de cálculo</label>
+          <textarea id="apu_memoria" rows="3" maxlength="5000"></textarea>
+        </div>
 
-        <div class="section-title">A. MATERIALES <button onclick="agregarFilaVacia('mat')" style="width:auto; padding:2px 8px; margin:0; background:white; color:black; font-size:10px;">+ Fila</button></div>
+        <div class="audit-grid" id="audit-grid">
+          <div class="audit-card"><strong>Criterio COVENIN</strong><p id="audit-covenin">Pendiente de análisis.</p></div>
+          <div class="audit-card"><strong>Rendimiento</strong><p id="audit-rendimiento">Pendiente de análisis.</p></div>
+          <div class="audit-card"><strong>Supuestos</strong><ul id="audit-supuestos"><li>Sin información.</li></ul></div>
+          <div class="audit-card"><strong>Advertencias</strong><ul id="audit-advertencias"><li>Sin información.</li></ul></div>
+        </div>
+
+        <div class="resource-title">
+          <span>A. Materiales por unidad de partida</span>
+          <button type="button" class="btn btn-inline btn-neutral" data-add-row="mat">Agregar fila</button>
+        </div>
         <table class="apu-table" id="t_mat">
-            <thead><tr><th>Descripción</th><th>Und</th><th>Cant</th><th>P.Unit</th><th>Total</th><th class="no-print"></th></tr></thead>
-            <tbody></tbody>
-            <tfoot><tr><th colspan="4" class="num">Subtotal Materiales:</th><th id="sub_mat" class="num">0.00</th><th class="no-print"></th></tr></tfoot>
+          <colgroup><col style="width:39%"><col style="width:11%"><col style="width:14%"><col style="width:14%"><col style="width:16%"><col style="width:6%"></colgroup>
+          <thead><tr><th>Descripción</th><th>Und</th><th>Cant.</th><th>P. unit.</th><th>Parcial</th><th></th></tr></thead>
+          <tbody></tbody>
+          <tfoot><tr><th colspan="4" class="num">Subtotal materiales</th><th id="sub_mat" class="num">0,00</th><th></th></tr></tfoot>
         </table>
 
-        <div class="section-title">B. EQUIPOS <button onclick="agregarFilaVacia('eq')" style="width:auto; padding:2px 8px; margin:0; background:white; color:black; font-size:10px;">+ Fila</button></div>
+        <div class="resource-title">
+          <span>B. Equipos de la cuadrilla</span>
+          <button type="button" class="btn btn-inline btn-neutral" data-add-row="eq">Agregar fila</button>
+        </div>
         <table class="apu-table" id="t_eq">
-            <thead><tr><th>Descripción</th><th>Cant</th><th>Tarifa/Día</th><th>Costo/Und</th><th class="no-print"></th></tr></thead>
-            <tbody></tbody>
-            <tfoot><tr><th colspan="3" class="num">Subtotal Equipos:</th><th id="sub_eq" class="num">0.00</th><th class="no-print"></th></tr></tfoot>
+          <colgroup><col style="width:48%"><col style="width:15%"><col style="width:17%"><col style="width:14%"><col style="width:6%"></colgroup>
+          <thead><tr><th>Descripción</th><th>Cant.</th><th>Tarifa/día</th><th>Costo/und.</th><th></th></tr></thead>
+          <tbody></tbody>
+          <tfoot><tr><th colspan="3" class="num">Subtotal equipos</th><th id="sub_eq" class="num">0,00</th><th></th></tr></tfoot>
         </table>
 
-        <div class="section-title">C. MANO DE OBRA <button onclick="agregarFilaVacia('mo')" style="width:auto; padding:2px 8px; margin:0; background:white; color:black; font-size:10px;">+ Fila</button></div>
+        <div class="resource-title">
+          <span>C. Mano de obra de la cuadrilla</span>
+          <button type="button" class="btn btn-inline btn-neutral" data-add-row="mo">Agregar fila</button>
+        </div>
         <table class="apu-table" id="t_mo">
-            <thead><tr><th>Cargo</th><th>Cant</th><th>Jornal/Día</th><th>Costo/Und (c/FCAS)</th><th class="no-print"></th></tr></thead>
-            <tbody></tbody>
-            <tfoot><tr><th colspan="3" class="num">Subtotal M.O.:</th><th id="sub_mo" class="num">0.00</th><th class="no-print"></th></tr></tfoot>
+          <colgroup><col style="width:48%"><col style="width:15%"><col style="width:17%"><col style="width:14%"><col style="width:6%"></colgroup>
+          <thead><tr><th>Cargo</th><th>Cant.</th><th>Jornal/día</th><th>Costo/und.</th><th></th></tr></thead>
+          <tbody></tbody>
+          <tfoot><tr><th colspan="3" class="num">Subtotal mano de obra</th><th id="sub_mo" class="num">0,00</th><th></th></tr></tfoot>
         </table>
 
-        <div style="background:#f8fafc; padding:15px; border:1px solid var(--border); border-radius:4px; margin-top:15px; text-align:right;">
-            <strong>PRECIO UNITARIO TOTAL: USD <span id="apu_total_final" style="color:var(--primary); font-size:18px;">0.00</span></strong>
+        <div class="totals-box">
+          <div class="totals-row"><span>Costo directo</span><strong>USD <span id="apu_cd">0,00</span></strong></div>
+          <div class="totals-row"><span>Administración + imprevistos + utilidad</span><strong>USD <span id="apu_indirectos">0,00</span></strong></div>
+          <div class="totals-row"><span>Precio unitario base</span><strong>USD <span id="apu_pu_base">0,00</span></strong></div>
+          <div class="totals-row final"><span>Precio unitario contractual</span><span>USD <span id="apu_total_final">0,00</span></span></div>
         </div>
 
-        <button id="btn-guardar-partida" class="btn-add" onclick="guardarPartidaEnPresupuesto()" style="margin-top:15px;">➕ Agregar Partida al Presupuesto Final</button>
+        <button type="button" class="btn btn-primary" id="btn-save-item" style="width:100%; margin-top:14px;">Agregar partida al presupuesto</button>
+      </section>
+    </section>
 
-    </div>
+    <section class="panel-preview" id="preview-panel" aria-label="Vista previa del expediente">
+      <div class="preview-toolbar no-print">
+        <button type="button" class="btn btn-pdf" id="btn-export-pdf">Exportar expediente PDF</button>
+        <button type="button" class="btn btn-neutral" id="btn-print">Imprimir desde el navegador</button>
+      </div>
 
-    <div class="panel-preview" id="expediente-pdf">
-        <button class="btn-pdf no-print" onclick="exportarExpedientePDF()" style="width:80%; margin-bottom:15px;">📄 Exportar Expediente Completo (Presupuesto + APUs)</button>
-        
-        <div class="pdf-page" id="page-presupuesto">
-            <div class="doc-header">
-                <div class="logo-box" id="render-logo">LOGOTIPO SEINCA</div>
-                <div class="doc-header-text">
-                    <h1>SEINCA</h1>
-                    <p>SERVICIOS INTEGRALES<br>RIF: J-297575472</p>
-                </div>
+      <div id="expediente-pdf">
+        <article class="pdf-page" id="page-presupuesto">
+          <div class="doc-header">
+            <div class="logo-box" id="render-logo">LOGOTIPO SEINCA</div>
+            <div class="doc-header-text">
+              <h1>SEINCA</h1>
+              <p>SERVICIOS INTEGRALES<br>RIF: J-297575472</p>
             </div>
-            
-            <div class="doc-title">PRESUPUESTO GENERAL DE OBRA</div>
-            
-            <table class="info-table">
-                <tr><td class="bg">OBRA:</td><td colspan="3" id="doc_obra"></td></tr>
-                <tr><td class="bg">CLIENTE:</td><td id="doc_cliente"></td><td class="bg" style="width:10%">FECHA:</td><td id="doc_fecha" style="width:20%"></td></tr>
-                <tr><td class="bg">UBICACIÓN:</td><td colspan="3" id="doc_ubicacion"></td></tr>
+          </div>
+          <div class="doc-title">Presupuesto general de obra</div>
+          <table class="info-table">
+            <tr><td class="bg">OBRA</td><td colspan="3" id="doc_obra"></td></tr>
+            <tr><td class="bg">CLIENTE</td><td id="doc_cliente"></td><td class="bg">FECHA</td><td id="doc_fecha"></td></tr>
+            <tr><td class="bg">UBICACIÓN</td><td colspan="3" id="doc_ubicacion"></td></tr>
+          </table>
+          <table class="main-table">
+            <thead>
+              <tr>
+                <th style="width:5%">N.º</th>
+                <th style="width:12%">COVENIN</th>
+                <th style="width:39%">DESCRIPCIÓN</th>
+                <th style="width:6%">UND.</th>
+                <th style="width:8%">CANT.</th>
+                <th style="width:12%">P. UNIT.</th>
+                <th style="width:12%">TOTAL</th>
+                <th class="no-print" style="width:6%">ACCIONES</th>
+              </tr>
+            </thead>
+            <tbody id="doc_tabla_presupuesto"></tbody>
+          </table>
+          <div id="budget-empty" class="empty-state">Aún no hay partidas agregadas.</div>
+          <div style="display:flex; justify-content:flex-end; margin-top:8px;">
+            <table class="summary-table" style="width:300px;">
+              <tr><td class="bold">SUBTOTAL</td><td id="doc_subtotal" class="num">0,00</td></tr>
+              <tr><td class="bold">IVA (16%)</td><td id="doc_iva" class="num">0,00</td></tr>
+              <tr><td class="contract">TOTAL GENERAL</td><td id="doc_total" class="num contract">0,00</td></tr>
             </table>
-
-            <table class="main-table">
-                <thead>
-                    <tr>
-                        <th width="5%">Nº</th>
-                        <th width="12%">COVENIN</th>
-                        <th width="40%">DESCRIPCIÓN</th>
-                        <th width="5%">UND</th>
-                        <th width="8%">CANT</th>
-                        <th width="10%">P.UNIT</th>
-                        <th width="10%">TOTAL</th>
-                        <th class="no-print" width="10%">ACCIONES</th>
-                    </tr>
-                </thead>
-                <tbody id="doc_tabla_presupuesto"></tbody>
-            </table>
-
-            <div style="display:flex; justify-content:flex-end;">
-                <table style="width: 300px; font-size:10px; border-collapse:collapse;" border="1">
-                    <tr><td style="background:#f1f5f9; font-weight:bold; text-align:right;">SUB-TOTAL:</td><td id="doc_subtotal" class="num">0.00</td></tr>
-                    <tr><td style="background:#f1f5f9; font-weight:bold; text-align:right;">I.V.A (16%):</td><td id="doc_iva" class="num">0.00</td></tr>
-                    <tr><td style="background:#1e293b; color:white; font-weight:bold; text-align:right;">TOTAL GENERAL:</td><td id="doc_total" class="num" style="font-weight:bold;">0.00</td></tr>
-                </table>
-            </div>
-
-            <div class="firmas-box">
-                <div><div class="firma-line"></div><strong>Ing. Jesus Fandiño</strong><br>Representante Legal - SEINCA</div>
-                <div><div class="firma-line"></div><strong>Aprobado por:</strong><br>Ente Contratante</div>
-            </div>
-        </div>
-
+          </div>
+          <div class="signatures">
+            <div><div class="signature-line"></div><strong>Ing. Jesús Fandiño</strong><br>Representante Legal · SEINCA</div>
+            <div><div class="signature-line"></div><strong>Aprobado por</strong><br>Ente contratante</div>
+          </div>
+          <div class="doc-footer"><span>SEINCA · Presupuesto generado digitalmente</span><span id="footer-date"></span></div>
+        </article>
         <div id="paginas-apus"></div>
+      </div>
+    </section>
+  </main>
 
-    </div>
+  <script>
+    'use strict';
 
-<script>
-    // --- ESTADO GLOBAL ---
-    let proyecto = { partidas: [] };
+    const APP_VERSION = '2.0.0';
+    const PROJECT_SCHEMA_VERSION = 2;
+    const STATE_FACTOR = 3;
+    const PRIVATE_FACTOR = 1;
+    const IVA_RATE = 0.16;
+    const INDIRECT_RATES = Object.freeze({ administracion: 0.15, imprevistos: 0.05, utilidad: 0.10 });
+    const API_URL = window.location.protocol === 'file:'
+      ? 'https://gemini-proxy-seinca.vercel.app/api/gemini'
+      : '/api/gemini';
+
+    const formatNumber = new Intl.NumberFormat('es-VE', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+
+    let proyecto = createEmptyProject();
     let partidaEditandoId = null;
-    const formato = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    let currentLogo = "";
+    let currentLogo = '';
+    let currentAudit = emptyAudit();
+    let lastAiMeta = null;
 
-    // --- INTEGRACIÓN CON API GEMINI ---
-    async function analizarPartidaIA() {
-        const desc = document.getElementById('ia_desc').value.trim();
-        const tipoCliente = document.getElementById('ia_cliente').value;
-        const altura = parseFloat(document.getElementById('ia_altura').value) || 0;
+    function createEmptyProject() {
+      return {
+        schemaVersion: PROJECT_SCHEMA_VERSION,
+        appVersion: APP_VERSION,
+        general: { obra: '', cliente: '', ubicacion: '', fecha: '' },
+        partidas: []
+      };
+    }
 
-        if(!desc) { alert("Describe la partida primero."); return; }
+    function emptyAudit() {
+      return {
+        covenin_verificado: false,
+        criterio_covenin: 'Pendiente de análisis.',
+        justificacion_rendimiento: 'Pendiente de análisis.',
+        criterio_ejecucion: '',
+        supuestos: [],
+        exclusiones: [],
+        advertencias: []
+      };
+    }
 
-        document.getElementById('loading').style.display = 'block';
+    function byId(id) {
+      const element = document.getElementById(id);
+      if (!element) throw new Error(`No existe el elemento #${id}`);
+      return element;
+    }
 
-        try {
-            // URL corregida hacia el proxy Vercel de producción
-            const response = await fetch('https://gemini-proxy-seinca.vercel.app/api/gemini', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    prompt: desc,
-                    tipoCliente: tipoCliente,
-                    altura: altura 
-                })
-            });
-            
-            const result = await response.json();
-            
-            if(!result.ok) throw new Error(result.error || "Error en la respuesta del servidor");
-            
-            const ai = result.data;
+    function numberOr(value, fallback = 0) {
+      const parsed = Number.parseFloat(value);
+      return Number.isFinite(parsed) ? parsed : fallback;
+    }
 
-            document.getElementById('apu_covenin').value = ai.covenin || '';
-            document.getElementById('apu_und').value = ai.unidad || 'und';
-            document.getElementById('apu_cant').value = ai.cantidad || 1;
-            document.getElementById('apu_rend').value = ai.rendimiento || 1;
-            document.getElementById('apu_desc').value = ai.descripcion_tecnica || desc;
+    function positiveOr(value, fallback = 1) {
+      const parsed = numberOr(value, fallback);
+      return parsed > 0 ? parsed : fallback;
+    }
 
-            renderTablaInputs('t_mat', ai.materiales || [], 'mat');
-            renderTablaInputs('t_eq', ai.equipos || [], 'eq');
-            renderTablaInputs('t_mo', ai.mo || [], 'mo');
+    function safeText(value, maxLength = 5000) {
+      return String(value ?? '').replace(/[\u0000-\u001F\u007F]/g, ' ').trim().slice(0, maxLength);
+    }
 
-            // Timeout vital para asegurar que el DOM esté listo antes de calcular
-            setTimeout(() => calcularAPU(), 100);
-            
-        } catch (e) { 
-            console.error(e);
-            alert("Error en la conexión con el Proxy SEINCA: " + e.message); 
-        } finally { 
-            document.getElementById('loading').style.display = 'none'; 
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function format(value) {
+      return formatNumber.format(numberOr(value, 0));
+    }
+
+    function formatDate(value) {
+      if (!value) return '';
+      const date = new Date(`${value}T00:00:00`);
+      if (Number.isNaN(date.getTime())) return safeText(value, 20);
+      return new Intl.DateTimeFormat('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date);
+    }
+
+    function clientFactor(clientType) {
+      return clientType === 'ESTADO' ? STATE_FACTOR : PRIVATE_FACTOR;
+    }
+
+    function currentClientType() {
+      return byId('ia_cliente').value === 'ESTADO' ? 'ESTADO' : 'PRIVADO';
+    }
+
+    function updateStatus(message, kind = 'ok') {
+      const pill = byId('system-status');
+      pill.textContent = message;
+      const palettes = {
+        ok: ['#ecfdf5', '#065f46'],
+        busy: ['#f5f3ff', '#5b21b6'],
+        warn: ['#fff7ed', '#9a3412'],
+        error: ['#fef2f2', '#991b1b']
+      };
+      const [background, color] = palettes[kind] || palettes.ok;
+      pill.style.background = background;
+      pill.style.color = color;
+    }
+
+    function setNotice(message = '', visible = false) {
+      const notice = byId('ai-notice');
+      notice.textContent = message;
+      notice.style.display = visible && message ? 'block' : 'none';
+    }
+
+    function setLoading(active) {
+      byId('loading').style.display = active ? 'block' : 'none';
+      byId('btn-ai').disabled = active;
+      updateStatus(active ? 'IA calculando…' : 'Motor IA listo', active ? 'busy' : 'ok');
+    }
+
+    function updateFactorDisplay() {
+      byId('apu_factor').value = `${format(clientFactor(currentClientType()))}x`;
+      calculateApu();
+    }
+
+    function createRemoveButton() {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'btn btn-inline btn-danger';
+      button.textContent = '×';
+      button.title = 'Eliminar fila';
+      button.addEventListener('click', () => {
+        button.closest('tr')?.remove();
+        calculateApu();
+      });
+      return button;
+    }
+
+    function createInput(className, type = 'text', value = '', options = {}) {
+      const input = document.createElement('input');
+      input.type = type;
+      input.className = className;
+      input.value = value ?? '';
+      if (options.step) input.step = options.step;
+      if (options.min !== undefined) input.min = String(options.min);
+      if (options.max !== undefined) input.max = String(options.max);
+      if (options.maxLength) input.maxLength = options.maxLength;
+      input.addEventListener('input', calculateApu);
+      return input;
+    }
+
+    function appendCell(row, child, className = '') {
+      const cell = document.createElement('td');
+      if (className) cell.className = className;
+      if (child instanceof Node) cell.appendChild(child);
+      else cell.textContent = String(child ?? '');
+      row.appendChild(cell);
+      return cell;
+    }
+
+    function addResourceRow(type, data = {}) {
+      const tableId = type === 'mat' ? 't_mat' : type === 'eq' ? 't_eq' : 't_mo';
+      const tbody = byId(tableId).querySelector('tbody');
+      const row = document.createElement('tr');
+
+      const description = safeText(data.desc ?? data.descripcion ?? data.cargo, 250);
+      appendCell(row, createInput('desc', 'text', description, { maxLength: 250 }));
+
+      if (type === 'mat') {
+        appendCell(row, createInput('und', 'text', safeText(data.und ?? data.unidad, 30) || 'und', { maxLength: 30 }));
+      }
+
+      const quantity = numberOr(data.cant ?? data.cantidad, 0);
+      const price = numberOr(data.precio ?? data.tarifa ?? data.jornal, 0);
+      appendCell(row, createInput('cant num', 'number', quantity, { step: '0.000001', min: 0 }));
+      appendCell(row, createInput('precio num', 'number', price, { step: '0.0001', min: 0 }));
+      const partial = appendCell(row, '0,00', 'num partial');
+      partial.dataset.raw = '0';
+      appendCell(row, createRemoveButton(), 'center');
+      tbody.appendChild(row);
+      calculateApu();
+    }
+
+    function renderResourceTable(type, data) {
+      const tableId = type === 'mat' ? 't_mat' : type === 'eq' ? 't_eq' : 't_mo';
+      byId(tableId).querySelector('tbody').innerHTML = '';
+      (Array.isArray(data) ? data : []).forEach((item) => addResourceRow(type, item));
+      calculateApu();
+    }
+
+    function readResourceTable(tableId) {
+      const isMaterial = tableId === 't_mat';
+      return Array.from(byId(tableId).querySelectorAll('tbody tr')).map((row) => ({
+        desc: safeText(row.querySelector('.desc')?.value, 250),
+        und: isMaterial ? safeText(row.querySelector('.und')?.value, 30) : '',
+        cant: Math.max(0, numberOr(row.querySelector('.cant')?.value, 0)),
+        precio: Math.max(0, numberOr(row.querySelector('.precio')?.value, 0)),
+        total: Math.max(0, numberOr(row.querySelector('.partial')?.dataset.raw, 0))
+      })).filter((item) => item.desc || item.cant > 0 || item.precio > 0);
+    }
+
+    function calculateApu() {
+      const rendimiento = positiveOr(byId('apu_rend').value, 1);
+      const fcasRate = Math.max(0, numberOr(byId('apu_fcas').value, 0)) / 100;
+      let materials = 0;
+      let equipment = 0;
+      let labor = 0;
+
+      byId('t_mat').querySelectorAll('tbody tr').forEach((row) => {
+        const partial = Math.max(0, numberOr(row.querySelector('.cant')?.value, 0)) * Math.max(0, numberOr(row.querySelector('.precio')?.value, 0));
+        const cell = row.querySelector('.partial');
+        cell.textContent = format(partial);
+        cell.dataset.raw = String(partial);
+        materials += partial;
+      });
+
+      byId('t_eq').querySelectorAll('tbody tr').forEach((row) => {
+        const partial = (Math.max(0, numberOr(row.querySelector('.cant')?.value, 0)) * Math.max(0, numberOr(row.querySelector('.precio')?.value, 0))) / rendimiento;
+        const cell = row.querySelector('.partial');
+        cell.textContent = format(partial);
+        cell.dataset.raw = String(partial);
+        equipment += partial;
+      });
+
+      byId('t_mo').querySelectorAll('tbody tr').forEach((row) => {
+        const directDaily = Math.max(0, numberOr(row.querySelector('.cant')?.value, 0)) * Math.max(0, numberOr(row.querySelector('.precio')?.value, 0));
+        const partial = (directDaily * (1 + fcasRate)) / rendimiento;
+        const cell = row.querySelector('.partial');
+        cell.textContent = format(partial);
+        cell.dataset.raw = String(partial);
+        labor += partial;
+      });
+
+      const directCost = materials + equipment + labor;
+      const administration = directCost * INDIRECT_RATES.administracion;
+      const contingencies = directCost * INDIRECT_RATES.imprevistos;
+      const profit = directCost * INDIRECT_RATES.utilidad;
+      const indirects = administration + contingencies + profit;
+      const baseUnitPrice = directCost + indirects;
+      const factor = clientFactor(currentClientType());
+      const contractualUnitPrice = baseUnitPrice * factor;
+
+      byId('sub_mat').textContent = format(materials);
+      byId('sub_eq').textContent = format(equipment);
+      byId('sub_mo').textContent = format(labor);
+      byId('apu_cd').textContent = format(directCost);
+      byId('apu_indirectos').textContent = format(indirects);
+      byId('apu_pu_base').textContent = format(baseUnitPrice);
+      byId('apu_total_final').textContent = format(contractualUnitPrice);
+
+      return {
+        materials,
+        equipment,
+        labor,
+        directCost,
+        administration,
+        contingencies,
+        profit,
+        indirects,
+        baseUnitPrice,
+        factor,
+        contractualUnitPrice
+      };
+    }
+
+    function renderAudit(audit = emptyAudit()) {
+      currentAudit = {
+        covenin_verificado: Boolean(audit.covenin_verificado),
+        criterio_covenin: safeText(audit.criterio_covenin, 1500) || 'Pendiente de análisis.',
+        justificacion_rendimiento: safeText(audit.justificacion_rendimiento, 3000) || 'Pendiente de análisis.',
+        criterio_ejecucion: safeText(audit.criterio_ejecucion, 3000),
+        supuestos: Array.isArray(audit.supuestos) ? audit.supuestos.map((v) => safeText(v, 500)).filter(Boolean) : [],
+        exclusiones: Array.isArray(audit.exclusiones) ? audit.exclusiones.map((v) => safeText(v, 500)).filter(Boolean) : [],
+        advertencias: Array.isArray(audit.advertencias) ? audit.advertencias.map((v) => safeText(v, 500)).filter(Boolean) : []
+      };
+
+      byId('audit-covenin').textContent = currentAudit.criterio_covenin;
+      byId('audit-rendimiento').textContent = currentAudit.justificacion_rendimiento;
+      renderList(byId('audit-supuestos'), currentAudit.supuestos, 'Sin supuestos declarados.');
+      renderList(byId('audit-advertencias'), currentAudit.advertencias, 'Sin advertencias declaradas.');
+    }
+
+    function renderList(element, items, emptyText) {
+      element.innerHTML = '';
+      const values = Array.isArray(items) && items.length ? items : [emptyText];
+      values.forEach((value) => {
+        const item = document.createElement('li');
+        item.textContent = value;
+        element.appendChild(item);
+      });
+    }
+
+    async function generateApuWithAi() {
+      const prompt = safeText(byId('ia_desc').value, 12000);
+      const tipoCliente = currentClientType();
+      const altura = Math.max(0, Math.min(300, numberOr(byId('ia_altura').value, 0)));
+
+      if (prompt.length < 10) {
+        alert('Describe la partida con más detalle antes de generar el APU.');
+        byId('ia_desc').focus();
+        return;
+      }
+
+      setNotice('', false);
+      setLoading(true);
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 58000);
+
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt, tipoCliente, altura }),
+          signal: controller.signal
+        });
+
+        const payload = await response.json().catch(() => null);
+        if (!response.ok || !payload?.ok) {
+          const detail = safeText(payload?.detalle || payload?.error || `HTTP ${response.status}`, 1000);
+          throw new Error(detail || 'No se pudo generar el APU');
         }
-    }
 
-    // --- RENDERIZADO DE TABLAS DE EDICIÓN ---
-    function renderTablaInputs(idTabla, datos, tipo) {
-        const tbody = document.querySelector(`#${idTabla} tbody`);
-        tbody.innerHTML = '';
-        if(!datos) return;
-        
-        datos.forEach(d => {
-            let html = `<tr><td><input type="text" class="desc" value="${d.desc || d.descripcion || d.cargo || ''}"></td>`;
-            if(tipo === 'mat') html += `<td><input type="text" class="und" value="${d.und || d.unidad || 'und'}"></td>`;
-            
-            const cant = parseFloat(d.cant || d.cantidad) || 0;
-            let precio = parseFloat(d.precio || d.tarifa || d.jornal) || 0;
-            
-            html += `<td><input type="number" step="0.01" class="cant num" value="${cant}" oninput="calcularAPU()"></td>`;
-            html += `<td><input type="number" step="0.01" class="precio num" value="${precio}" oninput="calcularAPU()"></td>`;
-            html += `<td class="num parci">0.00</td>
-                     <td class="center no-print"><button class="btn-action btn-delete" onclick="this.closest('tr').remove(); calcularAPU()">X</button></td></tr>`;
-            tbody.innerHTML += html;
-        });
-    }
+        const ai = payload.data || {};
+        byId('apu_covenin').value = safeText(ai.covenin, 80) || 'POR VERIFICAR';
+        byId('apu_und').value = safeText(ai.unidad, 20) || 'und';
+        byId('apu_cant').value = positiveOr(ai.cantidad, 1);
+        byId('apu_rend').value = positiveOr(ai.rendimiento, 1);
+        byId('apu_fcas').value = Math.max(0, numberOr(ai.fcas, 250));
+        byId('apu_desc').value = safeText(ai.descripcion_tecnica, 5000) || prompt;
+        byId('apu_memoria').value = safeText(ai.memoria_calculo, 5000);
 
-    function agregarFilaVacia(tipo) {
-        const tbody = document.querySelector(`#t_${tipo} tbody`);
-        let html = `<tr><td><input type="text" class="desc"></td>`;
-        if(tipo === 'mat') html += `<td><input type="text" class="und"></td>`;
-        html += `<td><input type="number" step="0.01" class="cant num" value="0" oninput="calcularAPU()"></td>
-                 <td><input type="number" step="0.01" class="precio num" value="0" oninput="calcularAPU()"></td>
-                 <td class="num parci">0.00</td><td class="center no-print"><button class="btn-action btn-delete" onclick="this.closest('tr').remove(); calcularAPU()">X</button></td></tr>`;
-        tbody.insertAdjacentHTML('beforeend', html);
-    }
+        renderResourceTable('mat', ai.materiales || []);
+        renderResourceTable('eq', (ai.equipos || []).map((item) => ({ ...item, precio: item.tarifa })));
+        renderResourceTable('mo', (ai.mo || []).map((item) => ({ ...item, desc: item.cargo, precio: item.jornal })));
+        renderAudit(ai);
 
-    function getDatosTabla(idTabla) {
-        return Array.from(document.querySelectorAll(`#${idTabla} tbody tr`)).map(r => {
-            const isMat = idTabla === 't_mat';
-            return {
-                desc: r.querySelector('.desc').value,
-                und: isMat ? r.querySelector('.und').value : '',
-                cant: parseFloat(r.querySelector('.cant').value) || 0,
-                precio: parseFloat(r.querySelector('.precio').value) || 0,
-                total: parseFloat(r.querySelector('.parci').innerText.replace(/,/g, '')) || 0
-            };
-        });
-    }
-
-    // --- CÁLCULOS MATEMÁTICOS ---
-    function calcularAPU() {
-        const rend = parseFloat(document.getElementById('apu_rend').value) || 1;
-        const fcas = (parseFloat(document.getElementById('apu_fcas').value) || 0) / 100;
-        
-        let tMat = 0, tEq = 0, tMo = 0;
-
-        document.querySelectorAll('#t_mat tbody tr').forEach(r => {
-            const p = (parseFloat(r.querySelector('.cant').value)||0) * (parseFloat(r.querySelector('.precio').value)||0);
-            r.querySelector('.parci').innerText = formato.format(p); 
-            tMat += p;
-        });
-
-        document.querySelectorAll('#t_eq tbody tr').forEach(r => {
-            const p = ((parseFloat(r.querySelector('.cant').value)||0) * (parseFloat(r.querySelector('.precio').value)||0)) / rend;
-            r.querySelector('.parci').innerText = formato.format(p); 
-            tEq += p;
-        });
-
-        document.querySelectorAll('#t_mo tbody tr').forEach(r => {
-            const p = (((parseFloat(r.querySelector('.cant').value)||0) * (parseFloat(r.querySelector('.precio').value)||0)) * (1 + fcas)) / rend;
-            r.querySelector('.parci').innerText = formato.format(p); 
-            tMo += p;
-        });
-
-        document.getElementById('sub_mat').innerText = formato.format(tMat);
-        document.getElementById('sub_eq').innerText = formato.format(tEq);
-        document.getElementById('sub_mo').innerText = formato.format(tMo);
-
-        const costoDirecto = tMat + tEq + tMo;
-        const precioUnitario = costoDirecto * (1 + 0.15 + 0.05 + 0.10); // Estructura: Admin (15%), Imprevistos (5%), Utilidad (10%)
-        document.getElementById('apu_total_final').innerText = formato.format(precioUnitario);
-        
-        return { tMat, tEq, tMo, costoDirecto, precioUnitario };
-    }
-
-    // --- GESTIÓN DE ESTADO (CRUD) ---
-    function guardarPartidaEnPresupuesto() {
-        const calc = calcularAPU();
-        const cant = parseFloat(document.getElementById('apu_cant').value) || 0;
-        
-        const partida = {
-            id: partidaEditandoId !== null ? partidaEditandoId : Date.now().toString(),
-            covenin: document.getElementById('apu_covenin').value,
-            desc: document.getElementById('apu_desc').value,
-            und: document.getElementById('apu_und').value,
-            cant: cant,
-            rend: parseFloat(document.getElementById('apu_rend').value)||1,
-            fcas: parseFloat(document.getElementById('apu_fcas').value)||0,
-                    const factorTipo = document.getElementById('tipo_cliente').value === 'PUBLICO' ? 4 : 1;
-            pu: calc.precioUnitario * factorTipo,
-            total: cant * calc.precioUnitario * factorTipo,
-            apu_data: {
-                mat: getDatosTabla('t_mat'), 
-                eq: getDatosTabla('t_eq'), 
-                mo: getDatosTabla('t_mo'),
-                tMat: calc.tMat, 
-                tEq: calc.tEq, 
-                tMo: calc.tMo, 
-                cd: calc.costoDirecto
-            }
+        lastAiMeta = {
+          modelo: safeText(payload.modelo, 100),
+          altura,
+          tipoCliente,
+          generatedAt: new Date().toISOString()
         };
 
-        if (partidaEditandoId === null) {
-            proyecto.partidas.push(partida);
-        } else {
-            const index = proyecto.partidas.findIndex(p => p.id === partidaEditandoId);
-            if (index !== -1) proyecto.partidas[index] = partida;
-            partidaEditandoId = null;
-            document.getElementById('btn-guardar-partida').innerText = "➕ Agregar Partida al Presupuesto Final";
-            document.getElementById('btn-guardar-partida').style.background = "var(--primary)";
+        calculateApu();
+        const verification = ai.covenin_verificado ? 'Referencia COVENIN marcada como verificada por la IA; confirma contra tu documentación.' : 'Código COVENIN pendiente de verificación documental.';
+        setNotice(`APU generado con ${lastAiMeta.modelo || 'Gemini'}. ${verification} Revisa precios y rendimientos antes de guardar.`, true);
+        updateStatus('APU generado', 'ok');
+      } catch (error) {
+        const message = error?.name === 'AbortError'
+          ? 'La solicitud tardó demasiado. Intenta nuevamente con una descripción más concreta.'
+          : safeText(error?.message, 1000) || 'Error desconocido';
+        setNotice(`No se pudo generar el APU: ${message}`, true);
+        updateStatus('Error de IA', 'error');
+      } finally {
+        clearTimeout(timer);
+        setLoading(false);
+      }
+    }
+
+    function validateCurrentItem() {
+      const errors = [];
+      if (!safeText(byId('apu_desc').value, 5000)) errors.push('La descripción técnica está vacía.');
+      if (!safeText(byId('apu_und').value, 20)) errors.push('La unidad está vacía.');
+      if (numberOr(byId('apu_cant').value, 0) <= 0) errors.push('La cantidad debe ser mayor que cero.');
+      if (numberOr(byId('apu_rend').value, 0) <= 0) errors.push('El rendimiento debe ser mayor que cero.');
+      if (numberOr(byId('apu_fcas').value, -1) < 0) errors.push('El FCAS no puede ser negativo.');
+      const rows = readResourceTable('t_mat').length + readResourceTable('t_eq').length + readResourceTable('t_mo').length;
+      if (rows === 0) errors.push('Agrega al menos un recurso al APU.');
+      return errors;
+    }
+
+    function saveItemToBudget() {
+      const errors = validateCurrentItem();
+      if (errors.length) {
+        alert(`Revisa la partida:\n\n• ${errors.join('\n• ')}`);
+        return;
+      }
+
+      const calc = calculateApu();
+      const quantity = positiveOr(byId('apu_cant').value, 1);
+      const tipoCliente = currentClientType();
+      const id = partidaEditandoId || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const item = {
+        id,
+        covenin: safeText(byId('apu_covenin').value, 80) || 'POR VERIFICAR',
+        desc: safeText(byId('apu_desc').value, 5000),
+        unidad: safeText(byId('apu_und').value, 20) || 'und',
+        cantidad: quantity,
+        rendimiento: positiveOr(byId('apu_rend').value, 1),
+        fcas: Math.max(0, numberOr(byId('apu_fcas').value, 0)),
+        tipoCliente,
+        factorCliente: clientFactor(tipoCliente),
+        altura: Math.max(0, numberOr(byId('ia_altura').value, 0)),
+        precioUnitarioBase: calc.baseUnitPrice,
+        precioUnitarioContractual: calc.contractualUnitPrice,
+        total: quantity * calc.contractualUnitPrice,
+        memoriaCalculo: safeText(byId('apu_memoria').value, 5000),
+        audit: structuredClone(currentAudit),
+        aiMeta: lastAiMeta ? structuredClone(lastAiMeta) : null,
+        apu: {
+          materiales: readResourceTable('t_mat'),
+          equipos: readResourceTable('t_eq'),
+          manoObra: readResourceTable('t_mo'),
+          totals: calc
         }
+      };
 
-        renderizarPresupuesto();
-        renderizarHojasAPU();
-        limpiarEditor();
+      if (partidaEditandoId) {
+        const index = proyecto.partidas.findIndex((partida) => partida.id === partidaEditandoId);
+        if (index >= 0) proyecto.partidas[index] = item;
+      } else {
+        proyecto.partidas.push(item);
+      }
+
+      partidaEditandoId = null;
+      renderBudget();
+      renderApuPages();
+      clearEditor();
+      updateStatus('Partida guardada', 'ok');
     }
 
-    function editarPartida(i) {
-        const p = proyecto.partidas[i];
-        partidaEditandoId = p.id;
-        
-        document.getElementById('apu_covenin').value = p.covenin;
-        document.getElementById('apu_und').value = p.und;
-        document.getElementById('apu_cant').value = p.cant;
-        document.getElementById('apu_rend').value = p.rend;
-        document.getElementById('apu_fcas').value = p.fcas;
-        document.getElementById('apu_desc').value = p.desc;
-
-        renderTablaInputs('t_mat', p.apu_data.mat, 'mat');
-        renderTablaInputs('t_eq', p.apu_data.eq, 'eq');
-        renderTablaInputs('t_mo', p.apu_data.mo, 'mo');
-
-        document.getElementById('btn-guardar-partida').innerText = "🔄 Actualizar Partida en el Presupuesto";
-        document.getElementById('btn-guardar-partida').style.background = "#0284c7";
-
-        setTimeout(() => calcularAPU(), 100);
-        document.querySelector('.panel-control').scrollTo({ top: 0, behavior: 'smooth' });
+    function clearEditor() {
+      partidaEditandoId = null;
+      byId('ia_desc').value = '';
+      byId('apu_covenin').value = '';
+      byId('apu_und').value = 'und';
+      byId('apu_cant').value = '1';
+      byId('apu_rend').value = '1';
+      byId('apu_fcas').value = '250';
+      byId('apu_desc').value = '';
+      byId('apu_memoria').value = '';
+      byId('t_mat').querySelector('tbody').innerHTML = '';
+      byId('t_eq').querySelector('tbody').innerHTML = '';
+      byId('t_mo').querySelector('tbody').innerHTML = '';
+      renderAudit(emptyAudit());
+      lastAiMeta = null;
+      setNotice('', false);
+      const button = byId('btn-save-item');
+      button.textContent = 'Agregar partida al presupuesto';
+      button.className = 'btn btn-primary';
+      button.style.width = '100%';
+      button.style.marginTop = '14px';
+      calculateApu();
     }
 
-    function eliminarPartida(i) {
-        if (!confirm('¿Eliminar esta partida del presupuesto?')) return;
-        proyecto.partidas.splice(i, 1);
-        if (partidaEditandoId !== null) limpiarEditor();
-        renderizarPresupuesto();
-        renderizarHojasAPU();
+    function editItem(index) {
+      const item = proyecto.partidas[index];
+      if (!item) return;
+      partidaEditandoId = item.id;
+      byId('apu_covenin').value = item.covenin || '';
+      byId('apu_und').value = item.unidad || 'und';
+      byId('apu_cant').value = positiveOr(item.cantidad, 1);
+      byId('apu_rend').value = positiveOr(item.rendimiento, 1);
+      byId('apu_fcas').value = Math.max(0, numberOr(item.fcas, 0));
+      byId('apu_desc').value = item.desc || '';
+      byId('apu_memoria').value = item.memoriaCalculo || '';
+      byId('ia_cliente').value = item.tipoCliente === 'ESTADO' ? 'ESTADO' : 'PRIVADO';
+      byId('ia_altura').value = Math.max(0, numberOr(item.altura, 0));
+      renderResourceTable('mat', item.apu?.materiales || []);
+      renderResourceTable('eq', item.apu?.equipos || []);
+      renderResourceTable('mo', item.apu?.manoObra || []);
+      renderAudit(item.audit || emptyAudit());
+      lastAiMeta = item.aiMeta || null;
+      updateFactorDisplay();
+      const button = byId('btn-save-item');
+      button.textContent = 'Actualizar partida en el presupuesto';
+      button.className = 'btn btn-save';
+      button.style.width = '100%';
+      button.style.marginTop = '14px';
+      document.querySelector('.panel-control').scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function limpiarEditor() {
-        partidaEditandoId = null;
-        document.getElementById('ia_desc').value = '';
-        document.getElementById('apu_covenin').value = '';
-        document.getElementById('apu_desc').value = '';
-        document.querySelector('#t_mat tbody').innerHTML = '';
-        document.querySelector('#t_eq tbody').innerHTML = '';
-        document.querySelector('#t_mo tbody').innerHTML = '';
-        calcularAPU();
+    function deleteItem(index) {
+      const item = proyecto.partidas[index];
+      if (!item) return;
+      if (!confirm(`¿Eliminar la partida ${index + 1}: ${item.desc.slice(0, 80)}?`)) return;
+      proyecto.partidas.splice(index, 1);
+      if (partidaEditandoId === item.id) clearEditor();
+      renderBudget();
+      renderApuPages();
     }
 
-    // --- RENDERIZADO DEL PDF ---
-    function renderizarPresupuesto() {
-        const tbody = document.getElementById('doc_tabla_presupuesto');
-        let subtotal = 0;
-        
-        tbody.innerHTML = proyecto.partidas.map((p, i) => {
-            subtotal += p.total;
-            return `<tr>
-                <td style="text-align:center;">${i + 1}</td>
-                <td style="text-align:center;">${p.covenin}</td>
-                <td>${p.desc}</td>
-                <td style="text-align:center;">${p.und}</td>
-                <td class="num">${formato.format(p.cant)}</td>
-                <td class="num">${formato.format(p.pu)}</td>
-                <td class="num"><strong>${formato.format(p.total)}</strong></td>
-                <td class="center no-print" style="white-space:nowrap;">
-                    <button class="btn-action btn-edit" onclick="editarPartida(${i})">✏️ Editar</button>
-                    <button class="btn-action btn-delete" onclick="eliminarPartida(${i})">🗑️ Eliminar</button>
-                </td>
-            </tr>`;
-        }).join('');
-
-        const iva = subtotal * 0.16;
-        document.getElementById('doc_subtotal').innerText = formato.format(subtotal);
-        document.getElementById('doc_iva').innerText = formato.format(iva);
-        document.getElementById('doc_total').innerText = formato.format(subtotal + iva);
+    function updateGeneralData() {
+      proyecto.general = {
+        obra: safeText(byId('g_obra').value, 250),
+        cliente: safeText(byId('g_cliente').value, 200),
+        ubicacion: safeText(byId('g_ubicacion').value, 250),
+        fecha: safeText(byId('g_fecha').value, 20)
+      };
+      byId('doc_obra').textContent = proyecto.general.obra;
+      byId('doc_cliente').textContent = proyecto.general.cliente;
+      byId('doc_ubicacion').textContent = proyecto.general.ubicacion;
+      byId('doc_fecha').textContent = formatDate(proyecto.general.fecha);
+      byId('footer-date').textContent = proyecto.general.fecha ? `Fecha: ${formatDate(proyecto.general.fecha)}` : '';
+      renderApuPages();
     }
 
-    function renderizarHojasAPU() {
-        const container = document.getElementById('paginas-apus');
-        container.innerHTML = ''; 
+    function renderBudget() {
+      const tbody = byId('doc_tabla_presupuesto');
+      tbody.innerHTML = '';
+      let subtotal = 0;
 
-        proyecto.partidas.forEach((p, index) => {
-            const logoHtml = currentLogo ? `<img src="${currentLogo}">` : `LOGOTIPO SEINCA`;
-            const header = `
-                <div class="doc-header">
-                    <div class="logo-box">${logoHtml}</div>
-                    <div class="doc-header-text"><h1>SEINCA</h1><p>SERVICIOS INTEGRALES<br>RIF: J-297575472</p></div>
-                </div>
-                <div class="doc-title">ANÁLISIS DE PRECIO UNITARIO (APU)</div>
-                <table class="info-table">
-                    <tr><td class="bg">PARTIDA Nº:</td><td>${index + 1}</td><td class="bg">COVENIN:</td><td>${p.covenin}</td></tr>
-                    <tr><td class="bg">DESCRIPCIÓN:</td><td colspan="3">${p.desc}</td></tr>
-                    <tr><td class="bg">UNIDAD:</td><td>${p.und}</td><td class="bg">CANTIDAD:</td><td>${formato.format(p.cant)}</td></tr>
-                    <tr><td class="bg">RENDIMIENTO:</td><td>${p.rend} Und/Día</td><td class="bg">FCAS:</td><td>${p.fcas}%</td></tr>
-                </table>
-            `;
+      proyecto.partidas.forEach((item, index) => {
+        subtotal += numberOr(item.total, 0);
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="center">${index + 1}</td>
+          <td class="center">${escapeHtml(item.covenin)}</td>
+          <td>${escapeHtml(item.desc)}</td>
+          <td class="center">${escapeHtml(item.unidad)}</td>
+          <td class="num">${format(item.cantidad)}</td>
+          <td class="num">${format(item.precioUnitarioContractual)}</td>
+          <td class="num"><strong>${format(item.total)}</strong></td>
+          <td class="center no-print"></td>`;
+        const actions = row.lastElementChild;
+        const editButton = document.createElement('button');
+        editButton.type = 'button';
+        editButton.className = 'btn btn-inline btn-load';
+        editButton.textContent = 'Editar';
+        editButton.addEventListener('click', () => editItem(index));
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.className = 'btn btn-inline btn-danger';
+        deleteButton.textContent = 'Borrar';
+        deleteButton.style.marginTop = '3px';
+        deleteButton.addEventListener('click', () => deleteItem(index));
+        actions.append(editButton, deleteButton);
+        tbody.appendChild(row);
+      });
 
-            const rowsMat = p.apu_data.mat.map(m => `<tr><td>${m.desc}</td><td style="text-align:center;">${m.und}</td><td class="num">${formato.format(m.cant)}</td><td class="num">${formato.format(m.precio)}</td><td class="num">${formato.format(m.total)}</td></tr>`).join('');
-            const rowsEq = p.apu_data.eq.map(e => `<tr><td>${e.desc}</td><td class="num">${formato.format(e.cant)}</td><td class="num">${formato.format(e.precio)}</td><td class="num">${formato.format(e.total)}</td></tr>`).join('');
-            const rowsMo = p.apu_data.mo.map(m => `<tr><td>${m.desc}</td><td class="num">${formato.format(m.cant)}</td><td class="num">${formato.format(m.precio)}</td><td class="num">${formato.format(m.total)}</td></tr>`).join('');
-
-            const page = document.createElement('div');
-            // 'page-break' forcea el salto de página para cada APU individual en el PDF
-            page.className = 'pdf-page page-break';
-            
-            page.innerHTML = `
-                ${header}
-                <table class="apu-sheet-table">
-                    <thead><tr><th colspan="5">A. MATERIALES</th></tr><tr><th width="50%">Descripción</th><th>Und</th><th>Cant</th><th>P.Unit</th><th>Total</th></tr></thead>
-                    <tbody>${rowsMat}</tbody>
-                    <tfoot><tr><td colspan="4" class="num bold">Subtotal Materiales:</td><td class="num bold">${formato.format(p.apu_data.tMat)}</td></tr></tfoot>
-                </table>
-
-                <table class="apu-sheet-table">
-                    <thead><tr><th colspan="4">B. EQUIPOS</th></tr><tr><th width="60%">Descripción</th><th>Cant</th><th>Tarifa/Día</th><th>Costo/Und</th></tr></thead>
-                    <tbody>${rowsEq}</tbody>
-                    <tfoot><tr><td colspan="3" class="num bold">Subtotal Equipos:</td><td class="num bold">${formato.format(p.apu_data.tEq)}</td></tr></tfoot>
-                </table>
-
-                <table class="apu-sheet-table">
-                    <thead><tr><th colspan="4">C. MANO DE OBRA</th></tr><tr><th width="60%">Cargo</th><th>Cant</th><th>Jornal/Día</th><th>Costo/Und</th></tr></thead>
-                    <tbody>${rowsMo}</tbody>
-                    <tfoot><tr><td colspan="3" class="num bold">Subtotal Mano de Obra:</td><td class="num bold">${formato.format(p.apu_data.tMo)}</td></tr></tfoot>
-                </table>
-
-                <div class="apu-sheet-summary">
-                    <table>
-                        <tr><td>COSTO DIRECTO:</td><td class="num">${formato.format(p.apu_data.cd)}</td></tr>
-                        <tr><td>Administración (15%):</td><td class="num">${formato.format(p.apu_data.cd * 0.15)}</td></tr>
-                        <tr><td>Imprevistos (5%):</td><td class="num">${formato.format(p.apu_data.cd * 0.05)}</td></tr>
-                        <tr><td>Utilidad (10%):</td><td class="num">${formato.format(p.apu_data.cd * 0.10)}</td></tr>
-                        <tr><td class="bold">PRECIO UNITARIO:</td><td class="num bold">${formato.format(p.pu)}</td></tr>
-                    </table>
-                </div>
-            `;
-            container.appendChild(page);
-        });
+      const iva = subtotal * IVA_RATE;
+      byId('doc_subtotal').textContent = format(subtotal);
+      byId('doc_iva').textContent = format(iva);
+      byId('doc_total').textContent = format(subtotal + iva);
+      byId('budget-empty').style.display = proyecto.partidas.length ? 'none' : 'block';
     }
 
-    function exportarExpedientePDF() {
-        // Remover clase globalmente de los botones de PDF temporalmente para evitar artefactos
-        const elemento = document.getElementById('expediente-pdf');
-        
-        const opt = {
-            margin: [0, 0, 0, 0], 
-            filename: 'Expediente_Tecnico_SEINCA.pdf',
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, windowWidth: document.getElementById('expediente-pdf').scrollWidth },
-            jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
-            pagebreak: { mode: ['css', 'legacy'] }
-        };
-
-        html2pdf().set(opt).from(elemento).save();
-    }
-
-    // --- UTILIDADES ---
-    function actualizarExpediente() {
-        document.getElementById('doc_obra').innerText = document.getElementById('g_obra').value;
-        document.getElementById('doc_cliente').innerText = document.getElementById('g_cliente').value;
-        document.getElementById('doc_ubicacion').innerText = document.getElementById('g_ubicacion').value;
-        document.getElementById('doc_fecha').innerText = document.getElementById('g_fecha').value;
-    }
-
-    function cargarLogo(event) {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                currentLogo = e.target.result;
-                document.getElementById('render-logo').innerHTML = `<img src="${currentLogo}">`;
-                document.getElementById('render-logo').style.border = 'none';
-            }
-            reader.readAsDataURL(file);
+    function resourceRows(items, type) {
+      return (Array.isArray(items) ? items : []).map((item) => {
+        if (type === 'mat') {
+          return `<tr><td>${escapeHtml(item.desc)}</td><td class="center">${escapeHtml(item.und)}</td><td class="num">${format(item.cant)}</td><td class="num">${format(item.precio)}</td><td class="num">${format(item.total)}</td></tr>`;
         }
+        return `<tr><td>${escapeHtml(item.desc)}</td><td class="num">${format(item.cant)}</td><td class="num">${format(item.precio)}</td><td class="num">${format(item.total)}</td></tr>`;
+      }).join('');
     }
 
-    function guardarDatos() {
-        const data = {
-            general: { obra: document.getElementById('g_obra').value, cliente: document.getElementById('g_cliente').value, ubicacion: document.getElementById('g_ubicacion').value, fecha: document.getElementById('g_fecha').value },
-            partidas: proyecto.partidas
-        };
-        const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob); 
-        a.download = 'Proyecto_APU.json'; 
-        a.click();
+    function compactList(items, emptyText) {
+      const values = Array.isArray(items) && items.length ? items : [emptyText];
+      return `<ul style="margin:0; padding-left:12px;">${values.map((value) => `<li>${escapeHtml(value)}</li>`).join('')}</ul>`;
     }
 
-    function cargarDatos(e) {
-        const reader = new FileReader();
-        reader.onload = (ev) => { 
-            const data = JSON.parse(ev.target.result); 
-            document.getElementById('g_obra').value = data.general?.obra || '';
-            document.getElementById('g_cliente').value = data.general?.cliente || '';
-            document.getElementById('g_ubicacion').value = data.general?.ubicacion || '';
-            document.getElementById('g_fecha').value = data.general?.fecha || '';
-            actualizarExpediente();
-            proyecto.partidas = data.partidas || [];
-            renderizarPresupuesto();
-            renderizarHojasAPU();
-        };
-        reader.readAsText(e.target.files[0]);
+    function documentHeaderHtml() {
+      const logo = currentLogo ? `<img src="${currentLogo}" alt="Logo">` : 'LOGOTIPO SEINCA';
+      return `
+        <div class="doc-header">
+          <div class="logo-box">${logo}</div>
+          <div class="doc-header-text"><h1>SEINCA</h1><p>SERVICIOS INTEGRALES<br>RIF: J-297575472</p></div>
+        </div>`;
     }
-</script>
+
+    function renderApuPages() {
+      const container = byId('paginas-apus');
+      container.innerHTML = '';
+
+      proyecto.partidas.forEach((item, index) => {
+        const totals = item.apu?.totals || {};
+        const rowCount = (item.apu?.materiales?.length || 0) + (item.apu?.equipos?.length || 0) + (item.apu?.manoObra?.length || 0);
+        const page = document.createElement('article');
+        page.className = `pdf-page${rowCount > 22 ? ' compact' : ''}`;
+        page.innerHTML = `
+          ${documentHeaderHtml()}
+          <div class="doc-title">Análisis de precio unitario (APU)</div>
+          <table class="info-table">
+            <tr><td class="bg">PARTIDA</td><td>${index + 1}</td><td class="bg">COVENIN</td><td>${escapeHtml(item.covenin)}</td></tr>
+            <tr><td class="bg">DESCRIPCIÓN</td><td colspan="3">${escapeHtml(item.desc)}</td></tr>
+            <tr><td class="bg">UNIDAD</td><td>${escapeHtml(item.unidad)}</td><td class="bg">CANTIDAD</td><td>${format(item.cantidad)}</td></tr>
+            <tr><td class="bg">RENDIMIENTO</td><td>${format(item.rendimiento)} ${escapeHtml(item.unidad)}/día</td><td class="bg">FCAS</td><td>${format(item.fcas)}%</td></tr>
+            <tr><td class="bg">CLIENTE</td><td>${escapeHtml(item.tipoCliente)}</td><td class="bg">FACTOR</td><td>${format(item.factorCliente)}x</td></tr>
+          </table>
+
+          <table class="apu-sheet-table">
+            <thead><tr><th colspan="5">A. MATERIALES POR UNIDAD DE PARTIDA</th></tr><tr><th style="width:50%">Descripción</th><th>Und.</th><th>Cant.</th><th>P. unit.</th><th>Parcial</th></tr></thead>
+            <tbody>${resourceRows(item.apu?.materiales, 'mat')}</tbody>
+            <tfoot><tr><td colspan="4" class="num"><strong>Subtotal materiales</strong></td><td class="num"><strong>${format(totals.materials)}</strong></td></tr></tfoot>
+          </table>
+
+          <table class="apu-sheet-table">
+            <thead><tr><th colspan="4">B. EQUIPOS DE LA CUADRILLA</th></tr><tr><th style="width:58%">Descripción</th><th>Cant.</th><th>Tarifa/día</th><th>Costo/und.</th></tr></thead>
+            <tbody>${resourceRows(item.apu?.equipos, 'eq')}</tbody>
+            <tfoot><tr><td colspan="3" class="num"><strong>Subtotal equipos</strong></td><td class="num"><strong>${format(totals.equipment)}</strong></td></tr></tfoot>
+          </table>
+
+          <table class="apu-sheet-table">
+            <thead><tr><th colspan="4">C. MANO DE OBRA DE LA CUADRILLA</th></tr><tr><th style="width:58%">Cargo</th><th>Cant.</th><th>Jornal/día</th><th>Costo/und. con FCAS</th></tr></thead>
+            <tbody>${resourceRows(item.apu?.manoObra, 'mo')}</tbody>
+            <tfoot><tr><td colspan="3" class="num"><strong>Subtotal mano de obra</strong></td><td class="num"><strong>${format(totals.labor)}</strong></td></tr></tfoot>
+          </table>
+
+          <div class="summary-wrap">
+            <table class="summary-table">
+              <tr><td>Costo directo</td><td class="num">${format(totals.directCost)}</td></tr>
+              <tr><td>Administración (15%)</td><td class="num">${format(totals.administration)}</td></tr>
+              <tr><td>Imprevistos (5%)</td><td class="num">${format(totals.contingencies)}</td></tr>
+              <tr><td>Utilidad (10%)</td><td class="num">${format(totals.profit)}</td></tr>
+              <tr><td class="bold">P. unitario base</td><td class="num bold">${format(item.precioUnitarioBase)}</td></tr>
+              <tr><td class="contract">P. unitario contractual</td><td class="num contract">${format(item.precioUnitarioContractual)}</td></tr>
+            </table>
+          </div>
+
+          <div class="apu-notes">
+            <div class="apu-note"><strong>Memoria de cálculo</strong>${escapeHtml(item.memoriaCalculo || 'No indicada.')}</div>
+            <div class="apu-note"><strong>Criterio COVENIN</strong>${escapeHtml(item.audit?.criterio_covenin || 'Pendiente de verificación documental.')}</div>
+            <div class="apu-note"><strong>Supuestos</strong>${compactList(item.audit?.supuestos, 'Sin supuestos declarados.')}</div>
+            <div class="apu-note"><strong>Advertencias y exclusiones</strong>${compactList([...(item.audit?.advertencias || []), ...(item.audit?.exclusiones || [])], 'Sin observaciones declaradas.')}</div>
+          </div>
+
+          <div class="signatures">
+            <div><div class="signature-line"></div><strong>Ing. Jesús Fandiño</strong><br>Representante Legal · SEINCA</div>
+            <div><div class="signature-line"></div><strong>Aprobado por</strong><br>Ente contratante</div>
+          </div>
+          <div class="doc-footer"><span>Partida ${index + 1} · Precios referenciales editables en USD</span><span>${escapeHtml(formatDate(proyecto.general.fecha))}</span></div>`;
+        container.appendChild(page);
+      });
+    }
+
+    function waitForImages(root) {
+      return Promise.all(Array.from(root.querySelectorAll('img')).map((image) => {
+        if (image.complete) return Promise.resolve();
+        return new Promise((resolve) => {
+          image.addEventListener('load', resolve, { once: true });
+          image.addEventListener('error', resolve, { once: true });
+        });
+      }));
+    }
+
+    async function exportPdf() {
+      if (!proyecto.partidas.length) {
+        alert('Agrega al menos una partida antes de exportar el expediente.');
+        return;
+      }
+      if (typeof window.html2pdf !== 'function') {
+        alert('La librería de PDF todavía no está disponible. Verifica tu conexión e intenta nuevamente.');
+        return;
+      }
+
+      updateGeneralData();
+      renderBudget();
+      renderApuPages();
+      updateStatus('Preparando PDF…', 'busy');
+      const original = byId('expediente-pdf');
+      const clone = original.cloneNode(true);
+      clone.querySelectorAll('.no-print').forEach((element) => element.remove());
+      clone.style.position = 'fixed';
+      clone.style.left = '-100000px';
+      clone.style.top = '0';
+      clone.style.width = '215.9mm';
+      clone.style.background = '#fff';
+      document.body.appendChild(clone);
+
+      try {
+        await document.fonts.ready;
+        await waitForImages(clone);
+        const workName = safeText(proyecto.general.obra, 80).replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ_-]+/g, '_') || 'Proyecto';
+        await window.html2pdf().set({
+          margin: 0,
+          filename: `SEINCA_${workName}.pdf`,
+          image: { type: 'jpeg', quality: 0.99 },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            logging: false,
+            windowWidth: 816
+          },
+          jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait', compress: true },
+          pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', '.apu-note', '.summary-table'] }
+        }).from(clone).save();
+        updateStatus('PDF exportado', 'ok');
+      } catch (error) {
+        console.error(error);
+        updateStatus('Error al exportar PDF', 'error');
+        alert(`No se pudo exportar el PDF: ${safeText(error?.message, 500) || 'error desconocido'}`);
+      } finally {
+        clone.remove();
+      }
+    }
+
+    function saveProject() {
+      updateGeneralData();
+      const payload = {
+        schemaVersion: PROJECT_SCHEMA_VERSION,
+        appVersion: APP_VERSION,
+        savedAt: new Date().toISOString(),
+        general: proyecto.general,
+        logo: currentLogo,
+        partidas: proyecto.partidas
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      const name = safeText(proyecto.general.obra, 60).replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ_-]+/g, '_') || 'Proyecto_APU';
+      link.download = `${name}_SEINCA.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+      updateStatus('Proyecto guardado', 'ok');
+    }
+
+    function normalizeLoadedItem(raw, index) {
+      const tipoCliente = raw?.tipoCliente === 'ESTADO' ? 'ESTADO' : 'PRIVADO';
+      const factorCliente = numberOr(raw?.factorCliente, clientFactor(tipoCliente));
+      const apu = raw?.apu || raw?.apu_data || {};
+      const materiales = Array.isArray(apu.materiales) ? apu.materiales : Array.isArray(apu.mat) ? apu.mat : [];
+      const equipos = Array.isArray(apu.equipos) ? apu.equipos : Array.isArray(apu.eq) ? apu.eq : [];
+      const manoObra = Array.isArray(apu.manoObra) ? apu.manoObra : Array.isArray(apu.mo) ? apu.mo : [];
+      const rendimiento = positiveOr(raw?.rendimiento ?? raw?.rend, 1);
+      const fcas = Math.max(0, numberOr(raw?.fcas, 250));
+
+      const recalcRows = (rows, type) => (Array.isArray(rows) ? rows : []).map((row) => {
+        const cant = Math.max(0, numberOr(row?.cant, 0));
+        const precio = Math.max(0, numberOr(row?.precio ?? row?.tarifa ?? row?.jornal, 0));
+        const total = type === 'mat'
+          ? cant * precio
+          : type === 'eq'
+            ? (cant * precio) / rendimiento
+            : (cant * precio * (1 + fcas / 100)) / rendimiento;
+        return { desc: safeText(row?.desc ?? row?.cargo, 250), und: type === 'mat' ? safeText(row?.und, 30) : '', cant, precio, total };
+      });
+
+      const cleanMaterials = recalcRows(materiales, 'mat');
+      const cleanEquipment = recalcRows(equipos, 'eq');
+      const cleanLabor = recalcRows(manoObra, 'mo');
+      const materialsTotal = cleanMaterials.reduce((sum, row) => sum + row.total, 0);
+      const equipmentTotal = cleanEquipment.reduce((sum, row) => sum + row.total, 0);
+      const laborTotal = cleanLabor.reduce((sum, row) => sum + row.total, 0);
+      const directCost = materialsTotal + equipmentTotal + laborTotal;
+      const administration = directCost * INDIRECT_RATES.administracion;
+      const contingencies = directCost * INDIRECT_RATES.imprevistos;
+      const profit = directCost * INDIRECT_RATES.utilidad;
+      const baseUnitPrice = directCost + administration + contingencies + profit;
+      const contractualUnitPrice = baseUnitPrice * factorCliente;
+      const cantidad = positiveOr(raw?.cantidad ?? raw?.cant, 1);
+
+      return {
+        id: safeText(raw?.id, 100) || `loaded-${Date.now()}-${index}`,
+        covenin: safeText(raw?.covenin, 80) || 'POR VERIFICAR',
+        desc: safeText(raw?.desc ?? raw?.descripcion_tecnica, 5000),
+        unidad: safeText(raw?.unidad ?? raw?.und, 20) || 'und',
+        cantidad,
+        rendimiento,
+        fcas,
+        tipoCliente,
+        factorCliente,
+        altura: Math.max(0, numberOr(raw?.altura, 0)),
+        precioUnitarioBase: baseUnitPrice,
+        precioUnitarioContractual: contractualUnitPrice,
+        total: cantidad * contractualUnitPrice,
+        memoriaCalculo: safeText(raw?.memoriaCalculo ?? raw?.memoria_calculo, 5000),
+        audit: raw?.audit || emptyAudit(),
+        aiMeta: raw?.aiMeta || null,
+        apu: {
+          materiales: cleanMaterials,
+          equipos: cleanEquipment,
+          manoObra: cleanLabor,
+          totals: {
+            materials: materialsTotal,
+            equipment: equipmentTotal,
+            labor: laborTotal,
+            directCost,
+            administration,
+            contingencies,
+            profit,
+            indirects: administration + contingencies + profit,
+            baseUnitPrice,
+            factor: factorCliente,
+            contractualUnitPrice
+          }
+        }
+      };
+    }
+
+    async function loadProject(file) {
+      if (!file) return;
+      try {
+        const text = await file.text();
+        if (text.length > 10_000_000) throw new Error('El archivo supera el tamaño permitido.');
+        const data = JSON.parse(text);
+        if (!data || typeof data !== 'object') throw new Error('El archivo no contiene un proyecto válido.');
+
+        proyecto = createEmptyProject();
+        proyecto.general = {
+          obra: safeText(data.general?.obra, 250),
+          cliente: safeText(data.general?.cliente, 200),
+          ubicacion: safeText(data.general?.ubicacion, 250),
+          fecha: safeText(data.general?.fecha, 20)
+        };
+        proyecto.partidas = (Array.isArray(data.partidas) ? data.partidas : []).map(normalizeLoadedItem);
+        currentLogo = typeof data.logo === 'string' && data.logo.startsWith('data:image/') ? data.logo : '';
+
+        byId('g_obra').value = proyecto.general.obra;
+        byId('g_cliente').value = proyecto.general.cliente;
+        byId('g_ubicacion').value = proyecto.general.ubicacion;
+        byId('g_fecha').value = proyecto.general.fecha;
+        renderLogo();
+        updateGeneralData();
+        renderBudget();
+        renderApuPages();
+        clearEditor();
+        updateStatus('Proyecto cargado', 'ok');
+      } catch (error) {
+        updateStatus('Archivo inválido', 'error');
+        alert(`No se pudo cargar el proyecto: ${safeText(error?.message, 500)}`);
+      } finally {
+        byId('file-upload').value = '';
+      }
+    }
+
+    function renderLogo() {
+      const box = byId('render-logo');
+      if (currentLogo) {
+        box.innerHTML = `<img src="${currentLogo}" alt="Logo de la empresa">`;
+      } else {
+        box.textContent = 'LOGOTIPO SEINCA';
+      }
+      renderApuPages();
+    }
+
+    function loadLogo(file) {
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        alert('Selecciona un archivo de imagen válido.');
+        return;
+      }
+      if (file.size > 3_000_000) {
+        alert('El logo no debe superar 3 MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        currentLogo = typeof reader.result === 'string' ? reader.result : '';
+        renderLogo();
+      };
+      reader.onerror = () => alert('No se pudo leer el logo.');
+      reader.readAsDataURL(file);
+    }
+
+    function newProject() {
+      if ((proyecto.partidas.length || proyecto.general.obra) && !confirm('¿Crear un proyecto nuevo? Los cambios no guardados se perderán.')) return;
+      proyecto = createEmptyProject();
+      currentLogo = '';
+      byId('g_obra').value = '';
+      byId('g_cliente').value = '';
+      byId('g_ubicacion').value = '';
+      byId('g_fecha').value = new Date().toISOString().slice(0, 10);
+      renderLogo();
+      clearEditor();
+      updateGeneralData();
+      renderBudget();
+      renderApuPages();
+      updateStatus('Proyecto nuevo', 'ok');
+    }
+
+    function bindEvents() {
+      ['g_obra', 'g_cliente', 'g_ubicacion', 'g_fecha'].forEach((id) => byId(id).addEventListener('input', updateGeneralData));
+      ['apu_rend', 'apu_fcas', 'apu_cant'].forEach((id) => byId(id).addEventListener('input', calculateApu));
+      byId('ia_cliente').addEventListener('change', updateFactorDisplay);
+      byId('btn-ai').addEventListener('click', generateApuWithAi);
+      byId('btn-save-item').addEventListener('click', saveItemToBudget);
+      byId('btn-save-project').addEventListener('click', saveProject);
+      byId('btn-load-project').addEventListener('click', () => byId('file-upload').click());
+      byId('btn-new-project').addEventListener('click', newProject);
+      byId('file-upload').addEventListener('change', (event) => loadProject(event.target.files?.[0]));
+      byId('logo-input').addEventListener('change', (event) => loadLogo(event.target.files?.[0]));
+      byId('btn-export-pdf').addEventListener('click', exportPdf);
+      byId('btn-print').addEventListener('click', () => window.print());
+      document.querySelectorAll('[data-add-row]').forEach((button) => {
+        button.addEventListener('click', () => addResourceRow(button.dataset.addRow));
+      });
+    }
+
+    function initialize() {
+      bindEvents();
+      byId('g_fecha').value = new Date().toISOString().slice(0, 10);
+      renderAudit(emptyAudit());
+      updateFactorDisplay();
+      updateGeneralData();
+      renderBudget();
+      renderApuPages();
+      updateStatus('Motor IA listo', 'ok');
+    }
+
+    window.addEventListener('DOMContentLoaded', initialize);
+  </script>
 </body>
 </html>
