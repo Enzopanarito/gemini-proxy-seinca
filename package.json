@@ -1,4 +1,12 @@
 {
   "name": "gemini-proxy-seinca",
-  "version": "1.0.0"
+  "version": "2.0.0",
+  "private": true,
+  "description": "SEINCA - Generador de presupuestos y APU para construcción en Venezuela",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "check": "node --check api/gemini.js"
+  }
 }
