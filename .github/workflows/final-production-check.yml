@@ -1,0 +1,65 @@
+name: Final SEINCA Production Check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  final-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Wait for deployment
+        run: sleep 12
+
+      - name: Verify deployed frontend
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location https://gemini-proxy-seinca.vercel.app/ -o /tmp/index.html
+          grep -F "Ingeniero Civil responsable del presupuesto · SEINCA" /tmp/index.html
+          grep -F "const HEALTH_URL = '/api/health';" /tmp/index.html
+          grep -F "Gemini operativo · falta configurar OpenAI" /tmp/index.html
+          grep -F "Detalle técnico:" /tmp/index.html
+          echo FRONTEND_FINAL_OK
+
+      - name: Verify provider health
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --max-time 30 https://gemini-proxy-seinca.vercel.app/api/health -o /tmp/health.json
+          cat /tmp/health.json
+          node -e "const d=require('/tmp/health.json'); if(!d.providers?.gemini?.ok) throw new Error('Gemini is not operational'); console.log('HEALTH_FINAL_OK', d.mode, d.providers.gemini.model);"
+
+      - name: Generate and validate three production APUs
+        run: |
+          node <<'NODE'
+          const endpoint = 'https://gemini-proxy-seinca.vercel.app/api/gemini';
+          const cases = [
+            { prompt: 'Construcción de pared de bloque de concreto de 15 cm, de 20 m de largo por 3 m de alto, incluyendo mortero de pega, replanteo, andamios menores y limpieza final.', altura: 0 },
+            { prompt: 'Aplicación de pintura de caucho de primera calidad en paredes interiores, dos manos, sobre 180 m2 de superficie previamente preparada, incluyendo sellador, resane menor y limpieza.', altura: 0 },
+            { prompt: 'Demolición controlada de 35 m3 de elementos de mampostería dañados, carga manual, acarreo interno de 40 m y disposición de escombros en sitio autorizado, trabajando a 6 m de altura con andamios y medidas de seguridad.', altura: 6 }
+          ];
+          for (let i = 0; i < cases.length; i += 1) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 59000);
+            const started = Date.now();
+            let response;
+            try {
+              response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: cases[i].prompt, provider: 'AUTO', tipoCliente: 'PRIVADO', altura: cases[i].altura }),
+                signal: controller.signal
+              });
+            } finally {
+              clearTimeout(timer);
+            }
+            const body = await response.json().catch(() => null);
+            console.log(`FINAL_TEST_${i + 1}`, response.status, `${Date.now() - started}ms`, body?.modelo || body?.detalle || body?.error);
+            if (!response.ok || !body?.ok) throw new Error(`APU ${i + 1} failed: ${body?.detalle || body?.error}; ${JSON.stringify(body?.intentos || [])}`);
+            const apu = body.data;
+            if (!apu?.descripcion_tecnica || !apu?.unidad || !(apu?.cantidad > 0) || !(apu?.rendimiento > 0)) throw new Error(`APU ${i + 1}: invalid core fields`);
+            const resources = (apu.materiales?.length || 0) + (apu.equipos?.length || 0) + (apu.mo?.length || 0);
+            if (resources < 1) throw new Error(`APU ${i + 1}: no resources`);
+          }
+          console.log('FINAL_PRODUCTION_TESTS_PASSED');
+          NODE
