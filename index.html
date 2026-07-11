@@ -1,10 +1,505 @@
 <!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SEINCA | Cotizaciones y APU Inteligentes</title><script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
-<style>:root{--p:#9f1d20;--d:#172033;--b:#d6dde7;--bg:#eef2f7;--ok:#047857;--warn:#b45309;--ai:#5b21b6}*{box-sizing:border-box}body{margin:0;font:13px Arial,sans-serif;background:var(--bg);color:#111827}.app{display:grid;grid-template-columns:minmax(520px,46vw) 1fr;gap:16px;padding:16px;min-height:100vh}.panel{background:#fff;border-radius:14px;box-shadow:0 12px 34px #0f172a20}.controls{padding:18px;max-height:calc(100vh - 32px);overflow:auto}.preview{max-height:calc(100vh - 32px);overflow:auto;padding:14px}h1{font-size:24px;margin:0;color:var(--d)}h2{font-size:15px;color:var(--p);margin:0 0 12px}.brand{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border-bottom:1px solid var(--b);padding-bottom:13px}.badge{padding:7px 10px;border-radius:999px;background:#ecfdf5;color:#065f46;font-size:11px;font-weight:700}.card{border:1px solid var(--b);border-radius:10px;padding:14px;margin-top:14px}.g2,.g3,.g4{display:grid;gap:9px}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;color:#475569;margin:0 0 4px}.fg{margin-bottom:10px}input,select,textarea{width:100%;padding:9px;border:1px solid var(--b);border-radius:7px;font:inherit}textarea{min-height:80px;resize:vertical}button{border:0;border-radius:7px;padding:10px 12px;color:#fff;font-weight:700;cursor:pointer}.btn-ai{background:var(--ai)}.btn-p{background:var(--p)}.btn-s{background:#0369a1}.btn-g{background:var(--ok)}.btn-n{background:#475569}.btn-w{background:var(--warn)}.btn-r{background:#dc2626}.mini{padding:5px 8px;font-size:10px}.toolbar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.notice,.loader{display:none;margin-top:9px;padding:10px;border-radius:8px;line-height:1.45}.notice{background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe}.loader{background:#f5f3ff;color:#5b21b6;border:1px solid #c4b5fd;font-weight:700}.rtitle{display:flex;justify-content:space-between;align-items:center;background:var(--d);color:#fff;padding:7px 9px;border-radius:6px 6px 0 0;margin-top:12px;font-weight:700}table{border-collapse:collapse;width:100%}.edit th,.edit td{border:1px solid var(--b);padding:5px;font-size:10px}.edit th{background:#f8fafc}.edit input{border:0;padding:4px}.num{text-align:right}.center{text-align:center}.totals{border:1px solid var(--b);border-radius:8px;overflow:hidden;margin-top:12px}.tr{display:flex;justify-content:space-between;padding:7px 10px;border-bottom:1px solid #e5e7eb}.tr.final{background:var(--d);color:#fff;font-weight:800;font-size:14px}.audit{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.audit>div{background:#f8fafc;border:1px solid var(--b);border-radius:7px;padding:8px;font-size:10px;line-height:1.4}.previewbar{position:sticky;top:0;z-index:4;display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--bg);padding-bottom:10px}.pdf-page{width:215.9mm;min-height:279.4mm;background:#fff;margin:0 auto 15px;padding:12mm 13mm;box-shadow:0 8px 28px #0f172a25;position:relative;page-break-after:always;overflow:hidden}.head{display:flex;justify-content:space-between;border-bottom:3px solid var(--p);padding-bottom:8px;margin-bottom:12px}.logo{width:170px;height:55px;display:flex;align-items:center}.logo img{max-width:100%;max-height:100%}.doc-title{text-align:center;font-weight:800;font-size:16px;margin:12px}.doc th,.doc td,.info td{border:1px solid #111;padding:5px;font-size:9px}.doc th{background:var(--d);color:#fff}.info .k{font-weight:700;background:#f1f5f9;width:14%}.summary{width:320px;margin-left:auto;margin-top:8px}.summary td{border:1px solid #111;padding:5px;font-size:9px}.sign{display:flex;justify-content:space-around;margin-top:35px;text-align:center;font-size:10px}.line{border-top:1px solid #111;width:190px;padding-top:5px}.foot{position:absolute;bottom:8mm;left:13mm;right:13mm;border-top:1px solid #aaa;padding-top:4px;font-size:8px;display:flex;justify-content:space-between}@media(max-width:1100px){.app{grid-template-columns:1fr}.controls,.preview{max-height:none}.pdf-page{transform:scale(.78);transform-origin:top center;margin-bottom:-55mm}}@media print{body{background:#fff}.controls,.previewbar,.no-print{display:none!important}.app{display:block;padding:0}.preview{padding:0;overflow:visible;max-height:none}.panel{box-shadow:none}.pdf-page{box-shadow:none;margin:0;page-break-after:always}}</style></head>
-<body><main class="app"><section class="panel controls"><div class="brand"><div><h1>SEINCA</h1><div>Motor profesional de cotizaciones y APU · Venezuela</div></div><span id="status" class="badge">Sistema listo</span></div><div class="toolbar" style="margin-top:12px"><button class="btn-s" id="saveProject">Guardar JSON</button><button class="btn-w" id="loadBtn">Cargar JSON</button><button class="btn-n" id="newProject">Nuevo</button><input id="loadFile" type="file" accept=".json" hidden></div>
-<section class="card"><h2>1. Datos generales</h2><div class="g2"><div class="fg"><label>Obra</label><input id="gObra"></div><div class="fg"><label>Contratante</label><input id="gCliente"></div><div class="fg"><label>Ubicación</label><input id="gUbicacion"></div><div class="fg"><label>Fecha</label><input id="gFecha" type="date"></div></div><div class="fg"><label>Logo</label><input id="logoInput" type="file" accept="image/*"></div></section>
-<section class="card"><h2>2. Ingeniero calculista IA</h2><div class="g3"><div class="fg"><label>Motor IA</label><select id="provider"><option value="AUTO">Automático inteligente</option><option value="OPENAI">OpenAI GPT-5.6</option><option value="GEMINI">Google Gemini</option><option value="DUAL">Doble revisión IA</option></select></div><div class="fg"><label>Cliente</label><select id="clientType"><option value="PRIVADO">Privado · 1x</option><option value="ESTADO">Estado · 3x</option></select></div><div class="fg"><label>Altura (m)</label><input id="height" type="number" min="0" max="300" step=".1" value="0"></div></div><div class="fg"><label>Descripción y medidas</label><textarea id="prompt" maxlength="12000" placeholder="Ej.: Construcción de pared de bloque de concreto de 15 cm, 20 m de largo por 3 m de alto, con columnas y viga de corona..."></textarea></div><button id="generate" class="btn-ai" style="width:100%">Generar APU profesional</button><div id="loader" class="loader">Analizando cómputos, rendimiento, recursos, riesgos y consistencia técnica…</div><div id="notice" class="notice"></div></section>
-<section class="card"><h2>3. Editor APU</h2><div class="g4"><div class="fg"><label>COVENIN</label><input id="covenin"></div><div class="fg"><label>Unidad</label><input id="unit" value="und"></div><div class="fg"><label>Cantidad</label><input id="quantity" type="number" step=".0001" value="1"></div><div class="fg"><label>Rendimiento/día</label><input id="rend" type="number" step=".0001" value="1"></div></div><div class="g3"><div class="fg"><label>FCAS %</label><input id="fcas" type="number" step=".01" value="250"></div><div class="fg"><label>Factor cliente</label><input id="factor" disabled></div><div class="fg"><label>Indirectos</label><input value="15% / 5% / 10%" disabled></div></div><div class="fg"><label>Descripción técnica</label><textarea id="description"></textarea></div><div class="fg"><label>Memoria de cálculo</label><textarea id="memory"></textarea></div><div class="audit"><div><b>Criterio normativo</b><div id="auditNorm">Pendiente.</div></div><div><b>Rendimiento</b><div id="auditRend">Pendiente.</div></div><div><b>Supuestos</b><ul id="auditAss"><li>Sin información.</li></ul></div><div><b>Advertencias</b><ul id="auditWarn"><li>Sin información.</li></ul></div></div>
-<div class="rtitle"><span>A. Materiales por unidad</span><button class="mini btn-n" data-add="mat">+ Fila</button></div><table class="edit" id="mat"><thead><tr><th>Descripción</th><th>Und</th><th>Cant</th><th>Precio</th><th>Parcial</th><th></th></tr></thead><tbody></tbody><tfoot><tr><th colspan="4" class="num">Subtotal</th><th id="sMat" class="num">0,00</th><th></th></tr></tfoot></table><div class="rtitle"><span>B. Equipos de cuadrilla</span><button class="mini btn-n" data-add="eq">+ Fila</button></div><table class="edit" id="eq"><thead><tr><th>Descripción</th><th>Cant</th><th>Tarifa/día</th><th>Costo/und</th><th></th></tr></thead><tbody></tbody><tfoot><tr><th colspan="3" class="num">Subtotal</th><th id="sEq" class="num">0,00</th><th></th></tr></tfoot></table><div class="rtitle"><span>C. Mano de obra</span><button class="mini btn-n" data-add="mo">+ Fila</button></div><table class="edit" id="mo"><thead><tr><th>Cargo</th><th>Cant</th><th>Jornal/día</th><th>Costo/und</th><th></th></tr></thead><tbody></tbody><tfoot><tr><th colspan="3" class="num">Subtotal</th><th id="sMo" class="num">0,00</th><th></th></tr></tfoot></table><div class="totals"><div class="tr"><span>Costo directo</span><b>USD <span id="direct">0,00</span></b></div><div class="tr"><span>Indirectos</span><b>USD <span id="indirect">0,00</span></b></div><div class="tr"><span>Precio unitario base</span><b>USD <span id="basePU">0,00</span></b></div><div class="tr final"><span>Precio contractual</span><span>USD <span id="finalPU">0,00</span></span></div></div><button id="saveItem" class="btn-p" style="width:100%;margin-top:12px">Agregar partida al presupuesto</button></section></section>
-<section class="panel preview"><div class="previewbar no-print"><button class="btn-g" id="pdf">Exportar PDF</button><button class="btn-n" id="print">Imprimir</button></div><div id="document"><article class="pdf-page"><div class="head"><div class="logo" id="docLogo">LOGOTIPO SEINCA</div><div style="text-align:right"><h1>SEINCA</h1><small>SERVICIOS INTEGRALES<br>RIF: J-297575472</small></div></div><div class="doc-title">PRESUPUESTO GENERAL DE OBRA</div><table class="info"><tr><td class="k">OBRA</td><td colspan="3" id="dObra"></td></tr><tr><td class="k">CLIENTE</td><td id="dCliente"></td><td class="k">FECHA</td><td id="dFecha"></td></tr><tr><td class="k">UBICACIÓN</td><td colspan="3" id="dUbicacion"></td></tr></table><table class="doc" style="margin-top:10px"><thead><tr><th>N.º</th><th>COVENIN</th><th>DESCRIPCIÓN</th><th>UND</th><th>CANT</th><th>P.UNIT</th><th>TOTAL</th><th class="no-print">ACCIONES</th></tr></thead><tbody id="budget"></tbody></table><table class="summary"><tr><td>SUBTOTAL</td><td id="sub" class="num">0,00</td></tr><tr><td>IVA 16%</td><td id="iva" class="num">0,00</td></tr><tr><td><b>TOTAL GENERAL</b></td><td id="grand" class="num"><b>0,00</b></td></tr></table><div class="sign"><div><div class="line"></div><b>Ing. Jesús Fandiño</b><br>Representante Legal</div><div><div class="line"></div><b>Aprobado por</b><br>Ente contratante</div></div><div class="foot"><span>SEINCA · Documento generado digitalmente</span><span id="footDate"></span></div></article><div id="apuPages"></div></div></section></main>
-<script>'use strict';const $=id=>document.getElementById(id),fmt=new Intl.NumberFormat('es-VE',{minimumFractionDigits:2,maximumFractionDigits:2}),n=(v,d=0)=>Number.isFinite(Number.parseFloat(v))?Number.parseFloat(v):d,esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));let project={version:3,general:{},items:[]},editId=null,logo='',audit={};const factor=()=>$('clientType').value==='ESTADO'?3:1;function status(t,k='ok'){$('status').textContent=t;$('status').style.background=k==='err'?'#fef2f2':k==='busy'?'#f5f3ff':'#ecfdf5';$('status').style.color=k==='err'?'#991b1b':k==='busy'?'#5b21b6':'#065f46'}function notice(t){$('notice').textContent=t;$('notice').style.display=t?'block':'none'}function setLoading(v){$('loader').style.display=v?'block':'none';$('generate').disabled=v;status(v?'IA calculando…':'Sistema listo',v?'busy':'ok')}function updateGeneral(){project.general={obra:$('gObra').value,cliente:$('gCliente').value,ubicacion:$('gUbicacion').value,fecha:$('gFecha').value};$('dObra').textContent=project.general.obra;$('dCliente').textContent=project.general.cliente;$('dUbicacion').textContent=project.general.ubicacion;$('dFecha').textContent=project.general.fecha;$('footDate').textContent=project.general.fecha}['gObra','gCliente','gUbicacion','gFecha'].forEach(id=>$(id).addEventListener('input',updateGeneral));$('clientType').addEventListener('change',()=>{$('factor').value=factor().toFixed(2)+'x';calc()});function input(cls,val,type='text'){const e=document.createElement('input');e.className=cls;e.type=type;e.value=val??'';if(type==='number'){e.step='.000001';e.min='0'}e.addEventListener('input',calc);return e}function addRow(type,d={}){const tb=$(type).querySelector('tbody'),tr=document.createElement('tr'),isMat=type==='mat',cells=[input('desc',d.desc??d.cargo??'')];if(isMat)cells.push(input('und',d.und??'und'));cells.push(input('cant',d.cant??0,'number'),input('price',d.precio??d.tarifa??d.jornal??0,'number'));cells.forEach(e=>{const td=document.createElement('td');td.append(e);tr.append(td)});const p=document.createElement('td');p.className='num partial';p.dataset.raw='0';p.textContent='0,00';tr.append(p);const a=document.createElement('td'),b=document.createElement('button');b.className='mini btn-r';b.textContent='×';b.onclick=()=>{tr.remove();calc()};a.append(b);tr.append(a);tb.append(tr);calc()}document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>addRow(b.dataset.add));function read(type){return[...$(type).querySelectorAll('tbody tr')].map(r=>({desc:r.querySelector('.desc').value,und:r.querySelector('.und')?.value||'',cant:n(r.querySelector('.cant').value),precio:n(r.querySelector('.price').value),total:n(r.querySelector('.partial').dataset.raw)})).filter(x=>x.desc||x.cant||x.precio)}function fill(type,arr){$(type).querySelector('tbody').innerHTML='';(arr||[]).forEach(x=>addRow(type,x));calc()}function calc(){const r=Math.max(.000001,n($('rend').value,1)),f=Math.max(0,n($('fcas').value))/100;let m=0,e=0,o=0;[['mat',(q,p)=>q*p],['eq',(q,p)=>q*p/r],['mo',(q,p)=>q*p*(1+f)/r]].forEach(([id,fn])=>{$(id).querySelectorAll('tbody tr').forEach(tr=>{const v=fn(n(tr.querySelector('.cant').value),n(tr.querySelector('.price').value));tr.querySelector('.partial').dataset.raw=v;tr.querySelector('.partial').textContent=fmt.format(v);if(id==='mat')m+=v;else if(id==='eq')e+=v;else o+=v})});const cd=m+e+o,ind=cd*.30,base=cd+ind,final=base*factor();$('sMat').textContent=fmt.format(m);$('sEq').textContent=fmt.format(e);$('sMo').textContent=fmt.format(o);$('direct').textContent=fmt.format(cd);$('indirect').textContent=fmt.format(ind);$('basePU').textContent=fmt.format(base);$('finalPU').textContent=fmt.format(final);$('factor').value=factor().toFixed(2)+'x';return{m,e,o,cd,ind,base,final}}['rend','fcas'].forEach(id=>$(id).addEventListener('input',calc));function list(id,a,empty){$(id).innerHTML='';((a&&a.length)?a:[empty]).forEach(v=>{const li=document.createElement('li');li.textContent=v;$(id).append(li)})}function setAudit(a={}){audit=a;$('auditNorm').textContent=a.criterio_covenin||'Pendiente.';$('auditRend').textContent=a.justificacion_rendimiento||'Pendiente.';list('auditAss',a.supuestos,'Sin información.');list('auditWarn',a.advertencias,'Sin información.')}async function call(url,body){const c=new AbortController(),t=setTimeout(()=>c.abort(),58000);try{const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:c.signal});const j=await r.json().catch(()=>null);if(!r.ok||!j?.ok)throw new Error(j?.detalle||j?.error||'Error de IA');return j}finally{clearTimeout(t)}}async function generate(){const prompt=$('prompt').value.trim(),provider=$('provider').value,base={prompt,tipoCliente:$('clientType').value,altura:n($('height').value)};if(prompt.length<10)return alert('Describe mejor la partida.');setLoading(true);notice('');try{let result;if(provider==='GEMINI')result=await call('/api/gemini',base);else if(provider==='OPENAI')result=await call('/api/openai',{...base,mode:'GENERATE'});else if(provider==='AUTO'){try{result=await call('/api/openai',{...base,mode:'GENERATE'})}catch{result=await call('/api/gemini',base)}}else{const[g,o]=await Promise.allSettled([call('/api/gemini',base),call('/api/openai',{...base,mode:'GENERATE'})]);if(g.status==='rejected'&&o.status==='rejected')throw new Error('Fallaron ambos motores');if(g.status==='fulfilled'&&o.status==='fulfilled')result=await call('/api/openai',{...base,mode:'REVIEW',candidates:[g.value.data,o.value.data]});else result=g.status==='fulfilled'?g.value:o.value}const a=result.data;$('covenin').value=a.covenin||'POR VERIFICAR';$('unit').value=a.unidad||'und';$('quantity').value=n(a.cantidad,1);$('rend').value=n(a.rendimiento,1);$('fcas').value=n(a.fcas,250);$('description').value=a.descripcion_tecnica||prompt;$('memory').value=a.memoria_calculo||'';fill('mat',a.materiales);fill('eq',(a.equipos||[]).map(x=>({...x,precio:x.tarifa})));fill('mo',(a.mo||[]).map(x=>({...x,desc:x.cargo,precio:x.jornal})));setAudit(a);notice(`APU generado con ${result.modelo||'IA'}. Verifique precios, código COVENIN y condiciones de obra.`);status('APU generado')}catch(e){notice('No se pudo generar: '+e.message);status('Error IA','err')}finally{setLoading(false)}}$('generate').onclick=generate;function clearEditor(){$('prompt').value='';$('covenin').value='';$('unit').value='und';$('quantity').value=1;$('rend').value=1;$('fcas').value=250;$('description').value='';$('memory').value='';['mat','eq','mo'].forEach(x=>$(x).querySelector('tbody').innerHTML='');editId=null;setAudit({});$('saveItem').textContent='Agregar partida al presupuesto';calc()}function saveItem(){const c=calc(),desc=$('description').value.trim();if(!desc||n($('quantity').value)<=0||n($('rend').value)<=0)return alert('Complete descripción, cantidad y rendimiento.');const item={id:editId||crypto.randomUUID(),covenin:$('covenin').value||'POR VERIFICAR',unidad:$('unit').value,cantidad:n($('quantity').value),rendimiento:n($('rend').value),fcas:n($('fcas').value),desc,memoria:$('memory').value,tipoCliente:$('clientType').value,factor:factor(),altura:n($('height').value),audit,mat:read('mat'),eq:read('eq'),mo:read('mo'),calc:c,total:n($('quantity').value)*c.final};const i=project.items.findIndex(x=>x.id===editId);if(i>=0)project.items[i]=item;else project.items.push(item);render();clearEditor()}$('saveItem').onclick=saveItem;function edit(i){const x=project.items[i];editId=x.id;$('covenin').value=x.covenin;$('unit').value=x.unidad;$('quantity').value=x.cantidad;$('rend').value=x.rendimiento;$('fcas').value=x.fcas;$('description').value=x.desc;$('memory').value=x.memoria||'';$('clientType').value=x.tipoCliente;$('height').value=x.altura||0;fill('mat',x.mat);fill('eq',x.eq);fill('mo',x.mo);setAudit(x.audit);$('saveItem').textContent='Actualizar partida';calc();document.querySelector('.controls').scrollTo({top:0,behavior:'smooth'})}function del(i){if(confirm('¿Eliminar esta partida?')){project.items.splice(i,1);render()}}function header(){return`<div class="head"><div class="logo">${logo?`<img src="${logo}">`:'LOGOTIPO SEINCA'}</div><div style="text-align:right"><h1>SEINCA</h1><small>SERVICIOS INTEGRALES<br>RIF: J-297575472</small></div></div>`}function rows(a,type){return(a||[]).map(x=>`<tr><td>${esc(x.desc)}</td>${type==='mat'?`<td>${esc(x.und)}</td>`:''}<td class="num">${fmt.format(x.cant)}</td><td class="num">${fmt.format(x.precio)}</td><td class="num">${fmt.format(x.total)}</td></tr>`).join('')}function render(){updateGeneral();const tb=$('budget');tb.innerHTML='';let sub=0;project.items.forEach((x,i)=>{sub+=x.total;const tr=document.createElement('tr');tr.innerHTML=`<td>${i+1}</td><td>${esc(x.covenin)}</td><td>${esc(x.desc)}</td><td>${esc(x.unidad)}</td><td class="num">${fmt.format(x.cantidad)}</td><td class="num">${fmt.format(x.calc.final)}</td><td class="num">${fmt.format(x.total)}</td><td class="no-print"></td>`;const a=tr.lastChild,e=document.createElement('button');e.className='mini btn-w';e.textContent='Editar';e.onclick=()=>edit(i);const d=document.createElement('button');d.className='mini btn-r';d.textContent='Borrar';d.onclick=()=>del(i);a.append(e,d);tb.append(tr)});$('sub').textContent=fmt.format(sub);$('iva').textContent=fmt.format(sub*.16);$('grand').textContent=fmt.format(sub*1.16);$('apuPages').innerHTML=project.items.map((x,i)=>`<article class="pdf-page">${header()}<div class="doc-title">ANÁLISIS DE PRECIO UNITARIO · PARTIDA ${i+1}</div><table class="info"><tr><td class="k">COVENIN</td><td>${esc(x.covenin)}</td><td class="k">UNIDAD</td><td>${esc(x.unidad)}</td></tr><tr><td class="k">DESCRIPCIÓN</td><td colspan="3">${esc(x.desc)}</td></tr><tr><td class="k">CANTIDAD</td><td>${fmt.format(x.cantidad)}</td><td class="k">RENDIMIENTO</td><td>${fmt.format(x.rendimiento)} und/día</td></tr><tr><td class="k">FCAS</td><td>${fmt.format(x.fcas)}%</td><td class="k">FACTOR CLIENTE</td><td>${fmt.format(x.factor)}x</td></tr></table><table class="doc" style="margin-top:8px"><thead><tr><th colspan="5">A. MATERIALES</th></tr><tr><th>Descripción</th><th>Und</th><th>Cant</th><th>Precio</th><th>Parcial</th></tr></thead><tbody>${rows(x.mat,'mat')}</tbody></table><table class="doc" style="margin-top:7px"><thead><tr><th colspan="4">B. EQUIPOS</th></tr><tr><th>Descripción</th><th>Cant</th><th>Tarifa</th><th>Costo/und</th></tr></thead><tbody>${rows(x.eq,'eq')}</tbody></table><table class="doc" style="margin-top:7px"><thead><tr><th colspan="4">C. MANO DE OBRA</th></tr><tr><th>Cargo</th><th>Cant</th><th>Jornal</th><th>Costo/und</th></tr></thead><tbody>${rows(x.mo,'mo')}</tbody></table><table class="summary"><tr><td>Costo directo</td><td class="num">${fmt.format(x.calc.cd)}</td></tr><tr><td>Indirectos 30%</td><td class="num">${fmt.format(x.calc.ind)}</td></tr><tr><td>Precio unitario base</td><td class="num">${fmt.format(x.calc.base)}</td></tr><tr><td>Factor cliente</td><td class="num">${fmt.format(x.factor)}x</td></tr><tr><td><b>Precio contractual</b></td><td class="num"><b>${fmt.format(x.calc.final)}</b></td></tr></table><div style="margin-top:8px;font-size:8px"><b>Memoria de cálculo:</b> ${esc(x.memoria||'No indicada')}<br><b>Criterio normativo:</b> ${esc(x.audit?.criterio_covenin||'Por verificar')}</div><div class="foot"><span>SEINCA · APU auditable</span><span>Partida ${i+1}</span></div></article>`).join('')}$('logoInput').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{logo=r.result;$('docLogo').innerHTML=`<img src="${logo}">`;render()};r.readAsDataURL(f)};$('saveProject').onclick=()=>{updateGeneral();const blob=new Blob([JSON.stringify({...project,logo},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SEINCA_Proyecto.json';a.click();URL.revokeObjectURL(a.href)};$('loadBtn').onclick=()=>$('loadFile').click();$('loadFile').onchange=e=>{const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);project={version:3,general:d.general||{},items:d.items||d.partidas||[]};logo=d.logo||'';['Obra','Cliente','Ubicacion','Fecha'].forEach(k=>$('g'+k).value=project.general[k.toLowerCase()]||'');if(logo)$('docLogo').innerHTML=`<img src="${logo}">`;render()}catch{alert('Archivo inválido')}};r.readAsText(e.target.files[0])};$('newProject').onclick=()=>{if(confirm('¿Crear un proyecto nuevo?')){project={version:3,general:{},items:[]};logo='';location.reload()}};$('print').onclick=()=>window.print();$('pdf').onclick=async()=>{if(typeof html2pdf!=='function')return alert('La librería PDF aún no cargó.');const clone=$('document').cloneNode(true);clone.querySelectorAll('.no-print').forEach(x=>x.remove());const box=document.createElement('div');box.style.position='fixed';box.style.left='-200vw';box.append(clone);document.body.append(box);await html2pdf().set({margin:0,filename:'SEINCA_Expediente_APU.pdf',image:{type:'jpeg',quality:.98},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:'mm',format:'letter',orientation:'portrait'},pagebreak:{mode:['css','legacy']}}).from(clone).save();box.remove()};$('factor').value='1.00x';setAudit({});calc();render();</script></body></html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SEINCA | Presupuestos y APU Inteligentes</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+  <style>
+    :root{--primary:#9f1d20;--dark:#172033;--border:#d6dde7;--bg:#eef2f7;--ok:#047857;--warn:#b45309;--ai:#5b21b6;--danger:#b91c1c}
+    *{box-sizing:border-box} body{margin:0;font:13px Arial,sans-serif;background:var(--bg);color:#111827}
+    .app{display:grid;grid-template-columns:minmax(520px,46vw) 1fr;gap:16px;padding:16px;min-height:100vh}
+    .panel{background:#fff;border-radius:14px;box-shadow:0 12px 34px #0f172a20}
+    .controls{padding:18px;max-height:calc(100vh - 32px);overflow:auto}.preview{max-height:calc(100vh - 32px);overflow:auto;padding:14px}
+    h1{font-size:24px;margin:0;color:var(--dark)}h2{font-size:15px;color:var(--primary);margin:0 0 12px}
+    .brand{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border-bottom:1px solid var(--border);padding-bottom:13px}
+    .badge{padding:7px 10px;border-radius:999px;background:#ecfdf5;color:#065f46;font-size:11px;font-weight:700}
+    .card{border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:14px}
+    .g2,.g3,.g4{display:grid;gap:9px}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+    label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;color:#475569;margin:0 0 4px}.fg{margin-bottom:10px}
+    input,select,textarea{width:100%;padding:9px;border:1px solid var(--border);border-radius:7px;font:inherit}textarea{min-height:80px;resize:vertical}
+    button{border:0;border-radius:7px;padding:10px 12px;color:#fff;font-weight:700;cursor:pointer}button:disabled{opacity:.6;cursor:wait}
+    .btn-ai{background:var(--ai)}.btn-primary{background:var(--primary)}.btn-blue{background:#0369a1}.btn-green{background:var(--ok)}.btn-neutral{background:#475569}.btn-warn{background:var(--warn)}.btn-danger{background:var(--danger)}
+    .mini{padding:5px 8px;font-size:10px}.toolbar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .notice,.loader{display:none;margin-top:9px;padding:10px;border-radius:8px;line-height:1.45;white-space:pre-wrap}.notice{background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe}.notice.error{background:#fef2f2;color:#991b1b;border-color:#fecaca}.loader{background:#f5f3ff;color:#5b21b6;border:1px solid #c4b5fd;font-weight:700}
+    .rtitle{display:flex;justify-content:space-between;align-items:center;background:var(--dark);color:#fff;padding:7px 9px;border-radius:6px 6px 0 0;margin-top:12px;font-weight:700}
+    table{border-collapse:collapse;width:100%}.edit th,.edit td{border:1px solid var(--border);padding:5px;font-size:10px}.edit th{background:#f8fafc}.edit input{border:0;padding:4px}.num{text-align:right}.center{text-align:center}
+    .totals{border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-top:12px}.tr{display:flex;justify-content:space-between;padding:7px 10px;border-bottom:1px solid #e5e7eb}.tr.final{background:var(--dark);color:#fff;font-weight:800;font-size:14px}
+    .audit{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.audit>div{background:#f8fafc;border:1px solid var(--border);border-radius:7px;padding:8px;font-size:10px;line-height:1.4}
+    .previewbar{position:sticky;top:0;z-index:4;display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--bg);padding-bottom:10px}
+    .pdf-page{width:215.9mm;min-height:279.4mm;background:#fff;margin:0 auto 15px;padding:12mm 13mm;box-shadow:0 8px 28px #0f172a25;position:relative;page-break-after:always;break-after:page;overflow:hidden}
+    .head{display:flex;justify-content:space-between;border-bottom:3px solid var(--primary);padding-bottom:8px;margin-bottom:12px}.logo{width:170px;height:55px;display:flex;align-items:center}.logo img{max-width:100%;max-height:100%}
+    .doc-title{text-align:center;font-weight:800;font-size:16px;margin:12px}.doc th,.doc td,.info td{border:1px solid #111;padding:5px;font-size:9px}.doc th{background:var(--dark);color:#fff}.info .k{font-weight:700;background:#f1f5f9;width:14%}
+    .summary{width:320px;margin-left:auto;margin-top:8px}.summary td{border:1px solid #111;padding:5px;font-size:9px}.sign{display:flex;justify-content:space-around;margin-top:35px;text-align:center;font-size:10px}.line{border-top:1px solid #111;width:210px;padding-top:5px}
+    .foot{position:absolute;bottom:8mm;left:13mm;right:13mm;border-top:1px solid #aaa;padding-top:4px;font-size:8px;display:flex;justify-content:space-between}
+    .small{font-size:10px;color:#64748b;line-height:1.4}.empty{padding:12px;text-align:center;color:#64748b;border:1px dashed var(--border);margin-top:8px}
+    @media(max-width:1100px){.app{grid-template-columns:1fr}.controls,.preview{max-height:none}.pdf-page{transform:scale(.78);transform-origin:top center;margin-bottom:-55mm}}
+    @media(max-width:700px){.g2,.g3,.g4{grid-template-columns:1fr}.toolbar{grid-template-columns:1fr}.app{padding:8px}.controls{padding:12px}}
+    @media print{body{background:#fff}.controls,.previewbar,.no-print{display:none!important}.app{display:block;padding:0}.preview{padding:0;overflow:visible;max-height:none}.panel{box-shadow:none}.pdf-page{box-shadow:none;margin:0;page-break-after:always;break-after:page}}
+  </style>
+</head>
+<body>
+<main class="app">
+  <section class="panel controls">
+    <div class="brand">
+      <div><h1>SEINCA</h1><div>Motor profesional de presupuestos y APU · Venezuela</div></div>
+      <span id="status" class="badge">Verificando motores…</span>
+    </div>
+
+    <div class="toolbar" style="margin-top:12px">
+      <button class="btn-blue" id="saveProject">Guardar JSON</button>
+      <button class="btn-warn" id="loadBtn">Cargar JSON</button>
+      <button class="btn-neutral" id="newProject">Nuevo</button>
+      <input id="loadFile" type="file" accept=".json" hidden>
+    </div>
+
+    <section class="card">
+      <h2>1. Datos generales</h2>
+      <div class="g2">
+        <div class="fg"><label for="gObra">Obra</label><input id="gObra"></div>
+        <div class="fg"><label for="gCliente">Contratante</label><input id="gCliente"></div>
+        <div class="fg"><label for="gUbicacion">Ubicación</label><input id="gUbicacion"></div>
+        <div class="fg"><label for="gFecha">Fecha</label><input id="gFecha" type="date"></div>
+      </div>
+      <div class="fg"><label for="logoInput">Logo</label><input id="logoInput" type="file" accept="image/*"></div>
+    </section>
+
+    <section class="card">
+      <h2>2. Ingeniero calculista IA</h2>
+      <div class="g3">
+        <div class="fg"><label for="provider">Motor IA</label><select id="provider"><option value="AUTO">Automático rápido</option><option value="DUAL">Doble revisión IA</option><option value="OPENAI">OpenAI GPT-5.6</option><option value="GEMINI">Google Gemini</option></select></div>
+        <div class="fg"><label for="clientType">Cliente</label><select id="clientType"><option value="PRIVADO">Privado · 1x</option><option value="ESTADO">Estado · 3x</option></select></div>
+        <div class="fg"><label for="height">Altura (m)</label><input id="height" type="number" min="0" max="300" step=".1" value="0"></div>
+      </div>
+      <div class="fg"><label for="prompt">Descripción y medidas</label><textarea id="prompt" maxlength="12000" placeholder="Ej.: Construcción de pared de bloque de concreto de 15 cm, 20 m de largo por 3 m de alto, incluyendo columnas, viga de corona, friso y limpieza final."></textarea></div>
+      <button id="generate" class="btn-ai" style="width:100%">Generar APU profesional</button>
+      <div id="loader" class="loader">Analizando cómputos, rendimiento, recursos, riesgos y consistencia técnica…</div>
+      <div id="notice" class="notice"></div>
+      <div class="small" style="margin-top:8px">Los precios generados son referencias editables. Confirma cotizaciones, rendimientos y normativa antes de emitir una oferta definitiva.</div>
+    </section>
+
+    <section class="card">
+      <h2>3. Editor APU</h2>
+      <div class="g4">
+        <div class="fg"><label for="covenin">COVENIN</label><input id="covenin"></div>
+        <div class="fg"><label for="unit">Unidad</label><input id="unit" value="und"></div>
+        <div class="fg"><label for="quantity">Cantidad</label><input id="quantity" type="number" min="0.0001" step=".0001" value="1"></div>
+        <div class="fg"><label for="rend">Rendimiento/día</label><input id="rend" type="number" min="0.0001" step=".0001" value="1"></div>
+      </div>
+      <div class="g3">
+        <div class="fg"><label for="fcas">FCAS %</label><input id="fcas" type="number" min="0" max="1000" step=".01" value="250"></div>
+        <div class="fg"><label for="factor">Factor cliente</label><input id="factor" disabled></div>
+        <div class="fg"><label>Indirectos</label><input value="15% / 5% / 10%" disabled></div>
+      </div>
+      <div class="fg"><label for="description">Descripción técnica</label><textarea id="description"></textarea></div>
+      <div class="fg"><label for="memory">Memoria de cálculo</label><textarea id="memory"></textarea></div>
+      <div class="audit">
+        <div><b>Criterio normativo</b><div id="auditNorm">Pendiente.</div></div>
+        <div><b>Rendimiento</b><div id="auditRend">Pendiente.</div></div>
+        <div><b>Supuestos</b><ul id="auditAss"><li>Sin información.</li></ul></div>
+        <div><b>Advertencias</b><ul id="auditWarn"><li>Sin información.</li></ul></div>
+      </div>
+
+      <div class="rtitle"><span>A. Materiales por unidad</span><button class="mini btn-neutral" data-add="mat">+ Fila</button></div>
+      <table class="edit" id="mat"><thead><tr><th>Descripción</th><th>Und</th><th>Cant.</th><th>Precio</th><th>Parcial</th><th></th></tr></thead><tbody></tbody><tfoot><tr><th colspan="4" class="num">Subtotal</th><th id="sMat" class="num">0,00</th><th></th></tr></tfoot></table>
+
+      <div class="rtitle"><span>B. Equipos de cuadrilla</span><button class="mini btn-neutral" data-add="eq">+ Fila</button></div>
+      <table class="edit" id="eq"><thead><tr><th>Descripción</th><th>Cant.</th><th>Tarifa/día</th><th>Costo/und.</th><th></th></tr></thead><tbody></tbody><tfoot><tr><th colspan="3" class="num">Subtotal</th><th id="sEq" class="num">0,00</th><th></th></tr></tfoot></table>
+
+      <div class="rtitle"><span>C. Mano de obra</span><button class="mini btn-neutral" data-add="mo">+ Fila</button></div>
+      <table class="edit" id="mo"><thead><tr><th>Cargo</th><th>Cant.</th><th>Jornal/día</th><th>Costo/und.</th><th></th></tr></thead><tbody></tbody><tfoot><tr><th colspan="3" class="num">Subtotal</th><th id="sMo" class="num">0,00</th><th></th></tr></tfoot></table>
+
+      <div class="totals">
+        <div class="tr"><span>Costo directo</span><b>USD <span id="direct">0,00</span></b></div>
+        <div class="tr"><span>Indirectos</span><b>USD <span id="indirect">0,00</span></b></div>
+        <div class="tr"><span>Precio unitario base</span><b>USD <span id="basePU">0,00</span></b></div>
+        <div class="tr final"><span>Precio contractual</span><span>USD <span id="finalPU">0,00</span></span></div>
+      </div>
+      <button id="saveItem" class="btn-primary" style="width:100%;margin-top:12px">Agregar partida al presupuesto</button>
+    </section>
+  </section>
+
+  <section class="panel preview">
+    <div class="previewbar no-print"><button class="btn-green" id="pdf">Exportar PDF</button><button class="btn-neutral" id="print">Imprimir</button></div>
+    <div id="document">
+      <article class="pdf-page">
+        <div class="head"><div class="logo" id="docLogo">LOGOTIPO SEINCA</div><div style="text-align:right"><h1>SEINCA</h1><small>SERVICIOS INTEGRALES<br>RIF: J-297575472</small></div></div>
+        <div class="doc-title">PRESUPUESTO GENERAL DE OBRA</div>
+        <table class="info"><tr><td class="k">OBRA</td><td colspan="3" id="dObra"></td></tr><tr><td class="k">CLIENTE</td><td id="dCliente"></td><td class="k">FECHA</td><td id="dFecha"></td></tr><tr><td class="k">UBICACIÓN</td><td colspan="3" id="dUbicacion"></td></tr></table>
+        <table class="doc" style="margin-top:10px"><thead><tr><th>N.º</th><th>COVENIN</th><th>DESCRIPCIÓN</th><th>UND.</th><th>CANT.</th><th>P. UNIT.</th><th>TOTAL</th><th class="no-print">ACCIONES</th></tr></thead><tbody id="budget"></tbody></table>
+        <div id="budgetEmpty" class="empty">Aún no hay partidas agregadas.</div>
+        <table class="summary"><tr><td>SUBTOTAL</td><td id="sub" class="num">0,00</td></tr><tr><td>IVA 16%</td><td id="iva" class="num">0,00</td></tr><tr><td><b>TOTAL GENERAL</b></td><td id="grand" class="num"><b>0,00</b></td></tr></table>
+        <div class="sign"><div><div class="line"></div><b>Ing. Jesús Fandiño</b><br>Ingeniero Civil responsable del presupuesto · SEINCA</div><div><div class="line"></div><b>Aprobado por</b><br>Ente contratante</div></div>
+        <div class="foot"><span>SEINCA · Documento generado digitalmente</span><span id="footDate"></span></div>
+      </article>
+      <div id="apuPages"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+const fmt = new Intl.NumberFormat('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const number = (value, fallback = 0) => Number.isFinite(Number.parseFloat(value)) ? Number.parseFloat(value) : fallback;
+const clean = (value, max = 6000) => String(value ?? '').replace(/[\u0000-\u001F\u007F]/g, ' ').trim().slice(0, max);
+const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
+const format = (value) => fmt.format(number(value));
+const API_URL = '/api/gemini';
+const INDIRECTS = { admin: 0.15, contingency: 0.05, profit: 0.10 };
+const IVA = 0.16;
+let project = { version: 4, general: {}, items: [], logo: '' };
+let editId = null;
+let logo = '';
+let audit = emptyAudit();
+let aiMeta = null;
+
+function emptyAudit() {
+  return { covenin_verificado: false, criterio_covenin: 'Pendiente.', justificacion_rendimiento: 'Pendiente.', criterio_ejecucion: '', supuestos: [], exclusiones: [], advertencias: [] };
+}
+
+function factor() { return $('clientType').value === 'ESTADO' ? 3 : 1; }
+
+function setStatus(message, kind = 'ok') {
+  $('status').textContent = message;
+  const colors = kind === 'error' ? ['#fef2f2','#991b1b'] : kind === 'busy' ? ['#f5f3ff','#5b21b6'] : kind === 'warn' ? ['#fff7ed','#9a3412'] : ['#ecfdf5','#065f46'];
+  $('status').style.background = colors[0];
+  $('status').style.color = colors[1];
+}
+
+function showNotice(message = '', isError = false) {
+  const element = $('notice');
+  element.textContent = message;
+  element.classList.toggle('error', isError);
+  element.style.display = message ? 'block' : 'none';
+}
+
+function setLoading(active) {
+  $('loader').style.display = active ? 'block' : 'none';
+  $('generate').disabled = active;
+  setStatus(active ? 'IA calculando…' : 'Sistema listo', active ? 'busy' : 'ok');
+}
+
+function createInput(className, type, value, options = {}) {
+  const input = document.createElement('input');
+  input.className = className;
+  input.type = type;
+  input.value = value ?? '';
+  if (options.step) input.step = options.step;
+  if (options.min !== undefined) input.min = options.min;
+  if (options.maxLength) input.maxLength = options.maxLength;
+  input.addEventListener('input', calculate);
+  return input;
+}
+
+function removeButton() {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'mini btn-danger';
+  button.textContent = '×';
+  button.title = 'Eliminar fila';
+  button.addEventListener('click', () => { button.closest('tr')?.remove(); calculate(); });
+  return button;
+}
+
+function addCell(row, content, className = '') {
+  const cell = document.createElement('td');
+  cell.className = className;
+  if (content instanceof Node) cell.appendChild(content); else cell.textContent = content;
+  row.appendChild(cell);
+  return cell;
+}
+
+function addRow(type, data = {}) {
+  const table = $(type);
+  const row = document.createElement('tr');
+  addCell(row, createInput('desc', 'text', clean(data.desc ?? data.cargo ?? data.descripcion, 250), { maxLength: 250 }));
+  if (type === 'mat') addCell(row, createInput('und', 'text', clean(data.und ?? data.unidad, 30) || 'und', { maxLength: 30 }));
+  addCell(row, createInput('cant', 'number', Math.max(0, number(data.cant ?? data.cantidad, 0)), { step: '0.000001', min: '0' }));
+  addCell(row, createInput('price', 'number', Math.max(0, number(data.precio ?? data.tarifa ?? data.jornal, 0)), { step: '0.0001', min: '0' }));
+  const partial = addCell(row, '0,00', 'num partial');
+  partial.dataset.raw = '0';
+  addCell(row, removeButton(), 'center');
+  table.querySelector('tbody').appendChild(row);
+  calculate();
+}
+
+function renderRows(type, rows) {
+  $(type).querySelector('tbody').innerHTML = '';
+  (Array.isArray(rows) ? rows : []).forEach((row) => addRow(type, row));
+  calculate();
+}
+
+function readRows(type) {
+  const material = type === 'mat';
+  return [...$(type).querySelectorAll('tbody tr')].map((row) => ({
+    desc: clean(row.querySelector('.desc')?.value, 250),
+    und: material ? clean(row.querySelector('.und')?.value, 30) : '',
+    cant: Math.max(0, number(row.querySelector('.cant')?.value, 0)),
+    precio: Math.max(0, number(row.querySelector('.price')?.value, 0)),
+    total: Math.max(0, number(row.querySelector('.partial')?.dataset.raw, 0))
+  })).filter((row) => row.desc || row.cant || row.precio);
+}
+
+function calculate() {
+  const rendimiento = Math.max(0.000001, number($('rend').value, 1));
+  const fcasRate = Math.max(0, number($('fcas').value, 0)) / 100;
+  let materials = 0, equipment = 0, labor = 0;
+
+  $('mat').querySelectorAll('tbody tr').forEach((row) => {
+    const value = Math.max(0, number(row.querySelector('.cant')?.value)) * Math.max(0, number(row.querySelector('.price')?.value));
+    row.querySelector('.partial').textContent = format(value); row.querySelector('.partial').dataset.raw = value; materials += value;
+  });
+  $('eq').querySelectorAll('tbody tr').forEach((row) => {
+    const value = Math.max(0, number(row.querySelector('.cant')?.value)) * Math.max(0, number(row.querySelector('.price')?.value)) / rendimiento;
+    row.querySelector('.partial').textContent = format(value); row.querySelector('.partial').dataset.raw = value; equipment += value;
+  });
+  $('mo').querySelectorAll('tbody tr').forEach((row) => {
+    const value = Math.max(0, number(row.querySelector('.cant')?.value)) * Math.max(0, number(row.querySelector('.price')?.value)) * (1 + fcasRate) / rendimiento;
+    row.querySelector('.partial').textContent = format(value); row.querySelector('.partial').dataset.raw = value; labor += value;
+  });
+
+  const direct = materials + equipment + labor;
+  const indirect = direct * (INDIRECTS.admin + INDIRECTS.contingency + INDIRECTS.profit);
+  const base = direct + indirect;
+  const final = base * factor();
+  $('sMat').textContent = format(materials); $('sEq').textContent = format(equipment); $('sMo').textContent = format(labor);
+  $('direct').textContent = format(direct); $('indirect').textContent = format(indirect); $('basePU').textContent = format(base); $('finalPU').textContent = format(final);
+  $('factor').value = `${format(factor())}x`;
+  return { materials, equipment, labor, direct, indirect, base, factor: factor(), final };
+}
+
+function renderList(id, values, fallback) {
+  const element = $(id); element.innerHTML = '';
+  const items = Array.isArray(values) && values.length ? values : [fallback];
+  items.forEach((value) => { const li = document.createElement('li'); li.textContent = clean(value, 600); element.appendChild(li); });
+}
+
+function renderAudit(data = emptyAudit()) {
+  audit = {
+    covenin_verificado: Boolean(data.covenin_verificado),
+    criterio_covenin: clean(data.criterio_covenin, 1600) || 'Pendiente.',
+    justificacion_rendimiento: clean(data.justificacion_rendimiento, 3500) || 'Pendiente.',
+    criterio_ejecucion: clean(data.criterio_ejecucion, 3500),
+    supuestos: Array.isArray(data.supuestos) ? data.supuestos.map((x) => clean(x, 600)).filter(Boolean) : [],
+    exclusiones: Array.isArray(data.exclusiones) ? data.exclusiones.map((x) => clean(x, 600)).filter(Boolean) : [],
+    advertencias: Array.isArray(data.advertencias) ? data.advertencias.map((x) => clean(x, 600)).filter(Boolean) : []
+  };
+  $('auditNorm').textContent = audit.criterio_covenin;
+  $('auditRend').textContent = audit.justificacion_rendimiento;
+  renderList('auditAss', audit.supuestos, 'Sin supuestos declarados.');
+  renderList('auditWarn', audit.advertencias, 'Sin advertencias declaradas.');
+}
+
+function attemptDetails(payload) {
+  const attempts = Array.isArray(payload?.intentos) ? payload.intentos : [];
+  if (!attempts.length) return '';
+  return '\n\nDetalle técnico:\n' + attempts.map((item) => `• ${item.provider || 'motor'} ${item.model || ''} [${item.status || 0}]: ${item.message || 'sin detalle'}`).join('\n');
+}
+
+async function generateApu() {
+  const prompt = clean($('prompt').value, 12000);
+  if (prompt.length < 10) { showNotice('Describe la partida con más detalle.', true); $('prompt').focus(); return; }
+  setLoading(true); showNotice('');
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 58000);
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, provider: $('provider').value, tipoCliente: $('clientType').value, altura: Math.max(0, number($('height').value, 0)) }),
+      signal: controller.signal
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload?.ok) {
+      throw new Error(`${clean(payload?.detalle || payload?.error || `HTTP ${response.status}`, 1500)}${attemptDetails(payload)}`);
+    }
+    const data = payload.data || {};
+    $('covenin').value = clean(data.covenin, 80) || 'POR VERIFICAR';
+    $('unit').value = clean(data.unidad, 30) || 'und';
+    $('quantity').value = Math.max(0.0001, number(data.cantidad, 1));
+    $('rend').value = Math.max(0.0001, number(data.rendimiento, 1));
+    $('fcas').value = Math.max(0, number(data.fcas, 250));
+    $('description').value = clean(data.descripcion_tecnica, 6000) || prompt;
+    $('memory').value = clean(data.memoria_calculo, 6000);
+    renderRows('mat', data.materiales || []);
+    renderRows('eq', (data.equipos || []).map((item) => ({ ...item, precio: item.tarifa })));
+    renderRows('mo', (data.mo || []).map((item) => ({ ...item, desc: item.cargo, precio: item.jornal })));
+    renderAudit(data);
+    aiMeta = { modelo: clean(payload.modelo, 200), motor: payload.motor || null, generatedAt: new Date().toISOString() };
+    calculate();
+    const engineWarnings = Array.isArray(payload.advertencias_motor) && payload.advertencias_motor.length ? ` Hubo ${payload.advertencias_motor.length} intento(s) de respaldo, pero se obtuvo un resultado válido.` : '';
+    showNotice(`APU generado con ${aiMeta.modelo || 'motor IA'}.${engineWarnings}`);
+    setStatus('APU generado');
+  } catch (error) {
+    const message = error?.name === 'AbortError' ? 'La solicitud superó el tiempo disponible.' : clean(error?.message, 4000) || 'Error desconocido';
+    showNotice(`No se pudo generar: ${message}`, true);
+    setStatus('Error de IA', 'error');
+  } finally {
+    clearTimeout(timer); setLoading(false);
+  }
+}
+
+function validateItem() {
+  const errors = [];
+  if (!clean($('description').value)) errors.push('La descripción técnica está vacía.');
+  if (!clean($('unit').value, 30)) errors.push('La unidad está vacía.');
+  if (number($('quantity').value) <= 0) errors.push('La cantidad debe ser mayor que cero.');
+  if (number($('rend').value) <= 0) errors.push('El rendimiento debe ser mayor que cero.');
+  if (readRows('mat').length + readRows('eq').length + readRows('mo').length === 0) errors.push('Agrega al menos un recurso.');
+  return errors;
+}
+
+function saveItem() {
+  const errors = validateItem();
+  if (errors.length) { alert(`Revisa la partida:\n\n• ${errors.join('\n• ')}`); return; }
+  const calc = calculate();
+  const quantity = Math.max(0.0001, number($('quantity').value, 1));
+  const id = editId || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const item = {
+    id,
+    covenin: clean($('covenin').value, 80) || 'POR VERIFICAR',
+    desc: clean($('description').value, 6000),
+    unidad: clean($('unit').value, 30) || 'und',
+    cantidad: quantity,
+    rendimiento: Math.max(0.0001, number($('rend').value, 1)),
+    fcas: Math.max(0, number($('fcas').value, 0)),
+    tipoCliente: $('clientType').value,
+    factorCliente: factor(),
+    altura: Math.max(0, number($('height').value, 0)),
+    precioUnitarioBase: calc.base,
+    precioUnitarioContractual: calc.final,
+    total: quantity * calc.final,
+    memoriaCalculo: clean($('memory').value, 6000),
+    audit: structuredClone(audit),
+    aiMeta: aiMeta ? structuredClone(aiMeta) : null,
+    apu: { materiales: readRows('mat'), equipos: readRows('eq'), manoObra: readRows('mo'), totals: calc }
+  };
+  const index = project.items.findIndex((value) => value.id === id);
+  if (index >= 0) project.items[index] = item; else project.items.push(item);
+  editId = null; renderAll(); clearEditor(); setStatus('Partida guardada');
+}
+
+function clearEditor() {
+  editId = null; aiMeta = null; $('prompt').value = ''; $('covenin').value = ''; $('unit').value = 'und'; $('quantity').value = '1'; $('rend').value = '1'; $('fcas').value = '250'; $('description').value = ''; $('memory').value = '';
+  renderRows('mat', []); renderRows('eq', []); renderRows('mo', []); renderAudit(emptyAudit()); showNotice('');
+  $('saveItem').textContent = 'Agregar partida al presupuesto'; calculate();
+}
+
+function editItem(id) {
+  const item = project.items.find((value) => value.id === id); if (!item) return;
+  editId = id; $('covenin').value = item.covenin; $('unit').value = item.unidad; $('quantity').value = item.cantidad; $('rend').value = item.rendimiento; $('fcas').value = item.fcas; $('description').value = item.desc; $('memory').value = item.memoriaCalculo || '';
+  $('clientType').value = item.tipoCliente === 'ESTADO' ? 'ESTADO' : 'PRIVADO'; $('height').value = item.altura || 0;
+  renderRows('mat', item.apu?.materiales || []); renderRows('eq', item.apu?.equipos || []); renderRows('mo', item.apu?.manoObra || []); renderAudit(item.audit || emptyAudit()); aiMeta = item.aiMeta || null;
+  $('saveItem').textContent = 'Actualizar partida'; calculate(); document.querySelector('.controls').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function deleteItem(id) {
+  const item = project.items.find((value) => value.id === id); if (!item) return;
+  if (!confirm(`¿Eliminar la partida: ${item.desc.slice(0, 90)}?`)) return;
+  project.items = project.items.filter((value) => value.id !== id); if (editId === id) clearEditor(); renderAll();
+}
+
+function updateGeneral() {
+  project.general = { obra: clean($('gObra').value, 250), cliente: clean($('gCliente').value, 200), ubicacion: clean($('gUbicacion').value, 250), fecha: clean($('gFecha').value, 20) };
+  $('dObra').textContent = project.general.obra; $('dCliente').textContent = project.general.cliente; $('dUbicacion').textContent = project.general.ubicacion; $('dFecha').textContent = formatDate(project.general.fecha); $('footDate').textContent = project.general.fecha ? `Fecha: ${formatDate(project.general.fecha)}` : '';
+}
+
+function formatDate(value) {
+  if (!value) return ''; const date = new Date(`${value}T00:00:00`); return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat('es-VE').format(date);
+}
+
+function renderBudget() {
+  const tbody = $('budget'); tbody.innerHTML = ''; let subtotal = 0;
+  project.items.forEach((item, index) => {
+    subtotal += number(item.total);
+    const row = document.createElement('tr');
+    [index + 1, item.covenin, item.desc, item.unidad, format(item.cantidad), format(item.precioUnitarioContractual), format(item.total)].forEach((value, cellIndex) => {
+      const cell = document.createElement('td'); cell.textContent = value; if ([0,1,3].includes(cellIndex)) cell.className = 'center'; if ([4,5,6].includes(cellIndex)) cell.className = 'num'; row.appendChild(cell);
+    });
+    const actions = document.createElement('td'); actions.className = 'center no-print';
+    const edit = document.createElement('button'); edit.className = 'mini btn-blue'; edit.textContent = 'Editar'; edit.addEventListener('click', () => editItem(item.id));
+    const del = document.createElement('button'); del.className = 'mini btn-danger'; del.textContent = 'Borrar'; del.style.marginLeft = '3px'; del.addEventListener('click', () => deleteItem(item.id)); actions.append(edit, del); row.appendChild(actions); tbody.appendChild(row);
+  });
+  $('sub').textContent = format(subtotal); $('iva').textContent = format(subtotal * IVA); $('grand').textContent = format(subtotal * (1 + IVA)); $('budgetEmpty').style.display = project.items.length ? 'none' : 'block';
+}
+
+function logoHtml() { return logo ? `<img src="${logo}" alt="Logo SEINCA">` : 'LOGOTIPO SEINCA'; }
+function resourceRows(rows, material = false) {
+  return (rows || []).map((row) => material
+    ? `<tr><td>${escapeHtml(row.desc)}</td><td class="center">${escapeHtml(row.und)}</td><td class="num">${format(row.cant)}</td><td class="num">${format(row.precio)}</td><td class="num">${format(row.total)}</td></tr>`
+    : `<tr><td>${escapeHtml(row.desc)}</td><td class="num">${format(row.cant)}</td><td class="num">${format(row.precio)}</td><td class="num">${format(row.total)}</td></tr>`).join('');
+}
+function listHtml(values, fallback) { const list = Array.isArray(values) && values.length ? values : [fallback]; return `<ul style="margin:0;padding-left:14px">${list.map((value) => `<li>${escapeHtml(value)}</li>`).join('')}</ul>`; }
+
+function renderApuPages() {
+  const container = $('apuPages'); container.innerHTML = '';
+  project.items.forEach((item, index) => {
+    const totals = item.apu?.totals || {};
+    const page = document.createElement('article'); page.className = 'pdf-page';
+    page.innerHTML = `<div class="head"><div class="logo">${logoHtml()}</div><div style="text-align:right"><h1>SEINCA</h1><small>SERVICIOS INTEGRALES<br>RIF: J-297575472</small></div></div>
+      <div class="doc-title">ANÁLISIS DE PRECIO UNITARIO · PARTIDA ${index + 1}</div>
+      <table class="info"><tr><td class="k">COVENIN</td><td>${escapeHtml(item.covenin)}</td><td class="k">UNIDAD</td><td>${escapeHtml(item.unidad)}</td></tr><tr><td class="k">DESCRIPCIÓN</td><td colspan="3">${escapeHtml(item.desc)}</td></tr><tr><td class="k">CANTIDAD</td><td>${format(item.cantidad)}</td><td class="k">RENDIMIENTO</td><td>${format(item.rendimiento)}/día</td></tr></table>
+      <h3 style="font-size:10px;margin:9px 0 3px">MATERIALES POR UNIDAD</h3><table class="doc"><thead><tr><th>Descripción</th><th>Und.</th><th>Cant.</th><th>Precio</th><th>Parcial</th></tr></thead><tbody>${resourceRows(item.apu?.materiales, true)}</tbody></table>
+      <h3 style="font-size:10px;margin:9px 0 3px">EQUIPOS DE CUADRILLA</h3><table class="doc"><thead><tr><th>Descripción</th><th>Cant.</th><th>Tarifa/día</th><th>Costo/und.</th></tr></thead><tbody>${resourceRows(item.apu?.equipos)}</tbody></table>
+      <h3 style="font-size:10px;margin:9px 0 3px">MANO DE OBRA</h3><table class="doc"><thead><tr><th>Cargo</th><th>Cant.</th><th>Jornal/día</th><th>Costo/und.</th></tr></thead><tbody>${resourceRows(item.apu?.manoObra)}</tbody></table>
+      <table class="summary"><tr><td>Costo directo</td><td class="num">${format(totals.direct)}</td></tr><tr><td>Administración 15%</td><td class="num">${format(number(totals.direct) * .15)}</td></tr><tr><td>Imprevistos 5%</td><td class="num">${format(number(totals.direct) * .05)}</td></tr><tr><td>Utilidad 10%</td><td class="num">${format(number(totals.direct) * .10)}</td></tr><tr><td>Precio unitario base</td><td class="num">${format(item.precioUnitarioBase)}</td></tr><tr><td><b>Precio contractual (${format(item.factorCliente)}x)</b></td><td class="num"><b>${format(item.precioUnitarioContractual)}</b></td></tr></table>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;font-size:8px"><div><b>MEMORIA DE CÁLCULO</b><div>${escapeHtml(item.memoriaCalculo || 'No indicada.')}</div></div><div><b>ADVERTENCIAS</b>${listHtml(item.audit?.advertencias, 'Sin advertencias declaradas.')}</div></div>
+      <div class="foot"><span>SEINCA · APU generado digitalmente</span><span>Partida ${index + 1}</span></div>`;
+    container.appendChild(page);
+  });
+}
+
+function renderLogo() { $('docLogo').innerHTML = logoHtml(); renderApuPages(); }
+function renderAll() { updateGeneral(); renderBudget(); renderApuPages(); renderLogo(); }
+
+function saveProject() {
+  updateGeneral(); project.logo = logo;
+  const blob = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' });
+  const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `SEINCA_${(project.general.obra || 'proyecto').replace(/[^a-z0-9_-]+/gi, '_')}.json`; link.click(); URL.revokeObjectURL(link.href);
+}
+
+function loadProject(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!data || !Array.isArray(data.items || data.partidas)) throw new Error('Formato de proyecto no reconocido');
+      project = { version: 4, general: data.general || {}, items: data.items || data.partidas || [], logo: data.logo || '' };
+      logo = project.logo || '';
+      $('gObra').value = project.general.obra || ''; $('gCliente').value = project.general.cliente || ''; $('gUbicacion').value = project.general.ubicacion || ''; $('gFecha').value = project.general.fecha || '';
+      renderAll(); clearEditor(); setStatus('Proyecto cargado');
+    } catch (error) { alert(`No se pudo cargar el proyecto: ${error.message}`); }
+  };
+  reader.readAsText(file);
+}
+
+async function exportPdf() {
+  if (typeof html2pdf !== 'function') { alert('La librería PDF todavía no terminó de cargar.'); return; }
+  const clone = $('document').cloneNode(true); clone.querySelectorAll('.no-print').forEach((node) => node.remove());
+  clone.style.position = 'fixed'; clone.style.left = '-10000px'; clone.style.top = '0'; document.body.appendChild(clone);
+  try {
+    await html2pdf().set({ margin: 0, filename: `SEINCA_${(project.general.obra || 'presupuesto').replace(/[^a-z0-9_-]+/gi, '_')}.pdf`, image: { type: 'jpeg', quality: .98 }, html2canvas: { scale: 1.5, useCORS: true, logging: false }, jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }, pagebreak: { mode: ['css','legacy'] } }).from(clone).save();
+  } finally { clone.remove(); }
+}
+
+async function checkHealth() {
+  try {
+    const response = await fetch(API_URL, { cache: 'no-store' });
+    const payload = await response.json();
+    const openai = payload?.live?.openai?.ok; const gemini = payload?.live?.gemini?.ok;
+    if (openai && gemini) setStatus('OpenAI + Gemini operativos'); else if (openai) setStatus('OpenAI operativo · Gemini en respaldo', 'warn'); else if (gemini) setStatus('Gemini operativo · OpenAI en respaldo', 'warn'); else setStatus('Motores IA sin conexión', 'error');
+  } catch { setStatus('No se pudo verificar la IA', 'warn'); }
+}
+
+['gObra','gCliente','gUbicacion','gFecha'].forEach((id) => $(id).addEventListener('input', updateGeneral));
+['clientType','rend','fcas'].forEach((id) => $(id).addEventListener('input', calculate));
+document.querySelectorAll('[data-add]').forEach((button) => button.addEventListener('click', () => addRow(button.dataset.add)));
+$('generate').addEventListener('click', generateApu); $('saveItem').addEventListener('click', saveItem); $('saveProject').addEventListener('click', saveProject); $('loadBtn').addEventListener('click', () => $('loadFile').click()); $('loadFile').addEventListener('change', (event) => event.target.files[0] && loadProject(event.target.files[0]));
+$('newProject').addEventListener('click', () => { if (!confirm('¿Crear un proyecto nuevo?')) return; project = { version: 4, general: {}, items: [], logo: '' }; logo = ''; ['gObra','gCliente','gUbicacion','gFecha'].forEach((id) => $(id).value = ''); clearEditor(); renderAll(); });
+$('logoInput').addEventListener('change', (event) => { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => { logo = reader.result; project.logo = logo; renderLogo(); }; reader.readAsDataURL(file); });
+$('pdf').addEventListener('click', exportPdf); $('print').addEventListener('click', () => window.print());
+renderAudit(); calculate(); renderAll(); checkHealth();
+</script>
+</body>
+</html>
