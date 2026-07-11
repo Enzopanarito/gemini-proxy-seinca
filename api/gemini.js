@@ -1,12 +1,14 @@
 import { APP_VERSION, normalizeConfig, text, validateApu } from '../lib/apu-core.js';
 import { LOCATION, RESEARCH_SCHEMA, buildResearchPrompt, normalizeGroundedResult, scoreGrounded } from '../lib/grounded-research.js';
 
-const ENGINE_VERSION = '6.0.1-grounded-caracas';
-const OPENAI_MODELS = String(process.env.OPENAI_MODELS || process.env.OPENAI_MODEL || 'gpt-5.6,gpt-5.5').split(',').map((v) => v.trim()).filter(Boolean);
-const GEMINI_MODELS = String(process.env.GEMINI_MODELS || process.env.GEMINI_MODEL || 'gemini-3.5-flash,gemini-2.5-flash-lite,gemini-2.5-flash').split(',').map((v) => v.trim()).filter(Boolean);
-const MODEL_TIMEOUT_MS = 50000;
+const ENGINE_VERSION = '6.1.0-grounded-caracas';
+const OPENAI_MODELS = String(process.env.OPENAI_MODELS || process.env.OPENAI_MODEL || 'gpt-5.6').split(',').map((v) => v.trim()).filter(Boolean);
+const GEMINI_MODELS = String(process.env.GEMINI_MODELS || process.env.GEMINI_MODEL || 'gemini-3.5-flash,gemini-2.5-flash').split(',').map((v) => v.trim()).filter(Boolean);
+const PROVIDER_ORDER = String(process.env.AI_PROVIDER_ORDER || 'openai,gemini').split(',').map((v) => v.trim().toLowerCase()).filter((v) => ['openai', 'gemini'].includes(v));
+const MODEL_TIMEOUT_MS = Math.min(54000, Math.max(15000, Number.parseInt(process.env.AI_MODEL_TIMEOUT_MS || '52000', 10) || 52000));
 const RATE_LIMIT = Number.parseInt(process.env.RATE_LIMIT_PER_MINUTE || '20', 10) || 20;
 const buckets = new Map();
+const providerCircuits = new Map();
 const asArray = (value) => Array.isArray(value) ? value : [];
 
 function requestId() { return globalThis.crypto?.randomUUID?.() || `req-${Date.now()}-${Math.random().toString(16).slice(2)}`; }
@@ -34,6 +36,22 @@ function parseJson(value) {
   throw new Error('La respuesta investigada no pudo interpretarse como JSON.');
 }
 function validUrl(value) { try { const u = new URL(String(value || '')); return ['http:', 'https:'].includes(u.protocol) ? u.toString() : ''; } catch { return ''; } }
+function quotaError(error) { const message = String(error?.message || '').toLowerCase(); return Number(error?.status) === 429 && (message.includes('quota') || message.includes('resource_exhausted') || message.includes('billing') || message.includes('credits')); }
+function rateError(error) { return Number(error?.status) === 429 && !quotaError(error); }
+function circuitOpen(provider) { const until = providerCircuits.get(provider) || 0; if (until <= Date.now()) { providerCircuits.delete(provider); return false; } return true; }
+function openCircuit(provider, error) {
+  const duration = quotaError(error) ? 30 * 60 * 1000 : rateError(error) ? 90 * 1000 : 0;
+  if (duration) providerCircuits.set(provider, Date.now() + duration);
+}
+function friendlyMessage(error) {
+  if (quotaError(error)) return 'Cuota o saldo API agotado; requiere activar facturación o aumentar el límite del proyecto.';
+  if (rateError(error)) return 'Límite temporal de solicitudes alcanzado; el motor quedó en pausa para evitar más consumo.';
+  if (Number(error?.status) === 408 || error?.name === 'AbortError') return 'La búsqueda excedió el tiempo disponible.';
+  const message = String(error?.message || 'Error desconocido');
+  if (/no demostró .*search|no contiene fuentes|sin fuentes/i.test(message)) return 'No devolvió fuentes web verificables y fue descartado.';
+  if (/cantidad total|rendimiento diario|no contiene recursos|respuesta incompleta/i.test(message)) return 'La respuesta llegó incompleta y fue descartada.';
+  return text(message.replace(/https?:\/\/\S+/g, '').trim(), 420) || 'Error desconocido.';
+}
 
 async function fetchWithTimeout(url, options, provider, model, signal = null) {
   const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), MODEL_TIMEOUT_MS); const abort = () => controller.abort();
@@ -96,7 +114,7 @@ async function callGemini({ model, prompt, context, apiKey, schema = true, signa
   const raw = parseJson(geminiText(payload)); return { ...normalizeGroundedResult(raw, grounding.urls, prompt, `Gemini ${model}`), provider: 'gemini', model };
 }
 
-function attempt(error) { return { provider: text(error?.provider || 'desconocido', 30), model: text(error?.model || '', 100), status: Number(error?.status) || 0, message: text(error?.message || 'Error desconocido', 700) }; }
+function attempt(error, provider = error?.provider, model = error?.model) { return { provider: text(provider || 'desconocido', 30), model: text(model || '', 100), status: Number(error?.status) || 0, message: friendlyMessage(error), quota: quotaError(error) }; }
 async function tryModel(provider, model, options, signal) {
   const caller = provider === 'openai' ? callOpenAI : callGemini; const attempts = [];
   for (const schema of [true, false]) {
@@ -105,28 +123,45 @@ async function tryModel(provider, model, options, signal) {
       const validation = validateApu(result.apu, options.context.config, { stage: 'draft' }); const fatal = validation.errors.filter((message) => !message.includes('precio'));
       if (fatal.length || result.coverage.priced < 1) throw Object.assign(new Error(fatal.join(' ') || 'No se obtuvo ningún precio web utilizable.'), { status: 422, provider, model });
       return { ...result, validation, attempts };
-    } catch (error) { attempts.push(attempt(error)); if (signal?.aborted || (schema && ![400, 422, 502].includes(Number(error?.status)))) break; }
+    } catch (error) {
+      error.provider ||= provider; error.model ||= model; attempts.push(attempt(error)); openCircuit(provider, error);
+      if (signal?.aborted || quotaError(error) || rateError(error) || (schema && ![400, 422, 502].includes(Number(error?.status)))) break;
+    }
   }
-  const failure = new Error(`${provider} ${model} no produjo un APU investigado utilizable`); failure.attempts = attempts; throw failure;
+  const failure = new Error(`${provider} ${model} no produjo un APU investigado utilizable`); failure.provider = provider; failure.model = model; failure.attempts = attempts; throw failure;
 }
 async function runProvider(provider, options) {
-  const models = [...new Set(provider === 'openai' ? OPENAI_MODELS : GEMINI_MODELS)].slice(0, 3); const cancel = new AbortController();
-  try { const winner = await Promise.any(models.map((model) => tryModel(provider, model, options, cancel.signal))); cancel.abort(); return winner; }
-  catch (aggregate) { cancel.abort(); const error = new Error(`${provider === 'openai' ? 'OpenAI' : 'Gemini'} no pudo generar e investigar el APU`); error.attempts = asArray(aggregate?.errors).flatMap((reason) => asArray(reason?.attempts)); throw error; }
+  if (circuitOpen(provider)) { const error = new Error('Proveedor temporalmente pausado por cuota o límite reciente.'); error.provider = provider; error.status = 429; error.attempts = [attempt(error, provider, '')]; throw error; }
+  const models = [...new Set(provider === 'openai' ? OPENAI_MODELS : GEMINI_MODELS)].slice(0, 3); const attempts = [];
+  for (const model of models) {
+    try { const result = await tryModel(provider, model, options, null); return { ...result, attempts: [...attempts, ...asArray(result.attempts)] }; }
+    catch (error) {
+      attempts.push(...asArray(error?.attempts).length ? error.attempts : [attempt(error, provider, model)]);
+      if (asArray(error?.attempts).some((item) => item.quota) || circuitOpen(provider)) break;
+    }
+  }
+  const error = new Error(`${provider === 'openai' ? 'OpenAI' : 'Gemini'} no pudo generar e investigar el APU`); error.attempts = attempts; throw error;
+}
+function orderedProviders(mode, openaiKey, geminiKey) {
+  if (mode === 'OPENAI') return openaiKey ? ['openai'] : [];
+  if (mode === 'GEMINI') return geminiKey ? ['gemini'] : [];
+  const available = new Set([openaiKey && 'openai', geminiKey && 'gemini'].filter(Boolean));
+  return [...PROVIDER_ORDER, 'openai', 'gemini'].filter((provider, index, arr) => available.has(provider) && arr.indexOf(provider) === index);
 }
 async function generate({ prompt, mode, context, openaiKey, geminiKey }) {
-  const jobs = [];
-  if (openaiKey && mode !== 'GEMINI') jobs.push(runProvider('openai', { prompt, context, apiKey: openaiKey }));
-  if (geminiKey && mode !== 'OPENAI') jobs.push(runProvider('gemini', { prompt, context, apiKey: geminiKey }));
-  if (!jobs.length) throw new Error('El motor seleccionado no tiene una clave API configurada.');
-  if (mode === 'AUTO') {
-    try { const selected = await Promise.any(jobs); return { selected, reviewer: null, attempts: selected.attempts || [] }; }
-    catch (aggregate) { const error = new Error('Los motores no lograron generar un APU con investigación web respaldada.'); error.attempts = asArray(aggregate?.errors).flatMap((reason) => asArray(reason?.attempts)); throw error; }
+  const providers = orderedProviders(mode, openaiKey, geminiKey); if (!providers.length) throw new Error('El motor seleccionado no tiene una clave API configurada.');
+  if (mode !== 'DUAL') {
+    const attempts = [];
+    for (const provider of providers) {
+      try { const selected = await runProvider(provider, { prompt, context, apiKey: provider === 'openai' ? openaiKey : geminiKey }); return { selected, reviewer: null, attempts: [...attempts, ...asArray(selected.attempts)] }; }
+      catch (error) { attempts.push(...asArray(error?.attempts)); }
+    }
+    const error = new Error('Los motores no lograron generar un APU con investigación web respaldada.'); error.attempts = attempts; throw error;
   }
-  const settled = await Promise.allSettled(jobs); const successes = settled.filter((r) => r.status === 'fulfilled').map((r) => r.value); const attempts = settled.flatMap((r) => r.status === 'rejected' ? asArray(r.reason?.attempts) : asArray(r.value?.attempts));
+  const settled = await Promise.allSettled(providers.map((provider) => runProvider(provider, { prompt, context, apiKey: provider === 'openai' ? openaiKey : geminiKey })));
+  const successes = settled.filter((r) => r.status === 'fulfilled').map((r) => r.value); const attempts = settled.flatMap((r) => r.status === 'rejected' ? asArray(r.reason?.attempts) : asArray(r.value?.attempts));
   if (!successes.length) { const error = new Error('Los motores no lograron generar un APU con investigación web respaldada.'); error.attempts = attempts; throw error; }
-  successes.sort((a, b) => scoreGrounded(b) - scoreGrounded(a));
-  const selected = successes[0]; const reviewer = successes[1] ? `${successes[1].provider === 'openai' ? 'OpenAI' : 'Gemini'} ${successes[1].model} (contraste web)` : null;
+  successes.sort((a, b) => scoreGrounded(b) - scoreGrounded(a)); const selected = successes[0]; const reviewer = successes[1] ? `${successes[1].provider === 'openai' ? 'OpenAI' : 'Gemini'} ${successes[1].model} (contraste web)` : null;
   return { selected, reviewer, attempts };
 }
 
@@ -135,7 +170,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(accepted ? 204 : 403).end(); if (!accepted) return res.status(403).json({ ok: false, error: 'Origen no autorizado', requestId: id });
   const openaiKey = process.env.OPENAI_API_KEY; const geminiKey = process.env.GEMINI_API_KEY || process.env.GEMINT_API_KEY;
   if (req.method === 'HEAD') return res.status(204).end();
-  if (req.method === 'GET') return res.status(200).json({ ok: Boolean(openaiKey || geminiKey), service: 'SEINCA grounded APU AI', version: ENGINE_VERSION, appVersion: APP_VERSION, location: LOCATION, configured: { openai: Boolean(openaiKey), gemini: Boolean(geminiKey) } });
+  if (req.method === 'GET') return res.status(200).json({ ok: Boolean(openaiKey || geminiKey), service: 'SEINCA grounded APU AI', version: ENGINE_VERSION, appVersion: APP_VERSION, location: LOCATION, configured: { openai: Boolean(openaiKey), gemini: Boolean(geminiKey) }, providerOrder: PROVIDER_ORDER, circuits: { openai: circuitOpen('openai'), gemini: circuitOpen('gemini') } });
   if (req.method !== 'POST') { res.setHeader('Allow', 'GET, HEAD, POST, OPTIONS'); return res.status(405).json({ ok: false, error: 'Método no permitido', requestId: id }); }
   if (!rateLimit(req)) return res.status(429).json({ ok: false, error: 'Demasiadas solicitudes', detalle: 'Espera un minuto y vuelve a intentar.', requestId: id });
   if (!openaiKey && !geminiKey) return res.status(500).json({ ok: false, error: 'Motores no configurados', detalle: 'Configura OPENAI_API_KEY o GEMINI_API_KEY en Vercel.', requestId: id });
@@ -143,16 +178,12 @@ export default async function handler(req, res) {
   const mode = providerMode(req.body?.provider || req.body?.motor); const tipoCliente = clientType(req.body?.tipoCliente || req.body?.clientType); const altura = Math.max(0, Math.min(300, Number(req.body?.altura ?? req.body?.height) || 0));
   const context = { tipoCliente, altura, config: normalizeConfig(req.body?.config || {}), catalog: asArray(req.body?.catalog).filter((item) => item?.verificado).slice(0, 100) };
   try {
-    const result = await generate({ prompt, mode, context, openaiKey, geminiKey }); const selected = result.selected;
-    const researchWarnings = selected.apu.advertencias.map((message) => ({ provider: 'investigación', model: selected.model, status: 200, message }));
-    return res.status(200).json({
-      ok: true, data: selected.apu,
-      modelo: `${selected.provider === 'openai' ? 'OpenAI' : 'Gemini'} ${selected.model} + investigación web Caracas${result.reviewer ? ` + ${result.reviewer}` : ''}`,
-      motor: { solicitado: mode, generador: `${selected.provider}:${selected.model}`, revisor: result.reviewer, modo: result.reviewer ? 'dual-grounded' : 'grounded', ubicacion: LOCATION, cobertura: selected.coverage, fuentes: selected.sources.slice(0, 40), normas: selected.norms },
-      tipoCliente, altura, requestId: id, advertencias_motor: [...result.attempts, ...researchWarnings].slice(-20)
-    });
+    const result = await generate({ prompt, mode, context, openaiKey, geminiKey }); const selected = result.selected; const researchWarnings = selected.apu.advertencias.map((message) => ({ provider: 'investigación', model: selected.model, status: 200, message }));
+    return res.status(200).json({ ok: true, data: selected.apu, modelo: `${selected.provider === 'openai' ? 'OpenAI' : 'Gemini'} ${selected.model} + investigación web Caracas${result.reviewer ? ` + ${result.reviewer}` : ''}`, motor: { solicitado: mode, generador: `${selected.provider}:${selected.model}`, revisor: result.reviewer, modo: result.reviewer ? 'dual-grounded' : 'grounded', ubicacion: LOCATION, cobertura: selected.coverage, fuentes: selected.sources.slice(0, 40), normas: selected.norms }, tipoCliente, altura, requestId: id, advertencias_motor: [...result.attempts, ...researchWarnings].slice(-20) });
   } catch (error) {
-    const attempts = asArray(error?.attempts).slice(-16); console.error('[SEINCA grounded]', { requestId: id, message: error?.message, attempts });
-    return res.status(502).json({ ok: false, error: 'No fue posible generar el APU investigado', detalle: text(error?.message, 900), intentos: attempts, requestId: id });
+    const attempts = asArray(error?.attempts).slice(-12); const allQuota = attempts.length > 0 && attempts.every((item) => item.quota || [408, 422, 429].includes(Number(item.status))); const billingRequired = attempts.some((item) => item.quota);
+    const detail = billingRequired ? 'La investigación está detenida porque OpenAI o Gemini no tienen cuota/saldo suficiente. No se generó ningún precio sin respaldo.' : text(error?.message, 900);
+    console.error('[SEINCA grounded]', { requestId: id, message: error?.message, attempts });
+    return res.status(billingRequired ? 503 : 502).json({ ok: false, error: billingRequired ? 'Investigación web sin cuota disponible' : 'No fue posible generar el APU investigado', detalle: detail, codigo: billingRequired ? 'BILLING_OR_QUOTA_REQUIRED' : allQuota ? 'PROVIDERS_TEMPORARILY_UNAVAILABLE' : 'GROUNDED_GENERATION_FAILED', intentos: attempts.map(({ quota, ...item }) => item), requestId: id });
   }
 }
