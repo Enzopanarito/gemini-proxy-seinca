@@ -41,7 +41,7 @@ requireTokens(app, [
 ], 'Aplicación');
 requireTokens(core, [
   "APP_VERSION = '5.0.0-enterprise-foundation'", 'calculateApu', 'validateApu', 'stableHash',
-  'requireVerifiedPricesForApproval', 'No se agregó'
+  'requireVerifiedPricesForApproval', 'La partida no contiene recursos'
 ], 'Núcleo');
 requireTokens(api, [
   'APP_VERSION', 'gpt-5.6', 'gemini-3.5-flash', '/v1beta/interactions', 'response_format',
