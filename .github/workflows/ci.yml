@@ -1,4 +1,4 @@
-name: Validar SEINCA
+name: Validar SEINCA Enterprise
 
 on:
   push:
@@ -10,15 +10,19 @@ permissions:
   contents: read
 
 jobs:
-  validate:
+  qa:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - name: Descargar repositorio
         uses: actions/checkout@v4
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - name: Validar sintaxis, DOM y componentes críticos
+          node-version: '22'
+      - name: Instalar dependencias
+        run: npm install --no-audit --no-fund
+      - name: Validar sintaxis, arquitectura y DOM
         run: npm run check
+      - name: Ejecutar pruebas del motor de costos
+        run: npm test
