@@ -1,14 +1,12 @@
-const VERSION = '4.0.0-stable-hybrid';
+const VERSION = '4.1.0-parallel-models';
 const OPENAI_MODELS = String(process.env.OPENAI_MODELS || process.env.OPENAI_MODEL || 'gpt-5.6,gpt-5.6-terra,gpt-5.6-luna')
   .split(',').map((value) => value.trim()).filter(Boolean);
 const GEMINI_MODELS = String(process.env.GEMINI_MODELS || process.env.GEMINI_MODEL || 'gemini-3.5-flash,gemini-2.5-flash,gemini-2.5-flash-lite')
   .split(',').map((value) => value.trim()).filter(Boolean);
 const MAX_PROMPT_LENGTH = 12000;
-const REQUEST_TIMEOUT_MS = 42000;
+const MODEL_TIMEOUT_MS = 50000;
 const MAX_REQUESTS_PER_MINUTE = Number.parseInt(process.env.RATE_LIMIT_PER_MINUTE || '30', 10) || 30;
-const HEALTH_CACHE_MS = 5 * 60 * 1000;
 const rateBuckets = new Map();
-let healthCache = null;
 
 const APU_SCHEMA = {
   type: 'object',
@@ -189,8 +187,7 @@ function normalizeApu(raw, prompt, providerName) {
   const warnings = array(first(raw, ['advertencias', 'warnings'])).map((item) => text(item, 600)).filter(Boolean);
   const sourceFallback = `Referencia ${providerName} editable - verificar cotización local`;
 
-  const rawMaterials = array(first(raw, ['materiales', 'materials']));
-  const materiales = rawMaterials.slice(0, 24).map((item, index) => {
+  const materiales = array(first(raw, ['materiales', 'materials'])).slice(0, 24).map((item, index) => {
     const cant = number(first(item, ['cant', 'cantidad', 'quantity', 'consumo']), 0);
     if (cant <= 0) {
       warnings.push(`Se omitió el material ${index + 1} por cantidad inválida.`);
@@ -205,8 +202,7 @@ function normalizeApu(raw, prompt, providerName) {
     };
   }).filter(Boolean);
 
-  const rawEquipment = array(first(raw, ['equipos', 'equipment', 'maquinaria']));
-  const equipos = rawEquipment.slice(0, 12).map((item, index) => {
+  const equipos = array(first(raw, ['equipos', 'equipment', 'maquinaria'])).slice(0, 12).map((item, index) => {
     const cant = number(first(item, ['cant', 'cantidad', 'quantity']), 0);
     if (cant <= 0) {
       warnings.push(`Se omitió el equipo ${index + 1} por cantidad inválida.`);
@@ -220,8 +216,7 @@ function normalizeApu(raw, prompt, providerName) {
     };
   }).filter(Boolean);
 
-  const rawLabor = array(first(raw, ['mo', 'mano_obra', 'manoObra', 'labor']));
-  const mo = rawLabor.slice(0, 12).map((item, index) => {
+  const mo = array(first(raw, ['mo', 'mano_obra', 'manoObra', 'labor'])).slice(0, 12).map((item, index) => {
     const cant = number(first(item, ['cant', 'cantidad', 'quantity']), 0);
     if (cant <= 0) {
       warnings.push(`Se omitió el cargo ${index + 1} por cantidad inválida.`);
@@ -242,7 +237,7 @@ function normalizeApu(raw, prompt, providerName) {
       jornal: 0,
       fuente_precio: 'Valor provisional: completar jornal antes de guardar'
     });
-    warnings.push('La IA no devolvió recursos utilizables. Se agregó una cuadrilla provisional con costo cero para evitar perder la partida; debe completarse manualmente.');
+    warnings.push('La IA no devolvió recursos utilizables. Se agregó una cuadrilla provisional con costo cero para no perder la partida; debe completarse manualmente.');
   }
 
   let cantidad = number(first(raw, ['cantidad', 'computo', 'quantity']), 1);
@@ -333,9 +328,14 @@ function providerError(provider, model, status, message) {
   return error;
 }
 
-async function fetchTimeout(url, options, timeoutMs, provider, model) {
+async function fetchTimeout(url, options, timeoutMs, provider, model, externalSignal = null) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const abortFromExternal = () => controller.abort();
+  if (externalSignal) {
+    if (externalSignal.aborted) controller.abort();
+    else externalSignal.addEventListener('abort', abortFromExternal, { once: true });
+  }
   try {
     return await fetch(url, { ...options, signal: controller.signal });
   } catch (error) {
@@ -343,6 +343,7 @@ async function fetchTimeout(url, options, timeoutMs, provider, model) {
     throw providerError(provider, model, 0, error?.message || 'Error de red');
   } finally {
     clearTimeout(timer);
+    if (externalSignal) externalSignal.removeEventListener('abort', abortFromExternal);
   }
 }
 
@@ -357,7 +358,7 @@ function openAIText(payload) {
   return parts.join('').trim();
 }
 
-async function callOpenAI({ model, prompt, tipoCliente, altura, apiKey, candidate = null, schema = true, timeoutMs = 30000 }) {
+async function callOpenAI({ model, prompt, tipoCliente, altura, apiKey, candidate = null, schema = true, timeoutMs = MODEL_TIMEOUT_MS, signal = null }) {
   const body = {
     model,
     instructions: engineeringInstructions(tipoCliente, altura),
@@ -372,7 +373,7 @@ async function callOpenAI({ model, prompt, tipoCliente, altura, apiKey, candidat
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify(body)
-  }, timeoutMs, 'openai', model);
+  }, timeoutMs, 'openai', model, signal);
 
   const raw = await response.text();
   let payload = null;
@@ -380,14 +381,18 @@ async function callOpenAI({ model, prompt, tipoCliente, altura, apiKey, candidat
   if (!response.ok) throw providerError('openai', model, response.status, payload?.error?.message || raw || `HTTP ${response.status}`);
   const output = openAIText(payload);
   if (!output) throw providerError('openai', model, 502, 'Respuesta vacía');
-  return { apu: normalizeApu(parseJson(output), prompt, `OpenAI ${model}`), model, provider: 'openai' };
+  try {
+    return { apu: normalizeApu(parseJson(output), prompt, `OpenAI ${model}`), model, provider: 'openai' };
+  } catch (error) {
+    throw providerError('openai', model, 422, error?.message || 'Respuesta inválida');
+  }
 }
 
 function geminiText(payload) {
   return array(payload?.candidates?.[0]?.content?.parts).map((part) => part?.text || '').join('').trim();
 }
 
-async function callGemini({ model, prompt, tipoCliente, altura, apiKey, candidate = null, schema = true, timeoutMs = 30000 }) {
+async function callGemini({ model, prompt, tipoCliente, altura, apiKey, candidate = null, schema = true, timeoutMs = MODEL_TIMEOUT_MS, signal = null }) {
   const generationConfig = {
     temperature: 0.1,
     topP: 0.85,
@@ -409,7 +414,8 @@ async function callGemini({ model, prompt, tipoCliente, altura, apiKey, candidat
     },
     timeoutMs,
     'gemini',
-    model
+    model,
+    signal
   );
 
   const raw = await response.text();
@@ -418,7 +424,11 @@ async function callGemini({ model, prompt, tipoCliente, altura, apiKey, candidat
   if (!response.ok) throw providerError('gemini', model, response.status, payload?.error?.message || raw || `HTTP ${response.status}`);
   const output = geminiText(payload);
   if (!output) throw providerError('gemini', model, 502, 'Respuesta vacía');
-  return { apu: normalizeApu(parseJson(output), prompt, `Gemini ${model}`), model, provider: 'gemini' };
+  try {
+    return { apu: normalizeApu(parseJson(output), prompt, `Gemini ${model}`), model, provider: 'gemini' };
+  } catch (error) {
+    throw providerError('gemini', model, 422, error?.message || 'Respuesta inválida');
+  }
 }
 
 function attempt(error) {
@@ -430,35 +440,50 @@ function attempt(error) {
   };
 }
 
-async function runProvider(provider, options) {
-  const models = provider === 'openai' ? OPENAI_MODELS : GEMINI_MODELS;
+async function tryModel(provider, model, options, signal) {
   const call = provider === 'openai' ? callOpenAI : callGemini;
   const attempts = [];
-  const started = Date.now();
-
-  for (const model of [...new Set(models)].slice(0, 3)) {
-    const elapsed = Date.now() - started;
-    const remaining = REQUEST_TIMEOUT_MS - elapsed;
-    if (remaining < 7000) break;
-
-    try {
-      return { ...(await call({ ...options, model, schema: true, timeoutMs: Math.min(26000, remaining) })), attempts };
-    } catch (error) {
-      attempts.push(attempt(error));
-      const remainingAfter = REQUEST_TIMEOUT_MS - (Date.now() - started);
-      if (remainingAfter > 9000 && [400, 422, 502].includes(Number(error?.status))) {
-        try {
-          return { ...(await call({ ...options, model, schema: false, timeoutMs: Math.min(15000, remainingAfter) })), attempts };
-        } catch (fallbackError) {
-          attempts.push(attempt(fallbackError));
-        }
-      }
+  try {
+    const result = await call({ ...options, model, schema: true, timeoutMs: MODEL_TIMEOUT_MS, signal });
+    return { ...result, attempts };
+  } catch (error) {
+    attempts.push(attempt(error));
+    if (![400, 422, 502].includes(Number(error?.status)) || signal?.aborted) {
+      const failure = new Error(`${provider} ${model} no produjo un APU válido`);
+      failure.attempts = attempts;
+      throw failure;
     }
   }
 
-  const error = new Error(`${provider === 'openai' ? 'OpenAI' : 'Gemini'} no produjo un APU utilizable`);
-  error.attempts = attempts;
-  throw error;
+  try {
+    const result = await call({ ...options, model, schema: false, timeoutMs: 18000, signal });
+    return { ...result, attempts };
+  } catch (error) {
+    attempts.push(attempt(error));
+    const failure = new Error(`${provider} ${model} no produjo un APU válido`);
+    failure.attempts = attempts;
+    throw failure;
+  }
+}
+
+async function runProvider(provider, options) {
+  const models = [...new Set(provider === 'openai' ? OPENAI_MODELS : GEMINI_MODELS)].slice(0, 2);
+  if (!models.length) throw new Error(`No hay modelos configurados para ${provider}`);
+
+  const cancel = new AbortController();
+  const jobs = models.map((model) => tryModel(provider, model, options, cancel.signal));
+  try {
+    const winner = await Promise.any(jobs);
+    cancel.abort();
+    return winner;
+  } catch (aggregate) {
+    cancel.abort();
+    const attempts = [];
+    for (const reason of array(aggregate?.errors)) attempts.push(...array(reason?.attempts));
+    const error = new Error(`${provider === 'openai' ? 'OpenAI' : 'Gemini'} no produjo un APU utilizable`);
+    error.attempts = attempts;
+    throw error;
+  }
 }
 
 function score(apu) {
@@ -490,7 +515,7 @@ async function generate({ prompt, tipoCliente, altura, mode, openaiKey, geminiKe
   if (geminiKey && mode !== 'OPENAI') jobs.push({ provider: 'gemini', promise: runProvider('gemini', { ...common, apiKey: geminiKey }) });
   if (!jobs.length) throw new Error('El motor seleccionado no tiene una clave API configurada');
 
-  if (mode === 'AUTO' && jobs.length > 1) {
+  if (mode === 'AUTO') {
     try {
       const winner = await Promise.any(jobs.map((job) => job.promise));
       return {
@@ -519,6 +544,7 @@ async function generate({ prompt, tipoCliente, altura, mode, openaiKey, geminiKe
       attempts.push(...array(result.reason?.attempts));
     }
   });
+
   if (!successes.length) {
     const error = new Error('Los motores configurados no produjeron un APU utilizable');
     error.attempts = attempts;
@@ -537,59 +563,12 @@ async function generate({ prompt, tipoCliente, altura, mode, openaiKey, geminiKe
 
   const openai = successes.find((item) => item.provider === 'openai');
   const gemini = successes.find((item) => item.provider === 'gemini');
-  const apu = compareApus(openai.apu, gemini.apu, `OpenAI ${openai.model}`, `Gemini ${gemini.model}`);
   return {
-    apu,
+    apu: compareApus(openai.apu, gemini.apu, `OpenAI ${openai.model}`, `Gemini ${gemini.model}`),
     generator: `OpenAI ${openai.model}`,
     reviewer: `Gemini ${gemini.model} (revisión cruzada)`,
     attempts
   };
-}
-
-async function pingOpenAI(apiKey) {
-  if (!apiKey) return { configured: false, ok: false, error: 'OPENAI_API_KEY no configurada' };
-  const model = OPENAI_MODELS[0];
-  try {
-    const result = await callOpenAI({
-      model,
-      prompt: 'Suministro e instalación de un metro cuadrado de pintura interior sobre pared preparada.',
-      tipoCliente: 'PRIVADO',
-      altura: 0,
-      apiKey,
-      schema: false,
-      timeoutMs: 15000
-    });
-    return { configured: true, ok: true, model: result.model };
-  } catch (error) {
-    return { configured: true, ok: false, model, status: Number(error?.status) || 0, error: text(error?.message, 500) };
-  }
-}
-
-async function pingGemini(apiKey) {
-  if (!apiKey) return { configured: false, ok: false, error: 'GEMINI_API_KEY no configurada' };
-  const model = GEMINI_MODELS[0];
-  try {
-    const result = await callGemini({
-      model,
-      prompt: 'Suministro e instalación de un metro cuadrado de pintura interior sobre pared preparada.',
-      tipoCliente: 'PRIVADO',
-      altura: 0,
-      apiKey,
-      schema: false,
-      timeoutMs: 15000
-    });
-    return { configured: true, ok: true, model: result.model };
-  } catch (error) {
-    return { configured: true, ok: false, model, status: Number(error?.status) || 0, error: text(error?.message, 500) };
-  }
-}
-
-async function health(openaiKey, geminiKey) {
-  if (healthCache && Date.now() - healthCache.createdAt < HEALTH_CACHE_MS) return healthCache.value;
-  const [openai, gemini] = await Promise.all([pingOpenAI(openaiKey), pingGemini(geminiKey)]);
-  const value = { openai, gemini };
-  healthCache = { createdAt: Date.now(), value };
-  return value;
 }
 
 export default async function handler(req, res) {
@@ -603,13 +582,12 @@ export default async function handler(req, res) {
 
   if (req.method === 'HEAD') return res.status(204).end();
   if (req.method === 'GET') {
-    const live = await health(openaiKey, geminiKey);
     return res.status(200).json({
-      ok: live.openai.ok || live.gemini.ok,
-      service: 'SEINCA Stable Hybrid APU AI',
+      ok: Boolean(openaiKey || geminiKey),
+      service: 'SEINCA Parallel Hybrid APU AI',
       version: VERSION,
-      mode: openaiKey && geminiKey ? 'hybrid' : openaiKey ? 'openai-only' : geminiKey ? 'gemini-only' : 'unconfigured',
-      live
+      configured: { openai: Boolean(openaiKey), gemini: Boolean(geminiKey) },
+      models: { openai: OPENAI_MODELS, gemini: GEMINI_MODELS }
     });
   }
 
