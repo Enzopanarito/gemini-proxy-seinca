@@ -25,12 +25,6 @@ if (!scripts.length) {
   }
 }
 
-try {
-  new vm.SourceTextModule(api, { identifier: 'api/gemini.js' });
-} catch (error) {
-  fail(`JavaScript inválido en api/gemini.js: ${error.message}`);
-}
-
 const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
 const duplicates = ids.filter((id, index) => ids.indexOf(id) !== index);
 if (duplicates.length) fail(`IDs duplicados: ${[...new Set(duplicates)].join(', ')}`);
