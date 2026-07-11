@@ -1,12 +1,26 @@
-const VERSION = '4.1.0-parallel-models';
+import {
+  APP_VERSION,
+  normalizeApu,
+  normalizeConfig,
+  number,
+  text,
+  validateApu
+} from '../lib/apu-core.js';
+
 const OPENAI_MODELS = String(process.env.OPENAI_MODELS || process.env.OPENAI_MODEL || 'gpt-5.6,gpt-5.6-terra,gpt-5.6-luna')
   .split(',').map((value) => value.trim()).filter(Boolean);
 const GEMINI_MODELS = String(process.env.GEMINI_MODELS || process.env.GEMINI_MODEL || 'gemini-3.5-flash,gemini-2.5-flash,gemini-2.5-flash-lite')
   .split(',').map((value) => value.trim()).filter(Boolean);
-const MAX_PROMPT_LENGTH = 12000;
+const MAX_PROMPT_LENGTH = 16000;
 const MODEL_TIMEOUT_MS = 50000;
-const MAX_REQUESTS_PER_MINUTE = Number.parseInt(process.env.RATE_LIMIT_PER_MINUTE || '30', 10) || 30;
+const RATE_LIMIT = Number.parseInt(process.env.RATE_LIMIT_PER_MINUTE || '20', 10) || 20;
 const rateBuckets = new Map();
+
+const PRICE_PROPERTIES = {
+  fuente_precio: { type: 'string' },
+  fecha_precio: { type: 'string' },
+  precio_verificado: { type: 'boolean' }
+};
 
 const APU_SCHEMA = {
   type: 'object',
@@ -29,70 +43,48 @@ const APU_SCHEMA = {
     materiales: {
       type: 'array',
       items: {
-        type: 'object',
-        additionalProperties: false,
+        type: 'object', additionalProperties: false,
         properties: {
-          desc: { type: 'string' },
-          und: { type: 'string' },
-          cant: { type: 'number' },
-          precio: { type: 'number' },
-          fuente_precio: { type: 'string' }
+          desc: { type: 'string' }, und: { type: 'string' }, cant: { type: 'number' }, precio: { type: 'number' },
+          ...PRICE_PROPERTIES
         },
-        required: ['desc', 'und', 'cant', 'precio', 'fuente_precio']
+        required: ['desc', 'und', 'cant', 'precio', 'fuente_precio', 'fecha_precio', 'precio_verificado']
       }
     },
     equipos: {
       type: 'array',
       items: {
-        type: 'object',
-        additionalProperties: false,
+        type: 'object', additionalProperties: false,
         properties: {
-          desc: { type: 'string' },
-          cant: { type: 'number' },
-          tarifa: { type: 'number' },
-          fuente_precio: { type: 'string' }
+          desc: { type: 'string' }, cant: { type: 'number' }, tarifa: { type: 'number' },
+          ...PRICE_PROPERTIES
         },
-        required: ['desc', 'cant', 'tarifa', 'fuente_precio']
+        required: ['desc', 'cant', 'tarifa', 'fuente_precio', 'fecha_precio', 'precio_verificado']
       }
     },
     mo: {
       type: 'array',
       items: {
-        type: 'object',
-        additionalProperties: false,
+        type: 'object', additionalProperties: false,
         properties: {
-          cargo: { type: 'string' },
-          cant: { type: 'number' },
-          jornal: { type: 'number' },
-          fuente_precio: { type: 'string' }
+          cargo: { type: 'string' }, cant: { type: 'number' }, jornal: { type: 'number' },
+          ...PRICE_PROPERTIES
         },
-        required: ['cargo', 'cant', 'jornal', 'fuente_precio']
+        required: ['cargo', 'cant', 'jornal', 'fuente_precio', 'fecha_precio', 'precio_verificado']
       }
     }
   },
   required: [
-    'covenin', 'covenin_verificado', 'criterio_covenin', 'unidad', 'cantidad',
-    'rendimiento', 'fcas', 'descripcion_tecnica', 'memoria_calculo',
-    'justificacion_rendimiento', 'criterio_ejecucion', 'supuestos', 'exclusiones',
-    'advertencias', 'materiales', 'equipos', 'mo'
+    'covenin', 'covenin_verificado', 'criterio_covenin', 'unidad', 'cantidad', 'rendimiento', 'fcas',
+    'descripcion_tecnica', 'memoria_calculo', 'justificacion_rendimiento', 'criterio_ejecucion',
+    'supuestos', 'exclusiones', 'advertencias', 'materiales', 'equipos', 'mo'
   ]
 };
 
-function text(value, max = 5000) {
-  return String(value ?? '').replace(/[\u0000-\u001F\u007F]/g, ' ').trim().slice(0, max);
-}
+const asArray = (value) => Array.isArray(value) ? value : [];
 
-function number(value, fallback = 0) {
-  const parsed = Number.parseFloat(value);
-  return Number.isFinite(parsed) ? parsed : fallback;
-}
-
-function array(value) {
-  return Array.isArray(value) ? value : [];
-}
-
-function clientType(value) {
-  return String(value || '').toUpperCase() === 'ESTADO' ? 'ESTADO' : 'PRIVADO';
+function requestId() {
+  return globalThis.crypto?.randomUUID?.() || `req-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
 function providerMode(value) {
@@ -100,74 +92,54 @@ function providerMode(value) {
   return ['AUTO', 'OPENAI', 'GEMINI', 'DUAL'].includes(mode) ? mode : 'AUTO';
 }
 
+function clientType(value) {
+  return String(value || '').toUpperCase() === 'ESTADO' ? 'ESTADO' : 'PRIVADO';
+}
+
 function allowedOrigins(req) {
-  const configured = String(process.env.ALLOWED_ORIGINS || '')
-    .split(',').map((value) => value.trim()).filter(Boolean);
+  const origins = String(process.env.ALLOWED_ORIGINS || '').split(',').map((value) => value.trim()).filter(Boolean);
   const host = text(req.headers.host, 255);
-  if (host) configured.push(`https://${host}`, `http://${host}`);
-  configured.push('null', 'http://localhost:3000', 'http://127.0.0.1:3000');
-  return new Set(configured);
+  if (host) origins.push(`https://${host}`, `http://${host}`);
+  origins.push('http://localhost:3000', 'http://127.0.0.1:3000');
+  return new Set(origins);
 }
 
 function applyCors(req, res) {
   const origin = text(req.headers.origin, 500);
   const allowed = allowedOrigins(req);
-  if (!origin || allowed.has(origin)) res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  const accepted = !origin || allowed.has(origin);
+  if (accepted) res.setHeader('Access-Control-Allow-Origin', origin || '*');
   res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  return !origin || allowed.has(origin);
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-SEINCA-Client');
+  return accepted;
 }
 
 function clientIp(req) {
-  return text(req.headers['x-forwarded-for'], 500).split(',')[0].trim()
-    || text(req.socket?.remoteAddress, 100)
-    || 'unknown';
+  return text(req.headers['x-forwarded-for'], 500).split(',')[0].trim() || text(req.socket?.remoteAddress, 100) || 'unknown';
 }
 
-function rateLimit(req) {
+function checkRateLimit(req) {
   const minute = Math.floor(Date.now() / 60000);
   const key = `${clientIp(req)}:${minute}`;
   const next = (rateBuckets.get(key) || 0) + 1;
   rateBuckets.set(key, next);
-  if (rateBuckets.size > 1500) {
+  if (rateBuckets.size > 2000) {
     for (const bucketKey of rateBuckets.keys()) {
       const bucketMinute = Number(bucketKey.split(':').pop());
       if (Number.isFinite(bucketMinute) && bucketMinute < minute - 2) rateBuckets.delete(bucketKey);
     }
   }
-  return next <= MAX_REQUESTS_PER_MINUTE;
+  return next <= RATE_LIMIT;
 }
 
-function normalizeUnit(value) {
-  const raw = text(value, 30).toLowerCase().replaceAll('²', '2').replaceAll('³', '3');
-  const aliases = {
-    metro: 'm', metros: 'm', 'm.l.': 'ml', lineal: 'ml',
-    'm^2': 'm2', 'm^3': 'm3', unidad: 'und', unidades: 'und',
-    dia: 'día', dias: 'día', días: 'día', litro: 'l', litros: 'l',
-    tonelada: 't', toneladas: 't'
-  };
-  return aliases[raw] || raw || 'und';
-}
-
-function first(obj, keys, fallback = undefined) {
-  for (const key of keys) {
-    if (obj && obj[key] !== undefined && obj[key] !== null) return obj[key];
-  }
-  return fallback;
-}
-
-function cleanJsonText(value) {
-  return text(value, 150000)
+function parseJson(value) {
+  const cleaned = text(value, 200000)
     .replace(/^```(?:json)?\s*/i, '')
     .replace(/```\s*$/i, '')
     .replace(/[“”]/g, '"')
     .replace(/[‘’]/g, "'")
     .trim();
-}
-
-function parseJson(value) {
-  const cleaned = cleanJsonText(value);
   const candidates = [cleaned];
   const firstBrace = cleaned.indexOf('{');
   const lastBrace = cleaned.lastIndexOf('}');
@@ -176,165 +148,82 @@ function parseJson(value) {
     try { return JSON.parse(candidate); } catch { }
     try { return JSON.parse(candidate.replace(/,\s*([}\]])/g, '$1')); } catch { }
   }
-  throw new Error('La IA respondió, pero el JSON no pudo interpretarse');
+  throw new Error('La respuesta no pudo interpretarse como JSON.');
 }
 
-function normalizeApu(raw, prompt, providerName) {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-    throw new Error('La IA no devolvió un objeto APU');
-  }
-
-  const warnings = array(first(raw, ['advertencias', 'warnings'])).map((item) => text(item, 600)).filter(Boolean);
-  const sourceFallback = `Referencia ${providerName} editable - verificar cotización local`;
-
-  const materiales = array(first(raw, ['materiales', 'materials'])).slice(0, 24).map((item, index) => {
-    const cant = number(first(item, ['cant', 'cantidad', 'quantity', 'consumo']), 0);
-    if (cant <= 0) {
-      warnings.push(`Se omitió el material ${index + 1} por cantidad inválida.`);
-      return null;
-    }
-    return {
-      desc: text(first(item, ['desc', 'descripcion', 'description', 'material']), 250) || `Material ${index + 1}`,
-      und: text(first(item, ['und', 'unidad', 'unit']), 30) || 'und',
-      cant,
-      precio: Math.max(0, number(first(item, ['precio', 'precio_unitario', 'price', 'unit_price']), 0)),
-      fuente_precio: text(first(item, ['fuente_precio', 'fuente', 'source']), 250) || sourceFallback
-    };
-  }).filter(Boolean);
-
-  const equipos = array(first(raw, ['equipos', 'equipment', 'maquinaria'])).slice(0, 12).map((item, index) => {
-    const cant = number(first(item, ['cant', 'cantidad', 'quantity']), 0);
-    if (cant <= 0) {
-      warnings.push(`Se omitió el equipo ${index + 1} por cantidad inválida.`);
-      return null;
-    }
-    return {
-      desc: text(first(item, ['desc', 'descripcion', 'description', 'equipo']), 250) || `Equipo ${index + 1}`,
-      cant,
-      tarifa: Math.max(0, number(first(item, ['tarifa', 'precio', 'tarifa_dia', 'rate']), 0)),
-      fuente_precio: text(first(item, ['fuente_precio', 'fuente', 'source']), 250) || sourceFallback
-    };
-  }).filter(Boolean);
-
-  const mo = array(first(raw, ['mo', 'mano_obra', 'manoObra', 'labor'])).slice(0, 12).map((item, index) => {
-    const cant = number(first(item, ['cant', 'cantidad', 'quantity']), 0);
-    if (cant <= 0) {
-      warnings.push(`Se omitió el cargo ${index + 1} por cantidad inválida.`);
-      return null;
-    }
-    return {
-      cargo: text(first(item, ['cargo', 'desc', 'descripcion', 'role']), 250) || `Trabajador ${index + 1}`,
-      cant,
-      jornal: Math.max(0, number(first(item, ['jornal', 'precio', 'jornal_dia', 'wage']), 0)),
-      fuente_precio: text(first(item, ['fuente_precio', 'fuente', 'source']), 250) || sourceFallback
-    };
-  }).filter(Boolean);
-
-  if (!materiales.length && !equipos.length && !mo.length) {
-    mo.push({
-      cargo: 'Cuadrilla provisional para revisión',
-      cant: 1,
-      jornal: 0,
-      fuente_precio: 'Valor provisional: completar jornal antes de guardar'
-    });
-    warnings.push('La IA no devolvió recursos utilizables. Se agregó una cuadrilla provisional con costo cero para no perder la partida; debe completarse manualmente.');
-  }
-
-  let cantidad = number(first(raw, ['cantidad', 'computo', 'quantity']), 1);
-  if (cantidad <= 0) {
-    cantidad = 1;
-    warnings.push('La cantidad no era válida y se sustituyó temporalmente por 1,00.');
-  }
-
-  let rendimiento = number(first(raw, ['rendimiento', 'rdto', 'performance']), 1);
-  if (rendimiento <= 0) {
-    rendimiento = 1;
-    warnings.push('El rendimiento no era válido y se sustituyó temporalmente por 1,00.');
-  }
-
-  let fcas = number(first(raw, ['fcas', 'fcas_porcentaje', 'fc_ar']), 250);
-  fcas = Math.min(1000, Math.max(0, fcas));
-
-  const covenin = text(first(raw, ['covenin', 'codigo_covenin', 'code']), 80) || 'POR VERIFICAR';
-  const list = (value) => array(value).map((item) => text(item, 600)).filter(Boolean).slice(0, 12);
-
-  return {
-    covenin,
-    covenin_verificado: covenin !== 'POR VERIFICAR' && Boolean(first(raw, ['covenin_verificado', 'verified'], false)),
-    criterio_covenin: text(first(raw, ['criterio_covenin', 'criterio_normativo', 'normative_criterion']), 1600),
-    unidad: normalizeUnit(first(raw, ['unidad', 'unit'])),
-    cantidad,
-    rendimiento,
-    fcas,
-    descripcion_tecnica: text(first(raw, ['descripcion_tecnica', 'descripcion', 'description']), 6000) || text(prompt, 6000),
-    memoria_calculo: text(first(raw, ['memoria_calculo', 'memoria', 'calculation_memory']), 6000),
-    justificacion_rendimiento: text(first(raw, ['justificacion_rendimiento', 'rendimiento_justificacion', 'performance_justification']), 3500),
-    criterio_ejecucion: text(first(raw, ['criterio_ejecucion', 'metodo_ejecucion', 'execution_criterion']), 3500),
-    supuestos: list(first(raw, ['supuestos', 'assumptions'], [])),
-    exclusiones: list(first(raw, ['exclusiones', 'exclusions'], [])),
-    advertencias: [...new Set(warnings)].slice(0, 12),
-    materiales,
-    equipos,
-    mo
-  };
+function catalogContext(input) {
+  const catalog = asArray(input).slice(0, 120).map((item) => ({
+    tipo: text(item.type, 20),
+    descripcion: text(item.desc, 250),
+    unidad: text(item.und, 30),
+    precio: Math.max(0, number(item.precio)),
+    fuente: text(item.fuente, 250),
+    fecha: text(item.fecha, 20),
+    verificado: Boolean(item.verificado)
+  })).filter((item) => item.descripcion && item.verificado);
+  return catalog.length
+    ? `CATÁLOGO VERIFICADO DEL USUARIO. Cuando coincida el recurso, copia exactamente precio, fuente, fecha y verificado:\n${JSON.stringify(catalog)}`
+    : 'No se suministró un catálogo verificado. Todo precio estimado debe marcarse como no verificado.';
 }
 
-function engineeringInstructions(tipoCliente, altura) {
-  const state = tipoCliente === 'ESTADO'
-    ? 'El contratante es un ente del Estado. El análisis debe ser conservador, trazable y auditable, sin inflar cantidades ni precios.'
-    : 'El contratante es privado. Optimiza recursos sin sacrificar alcance, calidad, seguridad ni normativa.';
-  const height = altura > 0
-    ? `La ejecución ocurre a ${altura.toFixed(2)} m. Considera acceso, transporte vertical, andamios, izaje, seguridad y reducción de rendimiento solo cuando correspondan.`
-    : 'La altura declarada es 0,00 m; no agregues costos de altura.';
-
-  return `Actúas como un comité venezolano de ingeniería de costos integrado por un Ingeniero Civil calculista, un presupuestista y un constructor senior.
+function instructions({ tipoCliente, altura, config, catalog }) {
+  const clientRule = tipoCliente === 'ESTADO'
+    ? 'El contratante es un ente del Estado: exige trazabilidad, metodología conservadora y controles, sin inflar cantidades.'
+    : 'El contratante es privado: optimiza recursos sin sacrificar alcance, calidad, seguridad ni normativa.';
+  const heightRule = altura > 0
+    ? `La ejecución ocurre a ${altura.toFixed(2)} m. Considera acceso, andamios, transporte vertical, izaje, seguridad y rendimiento solo cuando corresponda.`
+    : 'La altura declarada es 0,00 m. No agregues costos por altura.';
+  return `Actúas como un comité venezolano de ingeniería de costos compuesto por un Ingeniero Civil calculista, un presupuestista, un planificador y un auditor de obra.
 
 OBJETIVO
-Generar un APU profesional en USD para una sola partida, con cómputo, unidad, rendimiento, FCAS, descripción, memoria, materiales, equipos y mano de obra. Debe ser editable, coherente y auditable.
+Genera un APU profesional para UNA sola partida, técnicamente ejecutable, matemáticamente coherente, editable y auditable.
 
-CONDICIONES
-- ${state}
-- ${height}
-- Jornada: 8 horas.
-- El sistema calculará administración 15%, imprevistos 5% y utilidad 10% sobre costo directo.
+DATOS
+- ${clientRule}
+- ${heightRule}
+- Moneda: ${config.currency}.
+- Jornada: ${config.workdayHours} horas.
+- FCAS sugerido: ${config.defaultFcasPct}% (editable, no tasa legal universal).
+- Administración, imprevistos, utilidad, financiamiento, factor contractual e impuesto los calcula el sistema. No los incluyas como recursos.
 
 REGLAS
-1. Respeta todas las medidas suministradas y explica las operaciones en memoria_calculo.
-2. materiales[].cant es consumo POR UNA UNIDAD de partida.
-3. equipos[].cant y mo[].cant son cantidades de la cuadrilla diaria; el sistema divide entre rendimiento.
-4. No inventes códigos COVENIN. Sin certeza usa POR VERIFICAR y covenin_verificado=false.
-5. Usa terminología venezolana: cabilla, friso, pego, encofrado, mezcladora tipo trompo, oficial, ayudante y maestro de obra.
-6. Evita duplicidades y separa actividades que normalmente se pagan como partidas distintas.
-7. Los precios son referencias editables, no cotizaciones vigentes; indícalo en fuente_precio.
-8. FCAS es un porcentaje editable, no una tasa legal universal.
-9. No inventes materiales para demoliciones ni mano de obra para suministros puros.
-10. Devuelve todos los campos solicitados aunque algún arreglo de recursos deba quedar vacío.
-11. Devuelve exclusivamente JSON, sin Markdown ni comentarios externos.
+1. Respeta medidas expresas y demuestra el cómputo en memoria_calculo.
+2. cantidad es el cómputo TOTAL de la partida.
+3. materiales[].cant es consumo por UNA unidad de partida.
+4. equipos[].cant y mo[].cant son cantidades de la cuadrilla diaria; el sistema divide entre rendimiento.
+5. No inventes códigos COVENIN. Sin fuente segura usa POR VERIFICAR y covenin_verificado=false.
+6. No dupliques actividades o recursos. Señala actividades separables en exclusiones o advertencias.
+7. No inventes materiales en demoliciones ni mano de obra en suministros puros.
+8. Usa unidades normalizadas: m, ml, m2, m3, kg, t, l, und, día, h.
+9. Cada precio requiere fuente, fecha y estado de verificación.
+10. Un precio estimado por IA debe usar precio_verificado=false, fuente_precio="Estimación IA no verificada" y fecha_precio="".
+11. Nunca presentes una ausencia de información como verificada.
+12. Incluye desperdicio, acarreo interno, seguridad, andamios o izaje solo cuando sean aplicables.
+13. Devuelve todos los campos y exclusivamente JSON válido.
 
-REFERENCIAS EDITABLES CUANDO NO HAYA COTIZACIÓN
-Cemento 42,5 kg 9 USD/saco; bloque 15 cm 0,70 USD/und; bloque 20 cm 1,10 USD/und; arena 25 USD/m3; piedra 30 USD/m3; agua 2 USD/m3; cabilla 3/8 5,50 USD/ml; cabilla 1/2 9 USD/ml; alambre 3 USD/kg; pintura caucho 40 USD/gal; sellador 25 USD/gal; oficial 35 USD/día; ayudante 22 USD/día; maestro 45 USD/día; pintor 35 USD/día; carpintero 38 USD/día; mezcladora 25 USD/día; vibradora 20 USD/día; andamio 5 USD/día/módulo.`;
+${catalogContext(catalog)}`;
 }
 
 function task(prompt, candidate = null) {
-  if (!candidate) return `Elabora el APU de esta partida:\n\n${prompt}`;
-  return `Audita y corrige este APU sin cambiar las medidas expresas del alcance. Devuelve el APU final completo en JSON.\n\nALCANCE:\n${prompt}\n\nAPU CANDIDATO:\n${JSON.stringify(candidate)}`;
+  if (!candidate) return `Elabora el APU del siguiente alcance:\n\n${prompt}`;
+  return `Audita y mejora este APU sin cambiar las medidas expresas. Corrige unidad, cómputo, rendimiento, recursos, duplicidades y trazabilidad. Devuelve el APU final completo.\n\nALCANCE:\n${prompt}\n\nCANDIDATO:\n${JSON.stringify(candidate)}`;
 }
 
 function providerError(provider, model, status, message) {
-  const error = new Error(text(message, 1000) || `${provider} falló`);
+  const error = new Error(text(message, 1200) || `${provider} falló`);
   error.provider = provider;
   error.model = model;
   error.status = Number(status) || 0;
   return error;
 }
 
-async function fetchTimeout(url, options, timeoutMs, provider, model, externalSignal = null) {
+async function fetchWithTimeout(url, options, provider, model, signal = null, timeoutMs = MODEL_TIMEOUT_MS) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
-  const abortFromExternal = () => controller.abort();
-  if (externalSignal) {
-    if (externalSignal.aborted) controller.abort();
-    else externalSignal.addEventListener('abort', abortFromExternal, { once: true });
+  const abort = () => controller.abort();
+  if (signal) {
+    if (signal.aborted) controller.abort();
+    else signal.addEventListener('abort', abort, { once: true });
   }
   try {
     return await fetch(url, { ...options, signal: controller.signal });
@@ -343,91 +232,115 @@ async function fetchTimeout(url, options, timeoutMs, provider, model, externalSi
     throw providerError(provider, model, 0, error?.message || 'Error de red');
   } finally {
     clearTimeout(timer);
-    if (externalSignal) externalSignal.removeEventListener('abort', abortFromExternal);
+    signal?.removeEventListener('abort', abort);
   }
 }
 
 function openAIText(payload) {
-  if (typeof payload?.output_text === 'string' && payload.output_text.trim()) return payload.output_text.trim();
+  if (typeof payload?.output_text === 'string') return payload.output_text.trim();
   const parts = [];
-  for (const item of array(payload?.output)) {
-    for (const content of array(item?.content)) {
+  for (const item of asArray(payload?.output)) {
+    for (const content of asArray(item?.content)) {
       if (typeof content?.text === 'string') parts.push(content.text);
     }
   }
   return parts.join('').trim();
 }
 
-async function callOpenAI({ model, prompt, tipoCliente, altura, apiKey, candidate = null, schema = true, timeoutMs = MODEL_TIMEOUT_MS, signal = null }) {
+async function callOpenAI({ model, prompt, context, apiKey, candidate = null, schema = true, signal = null }) {
   const body = {
     model,
-    instructions: engineeringInstructions(tipoCliente, altura),
+    instructions: instructions(context),
     input: task(prompt, candidate),
     reasoning: { effort: candidate ? 'low' : 'medium' },
     max_output_tokens: 9000,
     store: false
   };
   if (schema) body.text = { format: { type: 'json_schema', name: 'seinca_apu', strict: true, schema: APU_SCHEMA } };
-
-  const response = await fetchTimeout('https://api.openai.com/v1/responses', {
+  const response = await fetchWithTimeout('https://api.openai.com/v1/responses', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify(body)
-  }, timeoutMs, 'openai', model, signal);
-
+  }, 'openai', model, signal);
   const raw = await response.text();
-  let payload = null;
-  try { payload = raw ? JSON.parse(raw) : null; } catch { }
+  let payload;
+  try { payload = raw ? JSON.parse(raw) : null; } catch { payload = null; }
   if (!response.ok) throw providerError('openai', model, response.status, payload?.error?.message || raw || `HTTP ${response.status}`);
   const output = openAIText(payload);
   if (!output) throw providerError('openai', model, 502, 'Respuesta vacía');
-  try {
-    return { apu: normalizeApu(parseJson(output), prompt, `OpenAI ${model}`), model, provider: 'openai' };
-  } catch (error) {
-    throw providerError('openai', model, 422, error?.message || 'Respuesta inválida');
+  const apu = normalizeApu(parseJson(output), prompt, `OpenAI ${model}`);
+  return { apu, provider: 'openai', model, usage: payload?.usage };
+}
+
+function interactionText(payload) {
+  if (typeof payload?.output_text === 'string') return payload.output_text.trim();
+  if (typeof payload?.output === 'string') return payload.output.trim();
+  const pieces = [];
+  for (const output of asArray(payload?.outputs || payload?.output)) {
+    if (typeof output?.text === 'string') pieces.push(output.text);
+    for (const part of asArray(output?.content || output?.parts)) if (typeof part?.text === 'string') pieces.push(part.text);
   }
+  return pieces.join('').trim();
 }
 
-function geminiText(payload) {
-  return array(payload?.candidates?.[0]?.content?.parts).map((part) => part?.text || '').join('').trim();
+function generateContentText(payload) {
+  return asArray(payload?.candidates?.[0]?.content?.parts).map((part) => part?.text || '').join('').trim();
 }
 
-async function callGemini({ model, prompt, tipoCliente, altura, apiKey, candidate = null, schema = true, timeoutMs = MODEL_TIMEOUT_MS, signal = null }) {
-  const generationConfig = {
-    temperature: 0.1,
-    topP: 0.85,
-    maxOutputTokens: 9000,
-    responseMimeType: 'application/json'
-  };
-  if (schema) generationConfig.responseJsonSchema = APU_SCHEMA;
-
-  const response = await fetchTimeout(
-    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: engineeringInstructions(tipoCliente, altura) }] },
-        contents: [{ role: 'user', parts: [{ text: task(prompt, candidate) }] }],
-        generationConfig
-      })
-    },
-    timeoutMs,
-    'gemini',
+async function callGeminiInteractions({ model, prompt, context, apiKey, candidate = null, schema = true, signal = null }) {
+  const body = {
     model,
-    signal
-  );
-
+    input: task(prompt, candidate),
+    system_instruction: instructions(context),
+    generation_config: { temperature: 0.1, max_output_tokens: 9000 },
+    store: false
+  };
+  if (schema) body.response_format = { type: 'json_schema', json_schema: { name: 'seinca_apu', schema: APU_SCHEMA } };
+  const response = await fetchWithTimeout('https://generativelanguage.googleapis.com/v1beta/interactions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+    body: JSON.stringify(body)
+  }, 'gemini', model, signal);
   const raw = await response.text();
-  let payload = null;
-  try { payload = raw ? JSON.parse(raw) : null; } catch { }
+  let payload;
+  try { payload = raw ? JSON.parse(raw) : null; } catch { payload = null; }
   if (!response.ok) throw providerError('gemini', model, response.status, payload?.error?.message || raw || `HTTP ${response.status}`);
-  const output = geminiText(payload);
-  if (!output) throw providerError('gemini', model, 502, 'Respuesta vacía');
+  const output = interactionText(payload);
+  if (!output) throw providerError('gemini', model, 502, 'Respuesta vacía en Interactions API');
+  return { apu: normalizeApu(parseJson(output), prompt, `Gemini ${model}`), provider: 'gemini', model, endpoint: 'interactions' };
+}
+
+async function callGeminiGenerateContent({ model, prompt, context, apiKey, candidate = null, schema = true, signal = null }) {
+  const generationConfig = { temperature: 0.1, topP: 0.85, maxOutputTokens: 9000, responseMimeType: 'application/json' };
+  if (schema) generationConfig.responseJsonSchema = APU_SCHEMA;
+  const response = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: instructions(context) }] },
+      contents: [{ role: 'user', parts: [{ text: task(prompt, candidate) }] }],
+      generationConfig
+    })
+  }, 'gemini', model, signal);
+  const raw = await response.text();
+  let payload;
+  try { payload = raw ? JSON.parse(raw) : null; } catch { payload = null; }
+  if (!response.ok) throw providerError('gemini', model, response.status, payload?.error?.message || raw || `HTTP ${response.status}`);
+  const output = generateContentText(payload);
+  if (!output) throw providerError('gemini', model, 502, 'Respuesta vacía en generateContent');
+  return { apu: normalizeApu(parseJson(output), prompt, `Gemini ${model}`), provider: 'gemini', model, endpoint: 'generateContent' };
+}
+
+async function callGemini(options) {
   try {
-    return { apu: normalizeApu(parseJson(output), prompt, `Gemini ${model}`), model, provider: 'gemini' };
-  } catch (error) {
-    throw providerError('gemini', model, 422, error?.message || 'Respuesta inválida');
+    return await callGeminiInteractions(options);
+  } catch (firstError) {
+    if (options.signal?.aborted) throw firstError;
+    try { return await callGeminiGenerateContent(options); }
+    catch (secondError) {
+      secondError.previous = firstError;
+      throw secondError;
+    }
   }
 }
 
@@ -440,36 +353,34 @@ function attempt(error) {
   };
 }
 
+function ensureUsable(result, context) {
+  const validation = validateApu(result.apu, context.config, { stage: 'draft' });
+  const fatal = validation.errors.filter((message) => !message.includes('precio'));
+  if (fatal.length) throw providerError(result.provider, result.model, 422, fatal.join(' '));
+  return { ...result, validation };
+}
+
 async function tryModel(provider, model, options, signal) {
-  const call = provider === 'openai' ? callOpenAI : callGemini;
+  const caller = provider === 'openai' ? callOpenAI : callGemini;
   const attempts = [];
-  try {
-    const result = await call({ ...options, model, schema: true, timeoutMs: MODEL_TIMEOUT_MS, signal });
-    return { ...result, attempts };
-  } catch (error) {
-    attempts.push(attempt(error));
-    if (![400, 422, 502].includes(Number(error?.status)) || signal?.aborted) {
-      const failure = new Error(`${provider} ${model} no produjo un APU válido`);
-      failure.attempts = attempts;
-      throw failure;
+  for (const schema of [true, false]) {
+    try {
+      const result = await caller({ ...options, model, schema, signal });
+      return { ...ensureUsable(result, options.context), attempts };
+    } catch (error) {
+      attempts.push(attempt(error));
+      if (signal?.aborted) break;
+      if (schema && ![400, 422, 502].includes(Number(error?.status))) break;
     }
   }
-
-  try {
-    const result = await call({ ...options, model, schema: false, timeoutMs: 18000, signal });
-    return { ...result, attempts };
-  } catch (error) {
-    attempts.push(attempt(error));
-    const failure = new Error(`${provider} ${model} no produjo un APU válido`);
-    failure.attempts = attempts;
-    throw failure;
-  }
+  const failure = new Error(`${provider} ${model} no produjo un APU utilizable`);
+  failure.attempts = attempts;
+  throw failure;
 }
 
 async function runProvider(provider, options) {
   const models = [...new Set(provider === 'openai' ? OPENAI_MODELS : GEMINI_MODELS)].slice(0, 2);
   if (!models.length) throw new Error(`No hay modelos configurados para ${provider}`);
-
   const cancel = new AbortController();
   const jobs = models.map((model) => tryModel(provider, model, options, cancel.signal));
   try {
@@ -478,151 +389,136 @@ async function runProvider(provider, options) {
     return winner;
   } catch (aggregate) {
     cancel.abort();
-    const attempts = [];
-    for (const reason of array(aggregate?.errors)) attempts.push(...array(reason?.attempts));
     const error = new Error(`${provider === 'openai' ? 'OpenAI' : 'Gemini'} no produjo un APU utilizable`);
-    error.attempts = attempts;
+    error.attempts = asArray(aggregate?.errors).flatMap((reason) => asArray(reason?.attempts));
     throw error;
   }
 }
 
-function score(apu) {
+function score(result) {
+  const apu = result?.apu;
   if (!apu) return -Infinity;
-  return (apu.materiales?.length || 0) * 2
-    + (apu.equipos?.length || 0) * 2
-    + (apu.mo?.length || 0) * 3
-    + Math.min(20, Math.floor((apu.descripcion_tecnica?.length || 0) / 180))
-    + Math.min(15, Math.floor((apu.memoria_calculo?.length || 0) / 150))
-    - (apu.advertencias?.length || 0);
+  return (apu.materiales?.length || 0) * 3 + (apu.equipos?.length || 0) * 2 + (apu.mo?.length || 0) * 4
+    + Math.min(20, Math.floor((apu.memoria_calculo?.length || 0) / 180))
+    + Math.min(15, Math.floor((apu.descripcion_tecnica?.length || 0) / 160))
+    - (result.validation?.warnings?.length || 0) * 2;
 }
 
-function compareApus(a, b, aName, bName) {
-  if (!b) return a;
-  const chosen = structuredClone(score(b) > score(a) ? b : a);
-  const warnings = [...array(chosen.advertencias)];
-  if (a.unidad !== b.unidad) warnings.push(`Revisión cruzada: ${aName} propuso unidad ${a.unidad} y ${bName} ${b.unidad}.`);
-  const difference = (x, y) => Math.abs(number(x) - number(y)) / Math.max(Math.abs(number(x)), Math.abs(number(y)), 0.000001);
-  if (difference(a.cantidad, b.cantidad) > 0.05) warnings.push(`Revisión cruzada: diferencia de cómputo (${a.cantidad} vs ${b.cantidad}).`);
-  if (difference(a.rendimiento, b.rendimiento) > 0.30) warnings.push(`Revisión cruzada: diferencia importante de rendimiento (${a.rendimiento} vs ${b.rendimiento}).`);
-  chosen.advertencias = [...new Set(warnings)].slice(0, 12);
-  return chosen;
+function compareResults(openai, gemini) {
+  const selected = cloneResult(score(gemini) > score(openai) ? gemini : openai);
+  const warnings = [...asArray(selected.apu.advertencias)];
+  if (openai.apu.unidad !== gemini.apu.unidad) warnings.push(`Contraste IA: unidades distintas (${openai.apu.unidad} vs ${gemini.apu.unidad}).`);
+  const ratio = (a, b) => Math.abs(number(a) - number(b)) / Math.max(Math.abs(number(a)), Math.abs(number(b)), 0.000001);
+  if (ratio(openai.apu.cantidad, gemini.apu.cantidad) > 0.05) warnings.push(`Contraste IA: diferencia de cómputo (${openai.apu.cantidad} vs ${gemini.apu.cantidad}).`);
+  if (ratio(openai.apu.rendimiento, gemini.apu.rendimiento) > 0.30) warnings.push(`Contraste IA: diferencia importante de rendimiento (${openai.apu.rendimiento} vs ${gemini.apu.rendimiento}).`);
+  selected.apu.advertencias = [...new Set(warnings)].slice(0, 20);
+  return selected;
 }
 
-async function generate({ prompt, tipoCliente, altura, mode, openaiKey, geminiKey }) {
+function cloneResult(result) {
+  return { ...result, apu: structuredClone(result.apu), validation: structuredClone(result.validation) };
+}
+
+async function generate({ prompt, mode, context, openaiKey, geminiKey }) {
   const jobs = [];
-  const common = { prompt, tipoCliente, altura };
-  if (openaiKey && mode !== 'GEMINI') jobs.push({ provider: 'openai', promise: runProvider('openai', { ...common, apiKey: openaiKey }) });
-  if (geminiKey && mode !== 'OPENAI') jobs.push({ provider: 'gemini', promise: runProvider('gemini', { ...common, apiKey: geminiKey }) });
-  if (!jobs.length) throw new Error('El motor seleccionado no tiene una clave API configurada');
+  const options = { prompt, context };
+  if (openaiKey && mode !== 'GEMINI') jobs.push({ provider: 'openai', promise: runProvider('openai', { ...options, apiKey: openaiKey }) });
+  if (geminiKey && mode !== 'OPENAI') jobs.push({ provider: 'gemini', promise: runProvider('gemini', { ...options, apiKey: geminiKey }) });
+  if (!jobs.length) throw new Error('El motor seleccionado no tiene una clave API configurada.');
 
   if (mode === 'AUTO') {
     try {
       const winner = await Promise.any(jobs.map((job) => job.promise));
-      return {
-        apu: winner.apu,
-        generator: `${winner.provider === 'openai' ? 'OpenAI' : 'Gemini'} ${winner.model}`,
-        reviewer: null,
-        attempts: winner.attempts || []
-      };
+      return { selected: winner, generator: `${winner.provider === 'openai' ? 'OpenAI' : 'Gemini'} ${winner.model}`, reviewer: null, attempts: winner.attempts || [] };
     } catch (aggregate) {
-      const attempts = [];
-      for (const reason of array(aggregate?.errors)) attempts.push(...array(reason?.attempts));
-      const error = new Error('Los motores configurados no produjeron un APU utilizable');
-      error.attempts = attempts;
+      const error = new Error('Los motores configurados no produjeron un APU utilizable.');
+      error.attempts = asArray(aggregate?.errors).flatMap((reason) => asArray(reason?.attempts));
       throw error;
     }
   }
 
   const settled = await Promise.allSettled(jobs.map((job) => job.promise));
-  const successes = [];
-  const attempts = [];
-  settled.forEach((result) => {
-    if (result.status === 'fulfilled') {
-      successes.push(result.value);
-      attempts.push(...array(result.value.attempts));
-    } else {
-      attempts.push(...array(result.reason?.attempts));
-    }
-  });
-
+  const successes = settled.filter((result) => result.status === 'fulfilled').map((result) => result.value);
+  const attempts = settled.flatMap((result) => result.status === 'fulfilled' ? asArray(result.value.attempts) : asArray(result.reason?.attempts));
   if (!successes.length) {
-    const error = new Error('Los motores configurados no produjeron un APU utilizable');
+    const error = new Error('Los motores configurados no produjeron un APU utilizable.');
     error.attempts = attempts;
     throw error;
   }
-
   if (successes.length === 1) {
     const only = successes[0];
-    return {
-      apu: only.apu,
-      generator: `${only.provider === 'openai' ? 'OpenAI' : 'Gemini'} ${only.model}`,
-      reviewer: null,
-      attempts
-    };
+    return { selected: only, generator: `${only.provider === 'openai' ? 'OpenAI' : 'Gemini'} ${only.model}`, reviewer: null, attempts };
   }
-
-  const openai = successes.find((item) => item.provider === 'openai');
-  const gemini = successes.find((item) => item.provider === 'gemini');
+  const openai = successes.find((result) => result.provider === 'openai');
+  const gemini = successes.find((result) => result.provider === 'gemini');
+  const selected = compareResults(openai, gemini);
   return {
-    apu: compareApus(openai.apu, gemini.apu, `OpenAI ${openai.model}`, `Gemini ${gemini.model}`),
-    generator: `OpenAI ${openai.model}`,
-    reviewer: `Gemini ${gemini.model} (revisión cruzada)`,
+    selected,
+    generator: `${selected.provider === 'openai' ? 'OpenAI' : 'Gemini'} ${selected.model}`,
+    reviewer: `${selected.provider === 'openai' ? `Gemini ${gemini.model}` : `OpenAI ${openai.model}`} (contraste cruzado)`,
     attempts
   };
 }
 
 export default async function handler(req, res) {
-  const corsAllowed = applyCors(req, res);
-  res.setHeader('X-SEINCA-Version', VERSION);
-  if (req.method === 'OPTIONS') return res.status(corsAllowed ? 204 : 403).end();
-  if (!corsAllowed) return res.status(403).json({ ok: false, error: 'Origen no autorizado' });
+  const acceptedOrigin = applyCors(req, res);
+  const id = requestId();
+  res.setHeader('X-SEINCA-Version', APP_VERSION);
+  res.setHeader('X-Request-Id', id);
+  res.setHeader('Cache-Control', 'no-store');
+  if (req.method === 'OPTIONS') return res.status(acceptedOrigin ? 204 : 403).end();
+  if (!acceptedOrigin) return res.status(403).json({ ok: false, error: 'Origen no autorizado', requestId: id });
 
   const openaiKey = process.env.OPENAI_API_KEY;
   const geminiKey = process.env.GEMINI_API_KEY || process.env.GEMINT_API_KEY;
-
   if (req.method === 'HEAD') return res.status(204).end();
   if (req.method === 'GET') {
     return res.status(200).json({
       ok: Boolean(openaiKey || geminiKey),
-      service: 'SEINCA Parallel Hybrid APU AI',
-      version: VERSION,
+      service: 'SEINCA Enterprise Hybrid APU AI',
+      version: APP_VERSION,
       configured: { openai: Boolean(openaiKey), gemini: Boolean(geminiKey) },
-      models: { openai: OPENAI_MODELS, gemini: GEMINI_MODELS }
+      models: { openai: OPENAI_MODELS, gemini: GEMINI_MODELS },
+      requestId: id
     });
   }
-
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'GET, HEAD, POST, OPTIONS');
-    return res.status(405).json({ ok: false, error: 'Método no permitido' });
+    return res.status(405).json({ ok: false, error: 'Método no permitido', requestId: id });
   }
-  if (!rateLimit(req)) return res.status(429).json({ ok: false, error: 'Demasiadas solicitudes', detalle: 'Espera un minuto y vuelve a intentar.' });
-  if (!openaiKey && !geminiKey) return res.status(500).json({ ok: false, error: 'Motores no configurados', detalle: 'Configura OPENAI_API_KEY o GEMINI_API_KEY en Vercel.' });
+  if (!checkRateLimit(req)) return res.status(429).json({ ok: false, error: 'Demasiadas solicitudes', detalle: 'Espera un minuto y vuelve a intentar.', requestId: id });
+  if (!openaiKey && !geminiKey) return res.status(503).json({ ok: false, error: 'Motores no configurados', detalle: 'Configura OPENAI_API_KEY o GEMINI_API_KEY en Vercel.', requestId: id });
 
   const prompt = text(req.body?.prompt, MAX_PROMPT_LENGTH);
-  const tipoCliente = clientType(req.body?.tipoCliente || req.body?.clientType);
-  const altura = Math.max(0, Math.min(300, number(req.body?.altura ?? req.body?.height, 0)));
+  if (prompt.length < 15) return res.status(400).json({ ok: false, error: 'Descripción insuficiente', detalle: 'Describe la partida con al menos 15 caracteres.', requestId: id });
   const mode = providerMode(req.body?.provider || req.body?.motor);
-  if (prompt.length < 10) return res.status(400).json({ ok: false, error: 'Descripción insuficiente', detalle: 'Describe la partida con al menos 10 caracteres.' });
+  const context = {
+    tipoCliente: clientType(req.body?.tipoCliente || req.body?.clientType),
+    altura: Math.max(0, Math.min(300, number(req.body?.altura ?? req.body?.height, 0))),
+    config: normalizeConfig(req.body?.config || {}),
+    catalog: asArray(req.body?.catalog)
+  };
 
   try {
-    const result = await generate({ prompt, tipoCliente, altura, mode, openaiKey, geminiKey });
+    const result = await generate({ prompt, mode, context, openaiKey, geminiKey });
     return res.status(200).json({
       ok: true,
-      data: result.apu,
+      data: result.selected.apu,
       modelo: result.reviewer ? `${result.generator} + ${result.reviewer}` : result.generator,
       motor: { solicitado: mode, generador: result.generator, revisor: result.reviewer, modo: result.reviewer ? 'dual' : 'simple' },
-      tipoCliente,
-      altura,
-      advertencias_motor: result.attempts.slice(-10)
+      advertencias_motor: result.attempts.slice(-12),
+      quality: result.selected.validation,
+      requestId: id
     });
   } catch (error) {
-    const attempts = array(error?.attempts).slice(-12);
-    console.error('[SEINCA]', { message: error?.message, attempts });
+    const attempts = asArray(error?.attempts).slice(-12);
+    console.error('[SEINCA Enterprise]', { requestId: id, message: error?.message, attempts });
     return res.status(502).json({
       ok: false,
       error: 'No fue posible generar el APU',
-      detalle: text(error?.message, 800),
-      intentos: attempts
+      detalle: text(error?.message, 900),
+      intentos: attempts,
+      requestId: id
     });
   }
 }
