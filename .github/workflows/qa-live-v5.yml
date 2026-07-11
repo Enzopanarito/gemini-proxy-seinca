@@ -1,0 +1,99 @@
+name: QA Live SEINCA Enterprise v5
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  enterprise-live-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar dependencias
+        run: npm install --no-audit --no-fund
+      - name: Ejecutar QA estático y unitario
+        run: npm run qa
+      - name: Esperar propagación de producción
+        run: sleep 15
+      - name: Verificar frontend empresarial publicado
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location https://gemini-proxy-seinca.vercel.app/ -o /tmp/index.html
+          curl --fail --silent --show-error --location https://gemini-proxy-seinca.vercel.app/app.js -o /tmp/app.js
+          curl --fail --silent --show-error --location https://gemini-proxy-seinca.vercel.app/styles.css -o /tmp/styles.css
+          grep -F "SEINCA ENTERPRISE" /tmp/index.html
+          grep -F "Catálogo trazable de precios" /tmp/index.html
+          grep -F "Ingeniero Civil responsable del presupuesto · SEINCA" /tmp/index.html
+          grep -F "validateApu" /tmp/app.js
+          grep -F ".quality-panel" /tmp/styles.css
+          echo FRONTEND_V5_OK
+      - name: Verificar proveedores de IA
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --max-time 35 https://gemini-proxy-seinca.vercel.app/api/health -o /tmp/health.json
+          cat /tmp/health.json
+          node -e "const d=require('/tmp/health.json'); if(!d.ok || (!d.providers?.openai?.ok && !d.providers?.gemini?.ok)) throw new Error('No hay proveedor IA operativo'); console.log('HEALTH_OK', d.mode, d.version);"
+      - name: Generar y validar tres APU reales
+        run: |
+          node <<'NODE'
+          const endpoint = 'https://gemini-proxy-seinca.vercel.app/api/gemini';
+          const painting = 'Aplicación de pintura de caucho de primera calidad en paredes interiores, dos manos, sobre 180 m2 de superficie previamente preparada, incluyendo sellador, resane menor y limpieza.';
+          const cases = [
+            { name: 'pared', prompt: 'Construcción de pared de bloque de concreto de 15 cm, de 20 m de largo por 3 m de alto, incluyendo mortero de pega, replanteo, andamios menores y limpieza final.', altura: 0 },
+            { name: 'pintura', prompt: painting, altura: 0 },
+            { name: 'demolición', prompt: 'Demolición controlada de 35 m3 de elementos de mampostería dañados, carga manual, acarreo interno de 40 m y disposición de escombros en sitio autorizado, trabajando a 6 m de altura con andamios y medidas de seguridad.', altura: 6 }
+          ];
+          const config = { currency:'USD', workdayHours:8, administrationPct:15, contingencyPct:5, profitPct:10, financingPct:0, taxPct:16, clientFactor:1, defaultFcasPct:250, maxPriceAgeDays:90, requireVerifiedPricesForApproval:true };
+          for (const test of cases) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 59000);
+            const started = Date.now();
+            let response;
+            try {
+              response = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, signal:controller.signal, body:JSON.stringify({ prompt:test.prompt, provider:'AUTO', tipoCliente:'PRIVADO', altura:test.altura, config, catalog:[] }) });
+            } finally { clearTimeout(timer); }
+            const body = await response.json().catch(() => null);
+            console.log(test.name, response.status, Date.now()-started, body?.modelo, body?.requestId);
+            if (!response.ok || !body?.ok) throw new Error(`${test.name}: ${body?.detalle || body?.error}; ${JSON.stringify(body?.intentos || [])}`);
+            const apu = body.data;
+            if (!apu?.descripcion_tecnica || !apu?.unidad || !(apu?.cantidad > 0) || !(apu?.rendimiento > 0)) throw new Error(`${test.name}: campos principales inválidos`);
+            const resources = (apu.materiales?.length || 0) + (apu.equipos?.length || 0) + (apu.mo?.length || 0);
+            if (resources < 1) throw new Error(`${test.name}: sin recursos`);
+            if (!body.requestId) throw new Error(`${test.name}: sin requestId`);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+          }
+          console.log('THREE_LIVE_APU_TESTS_PASSED');
+          NODE
+      - name: Generar PDF profesional real
+        run: |
+          cat > /tmp/project.json <<'JSON'
+          {
+            "project": {
+              "schemaVersion": 5,
+              "appVersion": "5.0.0-enterprise-foundation",
+              "id": "qa-project",
+              "general": {"code":"QA-001","revision":"0","status":"APROBADO","obra":"Prueba de producción SEINCA","cliente":"QA","ubicacion":"Venezuela","fecha":"2026-07-11","validityDays":15,"paymentTerms":"Contado","notes":""},
+              "config": {"currency":"USD","locale":"es-VE","workdayHours":8,"administrationPct":15,"contingencyPct":5,"profitPct":10,"financingPct":0,"taxPct":16,"clientFactor":1,"defaultFcasPct":250,"maxPriceAgeDays":90,"requireVerifiedPricesForApproval":true},
+              "catalog": [],
+              "items": [{
+                "id":"qa-item","status":"APROBADO","technicalReview":true,"prompt":"Pintura de pared","clientType":"PRIVADO","height":0,
+                "apuData": {"covenin":"POR VERIFICAR","covenin_verificado":false,"criterio_covenin":"Pendiente","unidad":"m2","cantidad":100,"rendimiento":50,"fcas":100,"descripcion_tecnica":"Aplicación de pintura en paredes interiores, dos manos.","memoria_calculo":"10 x 10 = 100 m2","justificacion_rendimiento":"Un pintor y un ayudante.","criterio_ejecucion":"Preparación y pintura.","supuestos":[],"exclusiones":[],"advertencias":[],"materiales":[{"desc":"Pintura","und":"gal","cant":0.1,"precio":40,"fuente_precio":"Cotización QA","fecha_precio":"2026-07-11","precio_verificado":true}],"equipos":[],"mo":[{"cargo":"Pintor","cant":1,"jornal":35,"fuente_precio":"Nómina QA","fecha_precio":"2026-07-11","precio_verificado":true}]}
+              }],
+              "logo":"","auditTrail":[],"createdAt":"2026-07-11T00:00:00.000Z","updatedAt":"2026-07-11T00:00:00.000Z"
+            }
+          }
+          JSON
+          curl --fail --silent --show-error --location --max-time 60 -H 'Content-Type: application/json' --data-binary @/tmp/project.json https://gemini-proxy-seinca.vercel.app/api/pdf -D /tmp/pdf-headers.txt -o /tmp/seinca.pdf
+          head -c 4 /tmp/seinca.pdf | grep -F '%PDF'
+          test $(stat -c%s /tmp/seinca.pdf) -gt 5000
+          grep -i 'x-seinca-document-hash' /tmp/pdf-headers.txt
+          echo SERVER_PDF_OK
