@@ -25,37 +25,52 @@ if (!scripts.length) {
   }
 }
 
+try {
+  new vm.SourceTextModule(api, { identifier: 'api/gemini.js' });
+} catch (error) {
+  fail(`JavaScript inválido en api/gemini.js: ${error.message}`);
+}
+
 const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
 const duplicates = ids.filter((id, index) => ids.indexOf(id) !== index);
 if (duplicates.length) fail(`IDs duplicados: ${[...new Set(duplicates)].join(', ')}`);
 
-const referencedIds = [...scripts.join('\n').matchAll(/byId\(['"]([^'"]+)['"]\)/g)].map((match) => match[1]);
+const inlineJs = scripts.join('\n');
+const referencedIds = [
+  ...inlineJs.matchAll(/\$\(['"]([^'"]+)['"]\)/g),
+  ...inlineJs.matchAll(/getElementById\(['"]([^'"]+)['"]\)/g)
+].map((match) => match[1]);
 const missingIds = [...new Set(referencedIds.filter((id) => !ids.includes(id)))];
 if (missingIds.length) fail(`IDs usados por JavaScript y ausentes en el DOM: ${missingIds.join(', ')}`);
 
 const requiredFrontendTokens = [
-  'function calculateApu()',
-  'function saveItemToBudget()',
+  'function calculate()',
+  'function generateApu()',
+  'function saveItem()',
   'function exportPdf()',
-  'const STATE_FACTOR = 3;',
-  "const IVA_RATE = 0.16;"
+  'const IVA = 0.16;',
+  "$('clientType').value === 'ESTADO' ? 3 : 1",
+  'Ingeniero Civil responsable del presupuesto · SEINCA',
+  'Detalle técnico:'
 ];
 for (const token of requiredFrontendTokens) {
   if (!html.includes(token)) fail(`Falta componente crítico del frontend: ${token}`);
 }
 
 const requiredApiTokens = [
-  "'gemini-3.5-flash'",
+  "const VERSION = '4.0.0-stable-hybrid'",
   'const APU_SCHEMA',
-  'response_format:',
-  'thinking_level:',
-  'checkRateLimit(req)',
-  'covenin="POR VERIFICAR"'
+  'async function callOpenAI',
+  'async function callGemini',
+  'Promise.any',
+  'OPENAI_API_KEY',
+  'GEMINI_API_KEY',
+  'function normalizeApu'
 ];
 for (const token of requiredApiTokens) {
   if (!api.includes(token)) fail(`Falta componente crítico del backend: ${token}`);
 }
 
 if (!process.exitCode) {
-  console.log(`SEINCA validado: ${ids.length} IDs únicos, ${referencedIds.length} referencias DOM y sintaxis correcta.`);
+  console.log(`SEINCA v4 validado: ${ids.length} IDs únicos, ${referencedIds.length} referencias DOM y sintaxis correcta.`);
 }
