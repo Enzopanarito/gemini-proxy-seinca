@@ -1,10 +1,10 @@
 import { APP_VERSION, normalizeConfig, text, validateApu } from '../lib/apu-core.js';
 import { LOCATION, RESEARCH_SCHEMA, buildResearchPrompt, normalizeGroundedResult, scoreGrounded } from '../lib/grounded-research.js';
 
-const ENGINE_VERSION = '6.0.0-grounded-caracas';
+const ENGINE_VERSION = '6.0.1-grounded-caracas';
 const OPENAI_MODELS = String(process.env.OPENAI_MODELS || process.env.OPENAI_MODEL || 'gpt-5.6,gpt-5.5').split(',').map((v) => v.trim()).filter(Boolean);
-const GEMINI_MODELS = String(process.env.GEMINI_MODELS || process.env.GEMINI_MODEL || 'gemini-3.5-flash,gemini-2.5-flash').split(',').map((v) => v.trim()).filter(Boolean);
-const MODEL_TIMEOUT_MS = 52000;
+const GEMINI_MODELS = String(process.env.GEMINI_MODELS || process.env.GEMINI_MODEL || 'gemini-3.5-flash,gemini-2.5-flash-lite,gemini-2.5-flash').split(',').map((v) => v.trim()).filter(Boolean);
+const MODEL_TIMEOUT_MS = 50000;
 const RATE_LIMIT = Number.parseInt(process.env.RATE_LIMIT_PER_MINUTE || '20', 10) || 20;
 const buckets = new Map();
 const asArray = (value) => Array.isArray(value) ? value : [];
@@ -65,7 +65,7 @@ async function callOpenAI({ model, prompt, context, apiKey, schema = true, signa
   const body = {
     model, reasoning: { effort: 'medium' },
     tools: [{ type: 'web_search', search_context_size: 'high', user_location: { type: 'approximate', country: 'VE', city: 'Caracas', region: 'Distrito Capital' } }],
-    tool_choice: 'required', include: ['web_search_call.action.sources'], input: buildResearchPrompt({ prompt, ...context }), max_output_tokens: 10000, store: false
+    tool_choice: 'required', include: ['web_search_call.action.sources'], input: buildResearchPrompt({ prompt, ...context }), max_output_tokens: 9000, store: false
   };
   if (schema) body.text = { format: { type: 'json_schema', name: 'seinca_grounded_apu', strict: true, schema: RESEARCH_SCHEMA } };
   const payload = await fetchWithTimeout('https://api.openai.com/v1/responses', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` }, body: JSON.stringify(body) }, 'openai', model, signal);
@@ -89,8 +89,8 @@ function geminiSources(payload) {
   return { searched, urls: [...new Set(urls)] };
 }
 async function callGemini({ model, prompt, context, apiKey, schema = true, signal }) {
-  const body = { model, input: buildResearchPrompt({ prompt, ...context }), tools: [{ type: 'google_search' }], generation_config: { temperature: 0.1, max_output_tokens: 10000 }, store: false };
-  if (schema) body.response_format = { type: 'json_schema', json_schema: { name: 'seinca_grounded_apu', schema: RESEARCH_SCHEMA } };
+  const body = { model, input: buildResearchPrompt({ prompt, ...context }), tools: [{ type: 'google_search' }], generation_config: { temperature: 0.1, max_output_tokens: 9000 }, store: false };
+  if (schema) body.response_format = { type: 'text', mime_type: 'application/json', schema: RESEARCH_SCHEMA };
   const payload = await fetchWithTimeout('https://generativelanguage.googleapis.com/v1beta/interactions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey }, body: JSON.stringify(body) }, 'gemini', model, signal);
   const grounding = geminiSources(payload); if (!grounding.searched || !grounding.urls.length) throw Object.assign(new Error('Gemini no demostró Google Search con fuentes.'), { status: 422, provider: 'gemini', model });
   const raw = parseJson(geminiText(payload)); return { ...normalizeGroundedResult(raw, grounding.urls, prompt, `Gemini ${model}`), provider: 'gemini', model };
@@ -110,7 +110,7 @@ async function tryModel(provider, model, options, signal) {
   const failure = new Error(`${provider} ${model} no produjo un APU investigado utilizable`); failure.attempts = attempts; throw failure;
 }
 async function runProvider(provider, options) {
-  const models = [...new Set(provider === 'openai' ? OPENAI_MODELS : GEMINI_MODELS)].slice(0, 2); const cancel = new AbortController();
+  const models = [...new Set(provider === 'openai' ? OPENAI_MODELS : GEMINI_MODELS)].slice(0, 3); const cancel = new AbortController();
   try { const winner = await Promise.any(models.map((model) => tryModel(provider, model, options, cancel.signal))); cancel.abort(); return winner; }
   catch (aggregate) { cancel.abort(); const error = new Error(`${provider === 'openai' ? 'OpenAI' : 'Gemini'} no pudo generar e investigar el APU`); error.attempts = asArray(aggregate?.errors).flatMap((reason) => asArray(reason?.attempts)); throw error; }
 }
@@ -119,6 +119,10 @@ async function generate({ prompt, mode, context, openaiKey, geminiKey }) {
   if (openaiKey && mode !== 'GEMINI') jobs.push(runProvider('openai', { prompt, context, apiKey: openaiKey }));
   if (geminiKey && mode !== 'OPENAI') jobs.push(runProvider('gemini', { prompt, context, apiKey: geminiKey }));
   if (!jobs.length) throw new Error('El motor seleccionado no tiene una clave API configurada.');
+  if (mode === 'AUTO') {
+    try { const selected = await Promise.any(jobs); return { selected, reviewer: null, attempts: selected.attempts || [] }; }
+    catch (aggregate) { const error = new Error('Los motores no lograron generar un APU con investigación web respaldada.'); error.attempts = asArray(aggregate?.errors).flatMap((reason) => asArray(reason?.attempts)); throw error; }
+  }
   const settled = await Promise.allSettled(jobs); const successes = settled.filter((r) => r.status === 'fulfilled').map((r) => r.value); const attempts = settled.flatMap((r) => r.status === 'rejected' ? asArray(r.reason?.attempts) : asArray(r.value?.attempts));
   if (!successes.length) { const error = new Error('Los motores no lograron generar un APU con investigación web respaldada.'); error.attempts = attempts; throw error; }
   successes.sort((a, b) => scoreGrounded(b) - scoreGrounded(a));
