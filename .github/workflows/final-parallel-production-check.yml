@@ -1,0 +1,93 @@
+name: Final Parallel Production Check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  production-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Wait for production deployment
+        run: sleep 15
+
+      - name: Verify deployed frontend
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location https://gemini-proxy-seinca.vercel.app/ -o /tmp/index.html
+          grep -F "Ingeniero Civil responsable del presupuesto · SEINCA" /tmp/index.html
+          grep -F "const HEALTH_URL = '/api/health';" /tmp/index.html
+          grep -F "Detalle técnico:" /tmp/index.html
+          echo FRONTEND_DEPLOYED_OK
+
+      - name: Verify provider health
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --max-time 30 https://gemini-proxy-seinca.vercel.app/api/health -o /tmp/health.json
+          cat /tmp/health.json
+          node -e "const d=require('/tmp/health.json'); if(!d.providers?.gemini?.ok && !d.providers?.openai?.ok) throw new Error('No operational provider'); console.log('HEALTH_OK', d.mode);"
+
+      - name: Generate five real APUs including repeated flaky case
+        run: |
+          node <<'NODE'
+          const endpoint = 'https://gemini-proxy-seinca.vercel.app/api/gemini';
+          const painting = 'Aplicación de pintura de caucho de primera calidad en paredes interiores, dos manos, sobre 180 m2 de superficie previamente preparada, incluyendo sellador, resane menor y limpieza.';
+          const cases = [
+            { name: 'wall', prompt: 'Construcción de pared de bloque de concreto de 15 cm, de 20 m de largo por 3 m de alto, incluyendo mortero de pega, replanteo, andamios menores y limpieza final.', altura: 0 },
+            { name: 'painting-1', prompt: painting, altura: 0 },
+            { name: 'painting-2', prompt: painting, altura: 0 },
+            { name: 'painting-3', prompt: painting, altura: 0 },
+            { name: 'demolition-height', prompt: 'Demolición controlada de 35 m3 de elementos de mampostería dañados, carga manual, acarreo interno de 40 m y disposición de escombros en sitio autorizado, trabajando a 6 m de altura con andamios y medidas de seguridad.', altura: 6 }
+          ];
+
+          for (let i = 0; i < cases.length; i += 1) {
+            if (i > 0) await new Promise(resolve => setTimeout(resolve, 2500));
+            const test = cases[i];
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 59000);
+            const started = Date.now();
+            let response;
+            try {
+              response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  prompt: test.prompt,
+                  provider: 'AUTO',
+                  tipoCliente: 'PRIVADO',
+                  altura: test.altura
+                }),
+                signal: controller.signal
+              });
+            } finally {
+              clearTimeout(timer);
+            }
+
+            const body = await response.json().catch(() => null);
+            console.log(`\n${test.name.toUpperCase()} HTTP ${response.status} - ${Date.now() - started} ms`);
+            console.log(JSON.stringify({
+              ok: body?.ok,
+              modelo: body?.modelo,
+              error: body?.error,
+              detalle: body?.detalle,
+              intentos: body?.intentos,
+              advertencias_motor: body?.advertencias_motor,
+              unidad: body?.data?.unidad,
+              cantidad: body?.data?.cantidad,
+              rendimiento: body?.data?.rendimiento,
+              recursos: (body?.data?.materiales?.length || 0) + (body?.data?.equipos?.length || 0) + (body?.data?.mo?.length || 0)
+            }, null, 2));
+
+            if (!response.ok || !body?.ok) {
+              throw new Error(`${test.name} failed: ${body?.detalle || body?.error || response.status}; attempts=${JSON.stringify(body?.intentos || [])}`);
+            }
+            const apu = body.data;
+            if (!apu?.descripcion_tecnica || !apu?.unidad || !(apu?.cantidad > 0) || !(apu?.rendimiento > 0)) {
+              throw new Error(`${test.name}: incomplete core fields`);
+            }
+            const resources = (apu.materiales?.length || 0) + (apu.equipos?.length || 0) + (apu.mo?.length || 0);
+            if (resources < 1) throw new Error(`${test.name}: no resources`);
+          }
+          console.log('\nALL_FIVE_PRODUCTION_APU_TESTS_PASSED');
+          NODE
