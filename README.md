@@ -1,26 +1,41 @@
-# SEINCA Enterprise 5
+# SEINCA Enterprise 6
 
-Plataforma local-first para presupuestos y Análisis de Precios Unitarios de construcción, con cálculo determinístico, catálogo trazable de precios, control de aprobación, historial automático, PDF profesional en servidor y comité híbrido OpenAI + Gemini.
+Plataforma local-first para presupuestos y Análisis de Precios Unitarios de construcción en Venezuela. Cada generación de APU ejecuta obligatoriamente una investigación web de precios en Caracas y una búsqueda de referencias COVENIN antes de devolver el resultado.
 
-## Capacidades activas
+## Flujo automático activo
 
-- Generación de APU con OpenAI, Gemini o contraste dual.
-- Modelos de respaldo en paralelo.
-- Cálculo económico independiente de la IA.
-- Parámetros de administración, imprevistos, utilidad, financiamiento, impuesto, factor contractual y FCAS editables por proyecto.
+1. OpenAI o Gemini genera el cómputo, rendimiento y recursos de la partida.
+2. El mismo proceso debe utilizar búsqueda web en tiempo real con mercado fijo `Caracas, Distrito Capital, Venezuela`.
+3. Investiga hasta tres precios comparables por material, equipo y cargo de mano de obra.
+4. Solo acepta una URL cuando aparece entre las fuentes citadas por el motor de búsqueda.
+5. Calcula la mediana de las cotizaciones utilizables para reducir el efecto de valores extremos.
+6. Los precios en bolívares únicamente se convierten con una tasa oficial del BCV citada.
+7. Busca códigos, títulos, años, aplicabilidad y fuentes de las normas COVENIN relacionadas.
+8. Una referencia COVENIN solo se marca verificada cuando la fuente citada pertenece a SENCAMER, Gaceta Oficial u otro dominio gubernamental venezolano.
+9. Un recurso sin precio web respaldado queda con precio cero y bloquea la aprobación; no se conserva silenciosamente una estimación de la IA.
+
+## Motores de investigación
+
+- OpenAI Responses API con `web_search`, ejecución obligatoria y ubicación aproximada Caracas.
+- Gemini Interactions API con `google_search` y validación de sus anotaciones de fuente.
+- Modelos de respaldo ejecutados en paralelo.
+- Contraste entre proveedores cuando OpenAI y Gemini están configurados.
+
+## Capacidades generales
+
+- Cálculo económico determinístico independiente de la IA.
+- Administración, imprevistos, utilidad, financiamiento, impuesto, factor contractual y FCAS editables.
 - Catálogo de precios con fuente, fecha y condición de verificación.
-- Bloqueo de aprobación cuando existen precios cero o no verificados.
-- Borradores y partidas aprobadas.
-- Confirmación obligatoria de revisión profesional.
-- Historial y recuperación local de versiones.
-- Importación y exportación de proyectos JSON y presupuesto CSV.
-- PDF Letter generado en el servidor, con páginas de continuación, fuentes de precios y hash documental.
-- PWA instalable y caché local de la interfaz.
-- Pruebas unitarias y validación automática en GitHub Actions.
+- Bloqueo de aprobación ante precios cero o no verificados.
+- Borradores, partidas aprobadas, revisión profesional e historial local.
+- Importación y exportación JSON, CSV y PDF profesional en servidor.
+- PWA instalable y pruebas automáticas.
+
+## Criterio de responsabilidad
+
+Una referencia web no equivale a una cotización contractual. SEINCA muestra la fuente y exige revisión profesional. Para cumplimiento literal de una norma, la empresa debe conservar el ejemplar oficial o licenciado; el sistema no reproduce textos protegidos ni inventa cláusulas.
 
 ## Variables de entorno
-
-Copie `.env.example` en la configuración de Vercel. Nunca guarde claves dentro del repositorio.
 
 - `OPENAI_API_KEY`
 - `GEMINI_API_KEY`
@@ -36,10 +51,6 @@ npm install
 npm run qa
 ```
 
-## Modelo de seguridad y responsabilidad
-
-La IA propone el APU; el motor determinístico calcula los costos. Una partida no puede aprobarse sin revisión profesional y, cuando la regla está activa, sin precios verificados. Los códigos COVENIN pendientes se muestran como `POR VERIFICAR` y no se presentan como confirmados.
-
 ## Límite actual de la edición local-first
 
-La versión 5 protege y versiona proyectos en el navegador y mediante archivos JSON. Para comercialización multiempresa todavía requiere conectar un servicio externo de identidad, base de datos, almacenamiento documental y auditoría central. Esas funciones no se declaran activas hasta que exista infraestructura y credenciales configuradas.
+Los proyectos e historiales residen en el navegador y en archivos JSON. Para comercialización multiempresa todavía se requiere identidad, base de datos, almacenamiento documental y auditoría central.
