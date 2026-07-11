@@ -1,0 +1,65 @@
+name: Patch Index Health Endpoint
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.pull_request.head.ref == 'fix/health-ui-endpoint'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/health-ui-endpoint
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Patch frontend health endpoint
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          path = Path('index.html')
+          text = path.read_text()
+          old_const = "const API_URL = '/api/gemini';\n"
+          new_const = "const API_URL = '/api/gemini';\nconst HEALTH_URL = '/api/health';\n"
+          if "const HEALTH_URL = '/api/health';" not in text:
+              if old_const not in text:
+                  raise SystemExit('API_URL marker not found')
+              text = text.replace(old_const, new_const, 1)
+
+          old = """async function checkHealth() {
+  try {
+    const response = await fetch(API_URL, { cache: 'no-store' });
+    const payload = await response.json();
+    const openai = payload?.live?.openai?.ok; const gemini = payload?.live?.gemini?.ok;
+    if (openai && gemini) setStatus('OpenAI + Gemini operativos'); else if (openai) setStatus('OpenAI operativo · Gemini en respaldo', 'warn'); else if (gemini) setStatus('Gemini operativo · OpenAI en respaldo', 'warn'); else setStatus('Motores IA sin conexión', 'error');
+  } catch { setStatus('No se pudo verificar la IA', 'warn'); }
+}
+"""
+          new = """async function checkHealth() {
+  try {
+    const response = await fetch(HEALTH_URL, { cache: 'no-store' });
+    const payload = await response.json();
+    const openai = payload?.providers?.openai?.ok;
+    const gemini = payload?.providers?.gemini?.ok;
+    if (openai && gemini) setStatus('OpenAI + Gemini operativos');
+    else if (openai) setStatus('OpenAI operativo · Gemini no disponible', 'warn');
+    else if (gemini) setStatus('Gemini operativo · falta configurar OpenAI', 'warn');
+    else setStatus('Motores IA sin conexión', 'error');
+  } catch { setStatus('No se pudo verificar la IA', 'warn'); }
+}
+"""
+          if old not in text:
+              raise SystemExit('checkHealth block not found')
+          path.write_text(text.replace(old, new, 1))
+          PY
+      - name: Commit only the frontend patch
+        run: |
+          rm .github/workflows/patch-index-pr.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html .github/workflows/patch-index-pr.yml
+          git commit -m "fix: consultar el endpoint rápido de salud IA"
+          git push origin HEAD:fix/health-ui-endpoint
