@@ -1,16 +1,15 @@
 name: Patch Health UI
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/patch-health-ui.yml'
+  pull_request_target:
+    types: [opened]
 
 permissions:
   contents: write
 
 jobs:
   patch:
+    if: startsWith(github.event.pull_request.head.ref, 'qa/health-ui-trigger')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
