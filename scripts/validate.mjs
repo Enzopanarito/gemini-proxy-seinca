@@ -43,6 +43,7 @@ const requiredFrontendTokens = [
   'function saveItem()',
   'function exportPdf()',
   'const IVA = 0.16;',
+  "const HEALTH_URL = '/api/health';",
   "$('clientType').value === 'ESTADO' ? 3 : 1",
   'Ingeniero Civil responsable del presupuesto · SEINCA',
   'Detalle técnico:'
@@ -52,10 +53,11 @@ for (const token of requiredFrontendTokens) {
 }
 
 const requiredApiTokens = [
-  "const VERSION = '4.0.0-stable-hybrid'",
+  "const VERSION = '4.1.0-parallel-models'",
   'const APU_SCHEMA',
   'async function callOpenAI',
   'async function callGemini',
+  'async function runProvider',
   'Promise.any',
   'OPENAI_API_KEY',
   'GEMINI_API_KEY',
@@ -66,5 +68,5 @@ for (const token of requiredApiTokens) {
 }
 
 if (!process.exitCode) {
-  console.log(`SEINCA v4 validado: ${ids.length} IDs únicos, ${referencedIds.length} referencias DOM y sintaxis correcta.`);
+  console.log(`SEINCA v4.1 validado: ${ids.length} IDs únicos, ${referencedIds.length} referencias DOM y sintaxis correcta.`);
 }
