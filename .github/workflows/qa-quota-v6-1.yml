@@ -1,0 +1,52 @@
+name: QA Quota Optimizer v6.1
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - name: QA estático y unitario
+        run: npm run qa
+      - name: Verificar motor publicado
+        run: |
+          curl --fail --silent --show-error --location --max-time 20 https://gemini-proxy-seinca.vercel.app/api/gemini -o /tmp/engine.json
+          cat /tmp/engine.json
+          node -e "const d=require('/tmp/engine.json'); if(!d.ok||d.version!=='6.1.0-grounded-caracas') throw new Error(JSON.stringify(d)); if(!String(d.location).includes('Caracas')) throw new Error('ubicación incorrecta');"
+      - name: Verificar respuesta real y protección de cuota
+        run: |
+          cat > /tmp/request.json <<'JSON'
+          {"prompt":"Suministro y aplicación de pintura de caucho blanca de primera calidad en paredes interiores, dos manos, sobre 40 m2 de superficie previamente preparada, incluyendo sellador, resane menor, protección y limpieza final.","provider":"AUTO","tipoCliente":"PRIVADO","altura":0,"config":{"currency":"USD","workdayHours":8,"defaultFcasPct":250,"requireVerifiedPricesForApproval":true},"catalog":[]}
+          JSON
+          code=$(curl --silent --show-error --location --max-time 59 -H 'Content-Type: application/json' --data @/tmp/request.json -o /tmp/apu.json -w '%{http_code}' https://gemini-proxy-seinca.vercel.app/api/gemini)
+          cat /tmp/apu.json
+          echo
+          node - "$code" <<'NODE'
+          const fs=require('fs');
+          const code=Number(process.argv[2]);
+          const d=JSON.parse(fs.readFileSync('/tmp/apu.json','utf8'));
+          if(code===200){
+            if(!d.ok||!String(d.modelo).includes('investigación web Caracas')) throw new Error('respuesta 200 no fundamentada');
+            const resources=[...(d.data.materiales||[]),...(d.data.equipos||[]),...(d.data.mo||[])];
+            if(!resources.some(r=>(r.precio||r.tarifa||r.jornal)>0)) throw new Error('sin precios web');
+            console.log('GROUNDED_OK');
+          } else if(code===503){
+            if(d.codigo!=='BILLING_OR_QUOTA_REQUIRED') throw new Error('código de cuota incorrecto: '+JSON.stringify(d));
+            if(!String(d.detalle).includes('No se generó ningún precio sin respaldo')) throw new Error('mensaje de seguridad incorrecto');
+            if(JSON.stringify(d).includes('platform.openai.com/docs')||JSON.stringify(d).includes('ai.google.dev/gemini-api/docs')) throw new Error('se filtró el error técnico largo');
+            console.log('QUOTA_FAILSAFE_OK');
+          } else {
+            throw new Error('HTTP inesperado '+code+' '+JSON.stringify(d));
+          }
+          NODE
