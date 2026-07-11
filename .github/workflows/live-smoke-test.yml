@@ -1,0 +1,64 @@
+name: Live SEINCA Smoke Test
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  production-smoke-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Wait for production propagation
+        run: sleep 15
+
+      - name: Verify frontend and technical signature
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location https://gemini-proxy-seinca.vercel.app/ -o /tmp/index.html
+          grep -F "Ingeniero Civil responsable del presupuesto" /tmp/index.html
+          grep -F "Detalle técnico" /tmp/index.html
+          echo "Frontend signature and diagnostics: OK"
+
+      - name: Verify live health endpoint
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location https://gemini-proxy-seinca.vercel.app/api/gemini -o /tmp/health.json
+          cat /tmp/health.json
+          node -e "const d=require('/tmp/health.json'); if(!d.version || !d.live) throw new Error('Health response incomplete'); if(!d.live.openai?.ok && !d.live.gemini?.ok) throw new Error('No provider is operational'); console.log('Health OK:', d.version, d.live);"
+
+      - name: Generate and validate three real APUs
+        run: |
+          node <<'NODE'
+          const endpoint = 'https://gemini-proxy-seinca.vercel.app/api/gemini';
+          const prompts = [
+            'Construcción de pared de bloque de concreto de 15 cm, de 20 m de largo por 3 m de alto, incluyendo mortero de pega, replanteo, andamios menores y limpieza final.',
+            'Aplicación de pintura de caucho de primera calidad en paredes interiores, dos manos, sobre 180 m2 de superficie previamente preparada, incluyendo sellador, resane menor y limpieza.',
+            'Demolición controlada de 35 m3 de elementos de mampostería dañados, carga manual, acarreo interno de 40 m y disposición de escombros en sitio autorizado, trabajando a 6 m de altura con andamios y medidas de seguridad.'
+          ];
+
+          for (let i = 0; i < prompts.length; i += 1) {
+            const started = Date.now();
+            const response = await fetch(endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                prompt: prompts[i],
+                provider: 'AUTO',
+                tipoCliente: 'PRIVADO',
+                altura: i === 2 ? 6 : 0
+              })
+            });
+            const body = await response.json().catch(() => null);
+            console.log(`\nTEST ${i + 1} HTTP ${response.status} - ${Date.now() - started} ms`);
+            console.log(JSON.stringify(body, null, 2));
+            if (!response.ok || !body?.ok) throw new Error(`APU ${i + 1} failed: ${body?.detalle || body?.error || response.status}`);
+            const apu = body.data;
+            if (!apu?.descripcion_tecnica || !apu?.unidad || !(apu?.cantidad > 0) || !(apu?.rendimiento > 0)) {
+              throw new Error(`APU ${i + 1} has incomplete core fields`);
+            }
+            const resources = (apu.materiales?.length || 0) + (apu.equipos?.length || 0) + (apu.mo?.length || 0);
+            if (resources < 1) throw new Error(`APU ${i + 1} has no resources`);
+          }
+          console.log('\nALL THREE LIVE APU TESTS PASSED');
+          NODE
