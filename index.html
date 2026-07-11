@@ -2,509 +2,209 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>SEINCA | Presupuestos y APU Inteligentes</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
-  <style>
-    :root{--primary:#9f1d20;--dark:#172033;--border:#d6dde7;--bg:#eef2f7;--ok:#047857;--warn:#b45309;--ai:#5b21b6;--danger:#b91c1c}
-    *{box-sizing:border-box} body{margin:0;font:13px Arial,sans-serif;background:var(--bg);color:#111827}
-    .app{display:grid;grid-template-columns:minmax(520px,46vw) 1fr;gap:16px;padding:16px;min-height:100vh}
-    .panel{background:#fff;border-radius:14px;box-shadow:0 12px 34px #0f172a20}
-    .controls{padding:18px;max-height:calc(100vh - 32px);overflow:auto}.preview{max-height:calc(100vh - 32px);overflow:auto;padding:14px}
-    h1{font-size:24px;margin:0;color:var(--dark)}h2{font-size:15px;color:var(--primary);margin:0 0 12px}
-    .brand{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border-bottom:1px solid var(--border);padding-bottom:13px}
-    .badge{padding:7px 10px;border-radius:999px;background:#ecfdf5;color:#065f46;font-size:11px;font-weight:700}
-    .card{border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:14px}
-    .g2,.g3,.g4{display:grid;gap:9px}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
-    label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;color:#475569;margin:0 0 4px}.fg{margin-bottom:10px}
-    input,select,textarea{width:100%;padding:9px;border:1px solid var(--border);border-radius:7px;font:inherit}textarea{min-height:80px;resize:vertical}
-    button{border:0;border-radius:7px;padding:10px 12px;color:#fff;font-weight:700;cursor:pointer}button:disabled{opacity:.6;cursor:wait}
-    .btn-ai{background:var(--ai)}.btn-primary{background:var(--primary)}.btn-blue{background:#0369a1}.btn-green{background:var(--ok)}.btn-neutral{background:#475569}.btn-warn{background:var(--warn)}.btn-danger{background:var(--danger)}
-    .mini{padding:5px 8px;font-size:10px}.toolbar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-    .notice,.loader{display:none;margin-top:9px;padding:10px;border-radius:8px;line-height:1.45;white-space:pre-wrap}.notice{background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe}.notice.error{background:#fef2f2;color:#991b1b;border-color:#fecaca}.loader{background:#f5f3ff;color:#5b21b6;border:1px solid #c4b5fd;font-weight:700}
-    .rtitle{display:flex;justify-content:space-between;align-items:center;background:var(--dark);color:#fff;padding:7px 9px;border-radius:6px 6px 0 0;margin-top:12px;font-weight:700}
-    table{border-collapse:collapse;width:100%}.edit th,.edit td{border:1px solid var(--border);padding:5px;font-size:10px}.edit th{background:#f8fafc}.edit input{border:0;padding:4px}.num{text-align:right}.center{text-align:center}
-    .totals{border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-top:12px}.tr{display:flex;justify-content:space-between;padding:7px 10px;border-bottom:1px solid #e5e7eb}.tr.final{background:var(--dark);color:#fff;font-weight:800;font-size:14px}
-    .audit{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.audit>div{background:#f8fafc;border:1px solid var(--border);border-radius:7px;padding:8px;font-size:10px;line-height:1.4}
-    .previewbar{position:sticky;top:0;z-index:4;display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--bg);padding-bottom:10px}
-    .pdf-page{width:215.9mm;min-height:279.4mm;background:#fff;margin:0 auto 15px;padding:12mm 13mm;box-shadow:0 8px 28px #0f172a25;position:relative;page-break-after:always;break-after:page;overflow:hidden}
-    .head{display:flex;justify-content:space-between;border-bottom:3px solid var(--primary);padding-bottom:8px;margin-bottom:12px}.logo{width:170px;height:55px;display:flex;align-items:center}.logo img{max-width:100%;max-height:100%}
-    .doc-title{text-align:center;font-weight:800;font-size:16px;margin:12px}.doc th,.doc td,.info td{border:1px solid #111;padding:5px;font-size:9px}.doc th{background:var(--dark);color:#fff}.info .k{font-weight:700;background:#f1f5f9;width:14%}
-    .summary{width:320px;margin-left:auto;margin-top:8px}.summary td{border:1px solid #111;padding:5px;font-size:9px}.sign{display:flex;justify-content:space-around;margin-top:35px;text-align:center;font-size:10px}.line{border-top:1px solid #111;width:210px;padding-top:5px}
-    .foot{position:absolute;bottom:8mm;left:13mm;right:13mm;border-top:1px solid #aaa;padding-top:4px;font-size:8px;display:flex;justify-content:space-between}
-    .small{font-size:10px;color:#64748b;line-height:1.4}.empty{padding:12px;text-align:center;color:#64748b;border:1px dashed var(--border);margin-top:8px}
-    @media(max-width:1100px){.app{grid-template-columns:1fr}.controls,.preview{max-height:none}.pdf-page{transform:scale(.78);transform-origin:top center;margin-bottom:-55mm}}
-    @media(max-width:700px){.g2,.g3,.g4{grid-template-columns:1fr}.toolbar{grid-template-columns:1fr}.app{padding:8px}.controls{padding:12px}}
-    @media print{body{background:#fff}.controls,.previewbar,.no-print{display:none!important}.app{display:block;padding:0}.preview{padding:0;overflow:visible;max-height:none}.panel{box-shadow:none}.pdf-page{box-shadow:none;margin:0;page-break-after:always;break-after:page}}
-  </style>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#8f1820">
+  <meta name="description" content="SEINCA Enterprise: presupuestos y análisis de precios unitarios para construcción.">
+  <title>SEINCA Enterprise | Presupuestos y APU</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<main class="app">
-  <section class="panel controls">
-    <div class="brand">
-      <div><h1>SEINCA</h1><div>Motor profesional de presupuestos y APU · Venezuela</div></div>
-      <span id="status" class="badge">Verificando motores…</span>
-    </div>
+  <noscript>SEINCA requiere JavaScript para funcionar.</noscript>
+  <main class="app-shell">
+    <aside class="workspace" aria-label="Panel de trabajo">
+      <header class="topbar">
+        <div>
+          <div class="eyebrow">SEINCA ENTERPRISE</div>
+          <h1>Presupuestos y APU</h1>
+          <div class="subtle" id="versionLabel"></div>
+        </div>
+        <span id="healthBadge" class="status-badge busy">Verificando IA…</span>
+      </header>
 
-    <div class="toolbar" style="margin-top:12px">
-      <button class="btn-blue" id="saveProject">Guardar JSON</button>
-      <button class="btn-warn" id="loadBtn">Cargar JSON</button>
-      <button class="btn-neutral" id="newProject">Nuevo</button>
-      <input id="loadFile" type="file" accept=".json" hidden>
-    </div>
+      <nav class="action-grid" aria-label="Acciones del proyecto">
+        <button id="newProject" class="button secondary">Nuevo</button>
+        <button id="saveProject" class="button secondary">Guardar JSON</button>
+        <button id="loadProjectButton" class="button secondary">Cargar JSON</button>
+        <button id="undoSnapshot" class="button secondary">Restaurar versión</button>
+        <button id="exportCsv" class="button secondary">Exportar CSV</button>
+        <button id="exportPdf" class="button success">PDF profesional</button>
+        <input id="loadProjectFile" type="file" accept="application/json,.json" hidden>
+      </nav>
 
-    <section class="card">
-      <h2>1. Datos generales</h2>
-      <div class="g2">
-        <div class="fg"><label for="gObra">Obra</label><input id="gObra"></div>
-        <div class="fg"><label for="gCliente">Contratante</label><input id="gCliente"></div>
-        <div class="fg"><label for="gUbicacion">Ubicación</label><input id="gUbicacion"></div>
-        <div class="fg"><label for="gFecha">Fecha</label><input id="gFecha" type="date"></div>
+      <section class="card" aria-labelledby="projectTitle">
+        <div class="section-head">
+          <div><span class="step">1</span><h2 id="projectTitle">Proyecto y control documental</h2></div>
+          <span id="autosaveStatus" class="mini-status">Sin cambios</span>
+        </div>
+        <div class="grid cols-4">
+          <label class="field"><span>Código</span><input id="projectCode" maxlength="60" placeholder="SEI-2026-001"></label>
+          <label class="field"><span>Revisión</span><input id="projectRevision" maxlength="20" value="0"></label>
+          <label class="field"><span>Estado</span><select id="projectStatus"><option>BORRADOR</option><option>EN REVISIÓN</option><option>APROBADO</option><option>EMITIDO</option><option>ANULADO</option></select></label>
+          <label class="field"><span>Fecha</span><input id="projectDate" type="date"></label>
+        </div>
+        <div class="grid cols-2">
+          <label class="field"><span>Obra</span><input id="projectName" maxlength="250"></label>
+          <label class="field"><span>Contratante</span><input id="clientName" maxlength="200"></label>
+          <label class="field"><span>Ubicación</span><input id="projectLocation" maxlength="250"></label>
+          <label class="field"><span>Validez de oferta (días)</span><input id="validityDays" type="number" min="1" max="365" value="15"></label>
+        </div>
+        <div class="grid cols-2">
+          <label class="field"><span>Condiciones de pago</span><textarea id="paymentTerms" rows="2"></textarea></label>
+          <label class="field"><span>Notas generales</span><textarea id="projectNotes" rows="2"></textarea></label>
+        </div>
+        <label class="field"><span>Logotipo</span><input id="logoInput" type="file" accept="image/png,image/jpeg"></label>
+      </section>
+
+      <section class="card" aria-labelledby="configTitle">
+        <div class="section-head"><div><span class="step">2</span><h2 id="configTitle">Parámetros económicos editables</h2></div><button id="resetConfig" class="link-button">Restablecer</button></div>
+        <div class="grid cols-4">
+          <label class="field"><span>Moneda</span><select id="currency"><option>USD</option><option>EUR</option><option>VES</option></select></label>
+          <label class="field"><span>Jornada (h)</span><input id="workdayHours" type="number" min="1" max="24" step="0.5" value="8"></label>
+          <label class="field"><span>Factor contractual</span><input id="clientFactor" type="number" min="0.01" max="100" step="0.01" value="1"></label>
+          <label class="field"><span>FCAS predeterminado %</span><input id="defaultFcas" type="number" min="0" max="1000" step="0.01" value="250"></label>
+          <label class="field"><span>Administración %</span><input id="administrationPct" type="number" min="0" max="200" step="0.01" value="15"></label>
+          <label class="field"><span>Imprevistos %</span><input id="contingencyPct" type="number" min="0" max="200" step="0.01" value="5"></label>
+          <label class="field"><span>Utilidad %</span><input id="profitPct" type="number" min="0" max="500" step="0.01" value="10"></label>
+          <label class="field"><span>Financiamiento %</span><input id="financingPct" type="number" min="0" max="500" step="0.01" value="0"></label>
+          <label class="field"><span>Impuesto %</span><input id="taxPct" type="number" min="0" max="100" step="0.01" value="16"></label>
+          <label class="field"><span>Vigencia máxima precio (días)</span><input id="maxPriceAgeDays" type="number" min="1" max="3650" value="90"></label>
+          <label class="toggle-field"><input id="requireVerifiedPrices" type="checkbox" checked><span>Exigir precios verificados para aprobar</span></label>
+        </div>
+        <p class="callout neutral">Estos parámetros pertenecen al proyecto. No se aplican porcentajes ocultos ni factores automáticos por tipo de cliente.</p>
+      </section>
+
+      <section class="card" aria-labelledby="catalogTitle">
+        <div class="section-head">
+          <div><span class="step">3</span><h2 id="catalogTitle">Catálogo trazable de precios</h2></div>
+          <div class="inline-actions"><button id="addCatalogRow" class="link-button">+ Recurso</button><button id="importCatalogButton" class="link-button">Importar</button><button id="exportCatalog" class="link-button">Exportar</button></div>
+          <input id="importCatalogFile" type="file" accept="application/json,.json,text/csv,.csv" hidden>
+        </div>
+        <div class="table-scroll">
+          <table class="editor-table" id="catalogTable">
+            <thead><tr><th>Tipo</th><th>Descripción</th><th>Und.</th><th>Precio</th><th>Fuente</th><th>Fecha</th><th>Verificado</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="subtle">Los precios verificados alimentan a la IA y prevalecen sobre cualquier estimación. Los precios sin respaldo no pueden aprobarse cuando la regla de verificación está activa.</p>
+      </section>
+
+      <section class="card" aria-labelledby="aiTitle">
+        <div class="section-head"><div><span class="step">4</span><h2 id="aiTitle">Comité calculista con IA</h2></div><span id="requestId" class="mini-status"></span></div>
+        <div class="grid cols-3">
+          <label class="field"><span>Modo IA</span><select id="providerMode"><option value="AUTO">Automático - primera respuesta válida</option><option value="DUAL">Doble contraste OpenAI + Gemini</option><option value="OPENAI">Solo OpenAI GPT-5.6</option><option value="GEMINI">Solo Gemini</option></select></label>
+          <label class="field"><span>Tipo de contratante</span><select id="clientType"><option value="PRIVADO">Privado</option><option value="ESTADO">Estado</option></select></label>
+          <label class="field"><span>Altura de ejecución (m)</span><input id="height" type="number" min="0" max="300" step="0.1" value="0"></label>
+        </div>
+        <label class="field"><span>Descripción precisa, medidas, alcance y condiciones</span><textarea id="prompt" rows="5" maxlength="16000" placeholder="Ej.: Construcción de pared de bloque de concreto de 15 cm, 20 m de largo por 3 m de alto, incluyendo mortero, replanteo, andamios y limpieza."></textarea></label>
+        <button id="generateApu" class="button ai full">Generar APU profesional</button>
+        <div id="aiLoader" class="callout ai hidden">Analizando cómputo, rendimiento, cuadrilla, recursos, riesgos, precios y trazabilidad…</div>
+        <div id="aiNotice" class="callout hidden" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="card" aria-labelledby="editorTitle">
+        <div class="section-head">
+          <div><span class="step">5</span><h2 id="editorTitle">Editor, control de calidad y aprobación</h2></div>
+          <div class="quality-pill" id="qualityPill">Calidad 0/100</div>
+        </div>
+        <div class="grid cols-4">
+          <label class="field"><span>COVENIN</span><input id="covenin" maxlength="80"></label>
+          <label class="toggle-field"><input id="coveninVerified" type="checkbox"><span>COVENIN verificado</span></label>
+          <label class="field"><span>Unidad</span><input id="unit" maxlength="30" value="und"></label>
+          <label class="field"><span>Cantidad total</span><input id="quantity" type="number" min="0" step="0.0001"></label>
+          <label class="field"><span>Rendimiento / día</span><input id="rendimiento" type="number" min="0" step="0.0001"></label>
+          <label class="field"><span>FCAS %</span><input id="fcas" type="number" min="0" max="1000" step="0.01"></label>
+        </div>
+        <label class="field"><span>Descripción técnica</span><textarea id="technicalDescription" rows="4"></textarea></label>
+        <label class="field"><span>Memoria de cálculo</span><textarea id="calculationMemory" rows="4"></textarea></label>
+        <div class="grid cols-2">
+          <label class="field"><span>Justificación del rendimiento</span><textarea id="performanceJustification" rows="3"></textarea></label>
+          <label class="field"><span>Criterio de ejecución</span><textarea id="executionCriteria" rows="3"></textarea></label>
+        </div>
+        <div class="grid cols-2">
+          <label class="field"><span>Supuestos (uno por línea)</span><textarea id="assumptions" rows="3"></textarea></label>
+          <label class="field"><span>Exclusiones (una por línea)</span><textarea id="exclusions" rows="3"></textarea></label>
+        </div>
+
+        <div class="resource-head"><h3>A. Materiales por unidad</h3><button class="link-button" data-add-resource="materiales">+ Fila</button></div>
+        <div class="table-scroll"><table class="editor-table" id="materialsTable"><thead><tr><th>Descripción</th><th>Und.</th><th>Cant.</th><th>Precio</th><th>Fuente</th><th>Fecha</th><th>✓</th><th>Parcial</th><th></th></tr></thead><tbody></tbody></table></div>
+
+        <div class="resource-head"><h3>B. Equipos de cuadrilla</h3><button class="link-button" data-add-resource="equipos">+ Fila</button></div>
+        <div class="table-scroll"><table class="editor-table" id="equipmentTable"><thead><tr><th>Descripción</th><th>Cant.</th><th>Tarifa/día</th><th>Fuente</th><th>Fecha</th><th>✓</th><th>Costo/und.</th><th></th></tr></thead><tbody></tbody></table></div>
+
+        <div class="resource-head"><h3>C. Mano de obra</h3><button class="link-button" data-add-resource="mo">+ Fila</button></div>
+        <div class="table-scroll"><table class="editor-table" id="laborTable"><thead><tr><th>Cargo</th><th>Cant.</th><th>Jornal/día</th><th>Fuente</th><th>Fecha</th><th>✓</th><th>Costo/und.</th><th></th></tr></thead><tbody></tbody></table></div>
+
+        <div class="summary-grid" aria-label="Resumen de costos">
+          <div><span>Materiales</span><b id="materialsTotal">0,00</b></div>
+          <div><span>Equipos</span><b id="equipmentTotal">0,00</b></div>
+          <div><span>Mano de obra + FCAS</span><b id="laborTotal">0,00</b></div>
+          <div><span>Costo directo</span><b id="directTotal">0,00</b></div>
+          <div><span>Indirectos</span><b id="indirectTotal">0,00</b></div>
+          <div class="emphasis"><span>Precio unitario contractual</span><b id="unitContractTotal">0,00</b></div>
+        </div>
+
+        <div class="quality-panel">
+          <div><h3>Errores que bloquean</h3><ul id="qualityErrors"><li>Completa la partida.</li></ul></div>
+          <div><h3>Advertencias</h3><ul id="qualityWarnings"><li>Pendiente de evaluación.</li></ul></div>
+        </div>
+
+        <div class="approval-row">
+          <label class="toggle-field strong"><input id="technicalReview" type="checkbox"><span>Confirmo que un profesional revisó cómputo, rendimiento, recursos, precios y normativa.</span></label>
+          <div class="inline-actions">
+            <button id="clearEditor" class="button secondary">Limpiar</button>
+            <button id="saveDraftItem" class="button primary">Guardar como borrador</button>
+            <button id="approveItem" class="button success">Aprobar y agregar</button>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <section class="preview-panel" aria-label="Vista previa del documento">
+      <div class="preview-toolbar no-print">
+        <label class="search-field"><span>Buscar partida</span><input id="budgetSearch" placeholder="Descripción o COVENIN"></label>
+        <button id="printDocument" class="button secondary">Imprimir</button>
       </div>
-      <div class="fg"><label for="logoInput">Logo</label><input id="logoInput" type="file" accept="image/*"></div>
+      <div id="documentPreview">
+        <article class="paper" id="budgetPage">
+          <header class="document-header">
+            <div class="document-logo" id="documentLogo">SEINCA</div>
+            <div class="company-block"><strong>SEINCA</strong><span>SERVICIOS INTEGRALES</span><span>RIF: J-297575472</span></div>
+          </header>
+          <h2 class="document-title">PRESUPUESTO GENERAL DE OBRA</h2>
+          <table class="info-table">
+            <tr><th>CÓDIGO</th><td id="docCode"></td><th>REVISIÓN</th><td id="docRevision"></td></tr>
+            <tr><th>OBRA</th><td colspan="3" id="docProject"></td></tr>
+            <tr><th>CLIENTE</th><td id="docClient"></td><th>FECHA</th><td id="docDate"></td></tr>
+            <tr><th>UBICACIÓN</th><td id="docLocation"></td><th>ESTADO</th><td id="docStatus"></td></tr>
+          </table>
+          <div class="table-scroll document-table-wrap">
+            <table class="document-table"><thead><tr><th>N°</th><th>COVENIN</th><th>DESCRIPCIÓN</th><th>UND.</th><th>CANT.</th><th>P. UNIT.</th><th>TOTAL</th><th class="no-print">ACCIONES</th></tr></thead><tbody id="budgetBody"></tbody></table>
+          </div>
+          <div id="emptyBudget" class="empty-state">Aún no hay partidas agregadas.</div>
+          <table class="document-summary">
+            <tr><th>SUBTOTAL</th><td id="budgetSubtotal">0,00</td></tr>
+            <tr><th id="taxLabel">IMPUESTO 16%</th><td id="budgetTax">0,00</td></tr>
+            <tr class="grand"><th>TOTAL GENERAL</th><td id="budgetGrandTotal">0,00</td></tr>
+          </table>
+          <div class="signature-grid">
+            <div><span class="signature-line"></span><strong>Ing. Jesús Fandiño</strong><small>Ingeniero Civil responsable del presupuesto · SEINCA</small></div>
+            <div><span class="signature-line"></span><strong>Aprobado por</strong><small>Ente contratante</small></div>
+          </div>
+          <footer class="document-footer"><span id="documentHash"></span><span id="documentVersion"></span></footer>
+        </article>
+        <div id="apuPages"></div>
+      </div>
     </section>
+  </main>
 
-    <section class="card">
-      <h2>2. Ingeniero calculista IA</h2>
-      <div class="g3">
-        <div class="fg"><label for="provider">Motor IA</label><select id="provider"><option value="AUTO">Automático rápido</option><option value="DUAL">Doble revisión IA</option><option value="OPENAI">OpenAI GPT-5.6</option><option value="GEMINI">Google Gemini</option></select></div>
-        <div class="fg"><label for="clientType">Cliente</label><select id="clientType"><option value="PRIVADO">Privado · 1x</option><option value="ESTADO">Estado · 3x</option></select></div>
-        <div class="fg"><label for="height">Altura (m)</label><input id="height" type="number" min="0" max="300" step=".1" value="0"></div>
-      </div>
-      <div class="fg"><label for="prompt">Descripción y medidas</label><textarea id="prompt" maxlength="12000" placeholder="Ej.: Construcción de pared de bloque de concreto de 15 cm, 20 m de largo por 3 m de alto, incluyendo columnas, viga de corona, friso y limpieza final."></textarea></div>
-      <button id="generate" class="btn-ai" style="width:100%">Generar APU profesional</button>
-      <div id="loader" class="loader">Analizando cómputos, rendimiento, recursos, riesgos y consistencia técnica…</div>
-      <div id="notice" class="notice"></div>
-      <div class="small" style="margin-top:8px">Los precios generados son referencias editables. Confirma cotizaciones, rendimientos y normativa antes de emitir una oferta definitiva.</div>
-    </section>
+  <dialog id="historyDialog">
+    <form method="dialog" class="dialog-card">
+      <div class="section-head"><h2>Versiones automáticas del proyecto</h2><button value="cancel" class="link-button">Cerrar</button></div>
+      <div id="historyList" class="history-list"></div>
+    </form>
+  </dialog>
 
-    <section class="card">
-      <h2>3. Editor APU</h2>
-      <div class="g4">
-        <div class="fg"><label for="covenin">COVENIN</label><input id="covenin"></div>
-        <div class="fg"><label for="unit">Unidad</label><input id="unit" value="und"></div>
-        <div class="fg"><label for="quantity">Cantidad</label><input id="quantity" type="number" min="0.0001" step=".0001" value="1"></div>
-        <div class="fg"><label for="rend">Rendimiento/día</label><input id="rend" type="number" min="0.0001" step=".0001" value="1"></div>
-      </div>
-      <div class="g3">
-        <div class="fg"><label for="fcas">FCAS %</label><input id="fcas" type="number" min="0" max="1000" step=".01" value="250"></div>
-        <div class="fg"><label for="factor">Factor cliente</label><input id="factor" disabled></div>
-        <div class="fg"><label>Indirectos</label><input value="15% / 5% / 10%" disabled></div>
-      </div>
-      <div class="fg"><label for="description">Descripción técnica</label><textarea id="description"></textarea></div>
-      <div class="fg"><label for="memory">Memoria de cálculo</label><textarea id="memory"></textarea></div>
-      <div class="audit">
-        <div><b>Criterio normativo</b><div id="auditNorm">Pendiente.</div></div>
-        <div><b>Rendimiento</b><div id="auditRend">Pendiente.</div></div>
-        <div><b>Supuestos</b><ul id="auditAss"><li>Sin información.</li></ul></div>
-        <div><b>Advertencias</b><ul id="auditWarn"><li>Sin información.</li></ul></div>
-      </div>
-
-      <div class="rtitle"><span>A. Materiales por unidad</span><button class="mini btn-neutral" data-add="mat">+ Fila</button></div>
-      <table class="edit" id="mat"><thead><tr><th>Descripción</th><th>Und</th><th>Cant.</th><th>Precio</th><th>Parcial</th><th></th></tr></thead><tbody></tbody><tfoot><tr><th colspan="4" class="num">Subtotal</th><th id="sMat" class="num">0,00</th><th></th></tr></tfoot></table>
-
-      <div class="rtitle"><span>B. Equipos de cuadrilla</span><button class="mini btn-neutral" data-add="eq">+ Fila</button></div>
-      <table class="edit" id="eq"><thead><tr><th>Descripción</th><th>Cant.</th><th>Tarifa/día</th><th>Costo/und.</th><th></th></tr></thead><tbody></tbody><tfoot><tr><th colspan="3" class="num">Subtotal</th><th id="sEq" class="num">0,00</th><th></th></tr></tfoot></table>
-
-      <div class="rtitle"><span>C. Mano de obra</span><button class="mini btn-neutral" data-add="mo">+ Fila</button></div>
-      <table class="edit" id="mo"><thead><tr><th>Cargo</th><th>Cant.</th><th>Jornal/día</th><th>Costo/und.</th><th></th></tr></thead><tbody></tbody><tfoot><tr><th colspan="3" class="num">Subtotal</th><th id="sMo" class="num">0,00</th><th></th></tr></tfoot></table>
-
-      <div class="totals">
-        <div class="tr"><span>Costo directo</span><b>USD <span id="direct">0,00</span></b></div>
-        <div class="tr"><span>Indirectos</span><b>USD <span id="indirect">0,00</span></b></div>
-        <div class="tr"><span>Precio unitario base</span><b>USD <span id="basePU">0,00</span></b></div>
-        <div class="tr final"><span>Precio contractual</span><span>USD <span id="finalPU">0,00</span></span></div>
-      </div>
-      <button id="saveItem" class="btn-primary" style="width:100%;margin-top:12px">Agregar partida al presupuesto</button>
-    </section>
-  </section>
-
-  <section class="panel preview">
-    <div class="previewbar no-print"><button class="btn-green" id="pdf">Exportar PDF</button><button class="btn-neutral" id="print">Imprimir</button></div>
-    <div id="document">
-      <article class="pdf-page">
-        <div class="head"><div class="logo" id="docLogo">LOGOTIPO SEINCA</div><div style="text-align:right"><h1>SEINCA</h1><small>SERVICIOS INTEGRALES<br>RIF: J-297575472</small></div></div>
-        <div class="doc-title">PRESUPUESTO GENERAL DE OBRA</div>
-        <table class="info"><tr><td class="k">OBRA</td><td colspan="3" id="dObra"></td></tr><tr><td class="k">CLIENTE</td><td id="dCliente"></td><td class="k">FECHA</td><td id="dFecha"></td></tr><tr><td class="k">UBICACIÓN</td><td colspan="3" id="dUbicacion"></td></tr></table>
-        <table class="doc" style="margin-top:10px"><thead><tr><th>N.º</th><th>COVENIN</th><th>DESCRIPCIÓN</th><th>UND.</th><th>CANT.</th><th>P. UNIT.</th><th>TOTAL</th><th class="no-print">ACCIONES</th></tr></thead><tbody id="budget"></tbody></table>
-        <div id="budgetEmpty" class="empty">Aún no hay partidas agregadas.</div>
-        <table class="summary"><tr><td>SUBTOTAL</td><td id="sub" class="num">0,00</td></tr><tr><td>IVA 16%</td><td id="iva" class="num">0,00</td></tr><tr><td><b>TOTAL GENERAL</b></td><td id="grand" class="num"><b>0,00</b></td></tr></table>
-        <div class="sign"><div><div class="line"></div><b>Ing. Jesús Fandiño</b><br>Ingeniero Civil responsable del presupuesto · SEINCA</div><div><div class="line"></div><b>Aprobado por</b><br>Ente contratante</div></div>
-        <div class="foot"><span>SEINCA · Documento generado digitalmente</span><span id="footDate"></span></div>
-      </article>
-      <div id="apuPages"></div>
-    </div>
-  </section>
-</main>
-
-<script>
-'use strict';
-const $ = (id) => document.getElementById(id);
-const fmt = new Intl.NumberFormat('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const number = (value, fallback = 0) => Number.isFinite(Number.parseFloat(value)) ? Number.parseFloat(value) : fallback;
-const clean = (value, max = 6000) => String(value ?? '').replace(/[\u0000-\u001F\u007F]/g, ' ').trim().slice(0, max);
-const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
-const format = (value) => fmt.format(number(value));
-const API_URL = '/api/gemini';
-const HEALTH_URL = '/api/health';
-const INDIRECTS = { admin: 0.15, contingency: 0.05, profit: 0.10 };
-const IVA = 0.16;
-let project = { version: 4, general: {}, items: [], logo: '' };
-let editId = null;
-let logo = '';
-let audit = emptyAudit();
-let aiMeta = null;
-
-function emptyAudit() {
-  return { covenin_verificado: false, criterio_covenin: 'Pendiente.', justificacion_rendimiento: 'Pendiente.', criterio_ejecucion: '', supuestos: [], exclusiones: [], advertencias: [] };
-}
-
-function factor() { return $('clientType').value === 'ESTADO' ? 3 : 1; }
-
-function setStatus(message, kind = 'ok') {
-  $('status').textContent = message;
-  const colors = kind === 'error' ? ['#fef2f2','#991b1b'] : kind === 'busy' ? ['#f5f3ff','#5b21b6'] : kind === 'warn' ? ['#fff7ed','#9a3412'] : ['#ecfdf5','#065f46'];
-  $('status').style.background = colors[0];
-  $('status').style.color = colors[1];
-}
-
-function showNotice(message = '', isError = false) {
-  const element = $('notice');
-  element.textContent = message;
-  element.classList.toggle('error', isError);
-  element.style.display = message ? 'block' : 'none';
-}
-
-function setLoading(active) {
-  $('loader').style.display = active ? 'block' : 'none';
-  $('generate').disabled = active;
-  setStatus(active ? 'IA calculando…' : 'Sistema listo', active ? 'busy' : 'ok');
-}
-
-function createInput(className, type, value, options = {}) {
-  const input = document.createElement('input');
-  input.className = className;
-  input.type = type;
-  input.value = value ?? '';
-  if (options.step) input.step = options.step;
-  if (options.min !== undefined) input.min = options.min;
-  if (options.maxLength) input.maxLength = options.maxLength;
-  input.addEventListener('input', calculate);
-  return input;
-}
-
-function removeButton() {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'mini btn-danger';
-  button.textContent = '×';
-  button.title = 'Eliminar fila';
-  button.addEventListener('click', () => { button.closest('tr')?.remove(); calculate(); });
-  return button;
-}
-
-function addCell(row, content, className = '') {
-  const cell = document.createElement('td');
-  cell.className = className;
-  if (content instanceof Node) cell.appendChild(content); else cell.textContent = content;
-  row.appendChild(cell);
-  return cell;
-}
-
-function addRow(type, data = {}) {
-  const table = $(type);
-  const row = document.createElement('tr');
-  addCell(row, createInput('desc', 'text', clean(data.desc ?? data.cargo ?? data.descripcion, 250), { maxLength: 250 }));
-  if (type === 'mat') addCell(row, createInput('und', 'text', clean(data.und ?? data.unidad, 30) || 'und', { maxLength: 30 }));
-  addCell(row, createInput('cant', 'number', Math.max(0, number(data.cant ?? data.cantidad, 0)), { step: '0.000001', min: '0' }));
-  addCell(row, createInput('price', 'number', Math.max(0, number(data.precio ?? data.tarifa ?? data.jornal, 0)), { step: '0.0001', min: '0' }));
-  const partial = addCell(row, '0,00', 'num partial');
-  partial.dataset.raw = '0';
-  addCell(row, removeButton(), 'center');
-  table.querySelector('tbody').appendChild(row);
-  calculate();
-}
-
-function renderRows(type, rows) {
-  $(type).querySelector('tbody').innerHTML = '';
-  (Array.isArray(rows) ? rows : []).forEach((row) => addRow(type, row));
-  calculate();
-}
-
-function readRows(type) {
-  const material = type === 'mat';
-  return [...$(type).querySelectorAll('tbody tr')].map((row) => ({
-    desc: clean(row.querySelector('.desc')?.value, 250),
-    und: material ? clean(row.querySelector('.und')?.value, 30) : '',
-    cant: Math.max(0, number(row.querySelector('.cant')?.value, 0)),
-    precio: Math.max(0, number(row.querySelector('.price')?.value, 0)),
-    total: Math.max(0, number(row.querySelector('.partial')?.dataset.raw, 0))
-  })).filter((row) => row.desc || row.cant || row.precio);
-}
-
-function calculate() {
-  const rendimiento = Math.max(0.000001, number($('rend').value, 1));
-  const fcasRate = Math.max(0, number($('fcas').value, 0)) / 100;
-  let materials = 0, equipment = 0, labor = 0;
-
-  $('mat').querySelectorAll('tbody tr').forEach((row) => {
-    const value = Math.max(0, number(row.querySelector('.cant')?.value)) * Math.max(0, number(row.querySelector('.price')?.value));
-    row.querySelector('.partial').textContent = format(value); row.querySelector('.partial').dataset.raw = value; materials += value;
-  });
-  $('eq').querySelectorAll('tbody tr').forEach((row) => {
-    const value = Math.max(0, number(row.querySelector('.cant')?.value)) * Math.max(0, number(row.querySelector('.price')?.value)) / rendimiento;
-    row.querySelector('.partial').textContent = format(value); row.querySelector('.partial').dataset.raw = value; equipment += value;
-  });
-  $('mo').querySelectorAll('tbody tr').forEach((row) => {
-    const value = Math.max(0, number(row.querySelector('.cant')?.value)) * Math.max(0, number(row.querySelector('.price')?.value)) * (1 + fcasRate) / rendimiento;
-    row.querySelector('.partial').textContent = format(value); row.querySelector('.partial').dataset.raw = value; labor += value;
-  });
-
-  const direct = materials + equipment + labor;
-  const indirect = direct * (INDIRECTS.admin + INDIRECTS.contingency + INDIRECTS.profit);
-  const base = direct + indirect;
-  const final = base * factor();
-  $('sMat').textContent = format(materials); $('sEq').textContent = format(equipment); $('sMo').textContent = format(labor);
-  $('direct').textContent = format(direct); $('indirect').textContent = format(indirect); $('basePU').textContent = format(base); $('finalPU').textContent = format(final);
-  $('factor').value = `${format(factor())}x`;
-  return { materials, equipment, labor, direct, indirect, base, factor: factor(), final };
-}
-
-function renderList(id, values, fallback) {
-  const element = $(id); element.innerHTML = '';
-  const items = Array.isArray(values) && values.length ? values : [fallback];
-  items.forEach((value) => { const li = document.createElement('li'); li.textContent = clean(value, 600); element.appendChild(li); });
-}
-
-function renderAudit(data = emptyAudit()) {
-  audit = {
-    covenin_verificado: Boolean(data.covenin_verificado),
-    criterio_covenin: clean(data.criterio_covenin, 1600) || 'Pendiente.',
-    justificacion_rendimiento: clean(data.justificacion_rendimiento, 3500) || 'Pendiente.',
-    criterio_ejecucion: clean(data.criterio_ejecucion, 3500),
-    supuestos: Array.isArray(data.supuestos) ? data.supuestos.map((x) => clean(x, 600)).filter(Boolean) : [],
-    exclusiones: Array.isArray(data.exclusiones) ? data.exclusiones.map((x) => clean(x, 600)).filter(Boolean) : [],
-    advertencias: Array.isArray(data.advertencias) ? data.advertencias.map((x) => clean(x, 600)).filter(Boolean) : []
-  };
-  $('auditNorm').textContent = audit.criterio_covenin;
-  $('auditRend').textContent = audit.justificacion_rendimiento;
-  renderList('auditAss', audit.supuestos, 'Sin supuestos declarados.');
-  renderList('auditWarn', audit.advertencias, 'Sin advertencias declaradas.');
-}
-
-function attemptDetails(payload) {
-  const attempts = Array.isArray(payload?.intentos) ? payload.intentos : [];
-  if (!attempts.length) return '';
-  return '\n\nDetalle técnico:\n' + attempts.map((item) => `• ${item.provider || 'motor'} ${item.model || ''} [${item.status || 0}]: ${item.message || 'sin detalle'}`).join('\n');
-}
-
-async function generateApu() {
-  const prompt = clean($('prompt').value, 12000);
-  if (prompt.length < 10) { showNotice('Describe la partida con más detalle.', true); $('prompt').focus(); return; }
-  setLoading(true); showNotice('');
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 58000);
-  try {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, provider: $('provider').value, tipoCliente: $('clientType').value, altura: Math.max(0, number($('height').value, 0)) }),
-      signal: controller.signal
-    });
-    const payload = await response.json().catch(() => null);
-    if (!response.ok || !payload?.ok) {
-      throw new Error(`${clean(payload?.detalle || payload?.error || `HTTP ${response.status}`, 1500)}${attemptDetails(payload)}`);
-    }
-    const data = payload.data || {};
-    $('covenin').value = clean(data.covenin, 80) || 'POR VERIFICAR';
-    $('unit').value = clean(data.unidad, 30) || 'und';
-    $('quantity').value = Math.max(0.0001, number(data.cantidad, 1));
-    $('rend').value = Math.max(0.0001, number(data.rendimiento, 1));
-    $('fcas').value = Math.max(0, number(data.fcas, 250));
-    $('description').value = clean(data.descripcion_tecnica, 6000) || prompt;
-    $('memory').value = clean(data.memoria_calculo, 6000);
-    renderRows('mat', data.materiales || []);
-    renderRows('eq', (data.equipos || []).map((item) => ({ ...item, precio: item.tarifa })));
-    renderRows('mo', (data.mo || []).map((item) => ({ ...item, desc: item.cargo, precio: item.jornal })));
-    renderAudit(data);
-    aiMeta = { modelo: clean(payload.modelo, 200), motor: payload.motor || null, generatedAt: new Date().toISOString() };
-    calculate();
-    const engineWarnings = Array.isArray(payload.advertencias_motor) && payload.advertencias_motor.length ? ` Hubo ${payload.advertencias_motor.length} intento(s) de respaldo, pero se obtuvo un resultado válido.` : '';
-    showNotice(`APU generado con ${aiMeta.modelo || 'motor IA'}.${engineWarnings}`);
-    setStatus('APU generado');
-  } catch (error) {
-    const message = error?.name === 'AbortError' ? 'La solicitud superó el tiempo disponible.' : clean(error?.message, 4000) || 'Error desconocido';
-    showNotice(`No se pudo generar: ${message}`, true);
-    setStatus('Error de IA', 'error');
-  } finally {
-    clearTimeout(timer); setLoading(false);
-  }
-}
-
-function validateItem() {
-  const errors = [];
-  if (!clean($('description').value)) errors.push('La descripción técnica está vacía.');
-  if (!clean($('unit').value, 30)) errors.push('La unidad está vacía.');
-  if (number($('quantity').value) <= 0) errors.push('La cantidad debe ser mayor que cero.');
-  if (number($('rend').value) <= 0) errors.push('El rendimiento debe ser mayor que cero.');
-  if (readRows('mat').length + readRows('eq').length + readRows('mo').length === 0) errors.push('Agrega al menos un recurso.');
-  return errors;
-}
-
-function saveItem() {
-  const errors = validateItem();
-  if (errors.length) { alert(`Revisa la partida:\n\n• ${errors.join('\n• ')}`); return; }
-  const calc = calculate();
-  const quantity = Math.max(0.0001, number($('quantity').value, 1));
-  const id = editId || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const item = {
-    id,
-    covenin: clean($('covenin').value, 80) || 'POR VERIFICAR',
-    desc: clean($('description').value, 6000),
-    unidad: clean($('unit').value, 30) || 'und',
-    cantidad: quantity,
-    rendimiento: Math.max(0.0001, number($('rend').value, 1)),
-    fcas: Math.max(0, number($('fcas').value, 0)),
-    tipoCliente: $('clientType').value,
-    factorCliente: factor(),
-    altura: Math.max(0, number($('height').value, 0)),
-    precioUnitarioBase: calc.base,
-    precioUnitarioContractual: calc.final,
-    total: quantity * calc.final,
-    memoriaCalculo: clean($('memory').value, 6000),
-    audit: structuredClone(audit),
-    aiMeta: aiMeta ? structuredClone(aiMeta) : null,
-    apu: { materiales: readRows('mat'), equipos: readRows('eq'), manoObra: readRows('mo'), totals: calc }
-  };
-  const index = project.items.findIndex((value) => value.id === id);
-  if (index >= 0) project.items[index] = item; else project.items.push(item);
-  editId = null; renderAll(); clearEditor(); setStatus('Partida guardada');
-}
-
-function clearEditor() {
-  editId = null; aiMeta = null; $('prompt').value = ''; $('covenin').value = ''; $('unit').value = 'und'; $('quantity').value = '1'; $('rend').value = '1'; $('fcas').value = '250'; $('description').value = ''; $('memory').value = '';
-  renderRows('mat', []); renderRows('eq', []); renderRows('mo', []); renderAudit(emptyAudit()); showNotice('');
-  $('saveItem').textContent = 'Agregar partida al presupuesto'; calculate();
-}
-
-function editItem(id) {
-  const item = project.items.find((value) => value.id === id); if (!item) return;
-  editId = id; $('covenin').value = item.covenin; $('unit').value = item.unidad; $('quantity').value = item.cantidad; $('rend').value = item.rendimiento; $('fcas').value = item.fcas; $('description').value = item.desc; $('memory').value = item.memoriaCalculo || '';
-  $('clientType').value = item.tipoCliente === 'ESTADO' ? 'ESTADO' : 'PRIVADO'; $('height').value = item.altura || 0;
-  renderRows('mat', item.apu?.materiales || []); renderRows('eq', item.apu?.equipos || []); renderRows('mo', item.apu?.manoObra || []); renderAudit(item.audit || emptyAudit()); aiMeta = item.aiMeta || null;
-  $('saveItem').textContent = 'Actualizar partida'; calculate(); document.querySelector('.controls').scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function deleteItem(id) {
-  const item = project.items.find((value) => value.id === id); if (!item) return;
-  if (!confirm(`¿Eliminar la partida: ${item.desc.slice(0, 90)}?`)) return;
-  project.items = project.items.filter((value) => value.id !== id); if (editId === id) clearEditor(); renderAll();
-}
-
-function updateGeneral() {
-  project.general = { obra: clean($('gObra').value, 250), cliente: clean($('gCliente').value, 200), ubicacion: clean($('gUbicacion').value, 250), fecha: clean($('gFecha').value, 20) };
-  $('dObra').textContent = project.general.obra; $('dCliente').textContent = project.general.cliente; $('dUbicacion').textContent = project.general.ubicacion; $('dFecha').textContent = formatDate(project.general.fecha); $('footDate').textContent = project.general.fecha ? `Fecha: ${formatDate(project.general.fecha)}` : '';
-}
-
-function formatDate(value) {
-  if (!value) return ''; const date = new Date(`${value}T00:00:00`); return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat('es-VE').format(date);
-}
-
-function renderBudget() {
-  const tbody = $('budget'); tbody.innerHTML = ''; let subtotal = 0;
-  project.items.forEach((item, index) => {
-    subtotal += number(item.total);
-    const row = document.createElement('tr');
-    [index + 1, item.covenin, item.desc, item.unidad, format(item.cantidad), format(item.precioUnitarioContractual), format(item.total)].forEach((value, cellIndex) => {
-      const cell = document.createElement('td'); cell.textContent = value; if ([0,1,3].includes(cellIndex)) cell.className = 'center'; if ([4,5,6].includes(cellIndex)) cell.className = 'num'; row.appendChild(cell);
-    });
-    const actions = document.createElement('td'); actions.className = 'center no-print';
-    const edit = document.createElement('button'); edit.className = 'mini btn-blue'; edit.textContent = 'Editar'; edit.addEventListener('click', () => editItem(item.id));
-    const del = document.createElement('button'); del.className = 'mini btn-danger'; del.textContent = 'Borrar'; del.style.marginLeft = '3px'; del.addEventListener('click', () => deleteItem(item.id)); actions.append(edit, del); row.appendChild(actions); tbody.appendChild(row);
-  });
-  $('sub').textContent = format(subtotal); $('iva').textContent = format(subtotal * IVA); $('grand').textContent = format(subtotal * (1 + IVA)); $('budgetEmpty').style.display = project.items.length ? 'none' : 'block';
-}
-
-function logoHtml() { return logo ? `<img src="${logo}" alt="Logo SEINCA">` : 'LOGOTIPO SEINCA'; }
-function resourceRows(rows, material = false) {
-  return (rows || []).map((row) => material
-    ? `<tr><td>${escapeHtml(row.desc)}</td><td class="center">${escapeHtml(row.und)}</td><td class="num">${format(row.cant)}</td><td class="num">${format(row.precio)}</td><td class="num">${format(row.total)}</td></tr>`
-    : `<tr><td>${escapeHtml(row.desc)}</td><td class="num">${format(row.cant)}</td><td class="num">${format(row.precio)}</td><td class="num">${format(row.total)}</td></tr>`).join('');
-}
-function listHtml(values, fallback) { const list = Array.isArray(values) && values.length ? values : [fallback]; return `<ul style="margin:0;padding-left:14px">${list.map((value) => `<li>${escapeHtml(value)}</li>`).join('')}</ul>`; }
-
-function renderApuPages() {
-  const container = $('apuPages'); container.innerHTML = '';
-  project.items.forEach((item, index) => {
-    const totals = item.apu?.totals || {};
-    const page = document.createElement('article'); page.className = 'pdf-page';
-    page.innerHTML = `<div class="head"><div class="logo">${logoHtml()}</div><div style="text-align:right"><h1>SEINCA</h1><small>SERVICIOS INTEGRALES<br>RIF: J-297575472</small></div></div>
-      <div class="doc-title">ANÁLISIS DE PRECIO UNITARIO · PARTIDA ${index + 1}</div>
-      <table class="info"><tr><td class="k">COVENIN</td><td>${escapeHtml(item.covenin)}</td><td class="k">UNIDAD</td><td>${escapeHtml(item.unidad)}</td></tr><tr><td class="k">DESCRIPCIÓN</td><td colspan="3">${escapeHtml(item.desc)}</td></tr><tr><td class="k">CANTIDAD</td><td>${format(item.cantidad)}</td><td class="k">RENDIMIENTO</td><td>${format(item.rendimiento)}/día</td></tr></table>
-      <h3 style="font-size:10px;margin:9px 0 3px">MATERIALES POR UNIDAD</h3><table class="doc"><thead><tr><th>Descripción</th><th>Und.</th><th>Cant.</th><th>Precio</th><th>Parcial</th></tr></thead><tbody>${resourceRows(item.apu?.materiales, true)}</tbody></table>
-      <h3 style="font-size:10px;margin:9px 0 3px">EQUIPOS DE CUADRILLA</h3><table class="doc"><thead><tr><th>Descripción</th><th>Cant.</th><th>Tarifa/día</th><th>Costo/und.</th></tr></thead><tbody>${resourceRows(item.apu?.equipos)}</tbody></table>
-      <h3 style="font-size:10px;margin:9px 0 3px">MANO DE OBRA</h3><table class="doc"><thead><tr><th>Cargo</th><th>Cant.</th><th>Jornal/día</th><th>Costo/und.</th></tr></thead><tbody>${resourceRows(item.apu?.manoObra)}</tbody></table>
-      <table class="summary"><tr><td>Costo directo</td><td class="num">${format(totals.direct)}</td></tr><tr><td>Administración 15%</td><td class="num">${format(number(totals.direct) * .15)}</td></tr><tr><td>Imprevistos 5%</td><td class="num">${format(number(totals.direct) * .05)}</td></tr><tr><td>Utilidad 10%</td><td class="num">${format(number(totals.direct) * .10)}</td></tr><tr><td>Precio unitario base</td><td class="num">${format(item.precioUnitarioBase)}</td></tr><tr><td><b>Precio contractual (${format(item.factorCliente)}x)</b></td><td class="num"><b>${format(item.precioUnitarioContractual)}</b></td></tr></table>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;font-size:8px"><div><b>MEMORIA DE CÁLCULO</b><div>${escapeHtml(item.memoriaCalculo || 'No indicada.')}</div></div><div><b>ADVERTENCIAS</b>${listHtml(item.audit?.advertencias, 'Sin advertencias declaradas.')}</div></div>
-      <div class="foot"><span>SEINCA · APU generado digitalmente</span><span>Partida ${index + 1}</span></div>`;
-    container.appendChild(page);
-  });
-}
-
-function renderLogo() { $('docLogo').innerHTML = logoHtml(); renderApuPages(); }
-function renderAll() { updateGeneral(); renderBudget(); renderApuPages(); renderLogo(); }
-
-function saveProject() {
-  updateGeneral(); project.logo = logo;
-  const blob = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' });
-  const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `SEINCA_${(project.general.obra || 'proyecto').replace(/[^a-z0-9_-]+/gi, '_')}.json`; link.click(); URL.revokeObjectURL(link.href);
-}
-
-function loadProject(file) {
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const data = JSON.parse(reader.result);
-      if (!data || !Array.isArray(data.items || data.partidas)) throw new Error('Formato de proyecto no reconocido');
-      project = { version: 4, general: data.general || {}, items: data.items || data.partidas || [], logo: data.logo || '' };
-      logo = project.logo || '';
-      $('gObra').value = project.general.obra || ''; $('gCliente').value = project.general.cliente || ''; $('gUbicacion').value = project.general.ubicacion || ''; $('gFecha').value = project.general.fecha || '';
-      renderAll(); clearEditor(); setStatus('Proyecto cargado');
-    } catch (error) { alert(`No se pudo cargar el proyecto: ${error.message}`); }
-  };
-  reader.readAsText(file);
-}
-
-async function exportPdf() {
-  if (typeof html2pdf !== 'function') { alert('La librería PDF todavía no terminó de cargar.'); return; }
-  const clone = $('document').cloneNode(true); clone.querySelectorAll('.no-print').forEach((node) => node.remove());
-  clone.style.position = 'fixed'; clone.style.left = '-10000px'; clone.style.top = '0'; document.body.appendChild(clone);
-  try {
-    await html2pdf().set({ margin: 0, filename: `SEINCA_${(project.general.obra || 'presupuesto').replace(/[^a-z0-9_-]+/gi, '_')}.pdf`, image: { type: 'jpeg', quality: .98 }, html2canvas: { scale: 1.5, useCORS: true, logging: false }, jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }, pagebreak: { mode: ['css','legacy'] } }).from(clone).save();
-  } finally { clone.remove(); }
-}
-
-async function checkHealth() {
-  try {
-    const response = await fetch(HEALTH_URL, { cache: 'no-store' });
-    const payload = await response.json();
-    const openai = payload?.providers?.openai?.ok;
-    const gemini = payload?.providers?.gemini?.ok;
-    if (openai && gemini) setStatus('OpenAI + Gemini operativos');
-    else if (openai) setStatus('OpenAI operativo · Gemini no disponible', 'warn');
-    else if (gemini) setStatus('Gemini operativo · falta configurar OpenAI', 'warn');
-    else setStatus('Motores IA sin conexión', 'error');
-  } catch { setStatus('No se pudo verificar la IA', 'warn'); }
-}
-
-['gObra','gCliente','gUbicacion','gFecha'].forEach((id) => $(id).addEventListener('input', updateGeneral));
-['clientType','rend','fcas'].forEach((id) => $(id).addEventListener('input', calculate));
-document.querySelectorAll('[data-add]').forEach((button) => button.addEventListener('click', () => addRow(button.dataset.add)));
-$('generate').addEventListener('click', generateApu); $('saveItem').addEventListener('click', saveItem); $('saveProject').addEventListener('click', saveProject); $('loadBtn').addEventListener('click', () => $('loadFile').click()); $('loadFile').addEventListener('change', (event) => event.target.files[0] && loadProject(event.target.files[0]));
-$('newProject').addEventListener('click', () => { if (!confirm('¿Crear un proyecto nuevo?')) return; project = { version: 4, general: {}, items: [], logo: '' }; logo = ''; ['gObra','gCliente','gUbicacion','gFecha'].forEach((id) => $(id).value = ''); clearEditor(); renderAll(); });
-$('logoInput').addEventListener('change', (event) => { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => { logo = reader.result; project.logo = logo; renderLogo(); }; reader.readAsDataURL(file); });
-$('pdf').addEventListener('click', exportPdf); $('print').addEventListener('click', () => window.print());
-renderAudit(); calculate(); renderAll(); checkHealth();
-</script>
+  <script type="module" src="/app.js"></script>
 </body>
 </html>
