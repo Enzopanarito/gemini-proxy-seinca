@@ -146,6 +146,7 @@ const clean = (value, max = 6000) => String(value ?? '').replace(/[\u0000-\u001F
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
 const format = (value) => fmt.format(number(value));
 const API_URL = '/api/gemini';
+const HEALTH_URL = '/api/health';
 const INDIRECTS = { admin: 0.15, contingency: 0.05, profit: 0.10 };
 const IVA = 0.16;
 let project = { version: 4, general: {}, items: [], logo: '' };
@@ -485,10 +486,14 @@ async function exportPdf() {
 
 async function checkHealth() {
   try {
-    const response = await fetch(API_URL, { cache: 'no-store' });
+    const response = await fetch(HEALTH_URL, { cache: 'no-store' });
     const payload = await response.json();
-    const openai = payload?.live?.openai?.ok; const gemini = payload?.live?.gemini?.ok;
-    if (openai && gemini) setStatus('OpenAI + Gemini operativos'); else if (openai) setStatus('OpenAI operativo · Gemini en respaldo', 'warn'); else if (gemini) setStatus('Gemini operativo · OpenAI en respaldo', 'warn'); else setStatus('Motores IA sin conexión', 'error');
+    const openai = payload?.providers?.openai?.ok;
+    const gemini = payload?.providers?.gemini?.ok;
+    if (openai && gemini) setStatus('OpenAI + Gemini operativos');
+    else if (openai) setStatus('OpenAI operativo · Gemini no disponible', 'warn');
+    else if (gemini) setStatus('Gemini operativo · falta configurar OpenAI', 'warn');
+    else setStatus('Motores IA sin conexión', 'error');
   } catch { setStatus('No se pudo verificar la IA', 'warn'); }
 }
 
