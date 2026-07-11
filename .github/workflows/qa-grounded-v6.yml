@@ -1,0 +1,57 @@
+name: QA Grounded Caracas v6
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  grounded-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - name: QA estático y unitario
+        run: npm run qa
+      - name: Esperar despliegue
+        run: sleep 12
+      - name: Verificar motor publicado
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --max-time 20 https://gemini-proxy-seinca.vercel.app/api/gemini -o /tmp/engine.json
+          cat /tmp/engine.json
+          node -e "const d=require('/tmp/engine.json'); if(!d.ok) throw new Error('motor no disponible'); if(d.version!=='6.0.0-grounded-caracas') throw new Error('versión incorrecta: '+d.version); if(!String(d.location).includes('Caracas')) throw new Error('mercado no fijado en Caracas'); console.log('ENGINE_GROUNDED_OK');"
+      - name: Generar APU real con precios y COVENIN investigados
+        run: |
+          set -euo pipefail
+          cat > /tmp/request.json <<'JSON'
+          {
+            "prompt": "Suministro y aplicación de pintura de caucho blanca de primera calidad en paredes interiores, dos manos, sobre 40 m2 de superficie previamente preparada, incluyendo sellador, resane menor, protección y limpieza final.",
+            "provider": "AUTO",
+            "tipoCliente": "PRIVADO",
+            "altura": 0,
+            "config": {"currency":"USD","workdayHours":8,"defaultFcasPct":250,"requireVerifiedPricesForApproval":true},
+            "catalog": []
+          }
+          JSON
+          curl --fail-with-body --silent --show-error --location --max-time 59 -H 'Content-Type: application/json' --data @/tmp/request.json https://gemini-proxy-seinca.vercel.app/api/gemini -o /tmp/apu.json
+          cat /tmp/apu.json
+          node <<'NODE'
+          const d=require('/tmp/apu.json');
+          if(!d.ok) throw new Error(d.detalle||d.error||'falló');
+          if(!String(d.modelo).includes('investigación web Caracas')) throw new Error('no declaró investigación web');
+          const resources=[...(d.data.materiales||[]),...(d.data.equipos||[]),...(d.data.mo||[])];
+          if(!resources.length) throw new Error('sin recursos');
+          if(!(d.motor?.fuentes?.length>0)) throw new Error('sin fuentes web citadas');
+          const priced=resources.filter(r=>(r.precio||r.tarifa||r.jornal)>0);
+          if(!priced.length) throw new Error('sin precios web utilizables');
+          for(const r of priced){if(!String(r.fuente_precio||'').includes('http')) throw new Error('precio sin URL: '+(r.desc||r.cargo));}
+          if(!d.data.criterio_covenin) throw new Error('sin investigación normativa');
+          console.log('LIVE_GROUNDED_APU_OK', {modelo:d.modelo, cobertura:d.motor.cobertura, recursos:resources.length, precios:priced.length, fuentes:d.motor.fuentes.length, covenin:d.data.covenin});
+          NODE
