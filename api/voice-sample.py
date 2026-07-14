@@ -1,7 +1,10 @@
 from http.server import BaseHTTPRequestHandler
 import asyncio
+import base64
+import json
 import os
 import tempfile
+from urllib.parse import urlparse, parse_qs
 
 import edge_tts
 
@@ -42,6 +45,28 @@ class handler(BaseHTTPRequestHandler):
 
             with open(temp_path, "rb") as audio_file:
                 audio = audio_file.read()
+
+            query = parse_qs(urlparse(self.path).query)
+            if query.get("format", [""])[0].lower() == "json":
+                payload = json.dumps(
+                    {
+                        "filename": "SEINCA_Onix_512_Muestra_Voz_Natural.mp3",
+                        "mime_type": "audio/mpeg",
+                        "voice": VOICE,
+                        "rate": RATE,
+                        "pitch": PITCH,
+                        "text": TEXT,
+                        "audio_base64": base64.b64encode(audio).decode("ascii"),
+                    },
+                    ensure_ascii=False,
+                ).encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Content-Length", str(len(payload)))
+                self.send_header("Cache-Control", "no-store")
+                self.end_headers()
+                self.wfile.write(payload)
+                return
 
             self.send_response(200)
             self.send_header("Content-Type", "audio/mpeg")
