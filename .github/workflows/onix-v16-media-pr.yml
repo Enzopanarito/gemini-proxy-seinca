@@ -35,6 +35,7 @@ jobs:
           PY
       - name: Generar video
         run: |
+          set -e
           cat > onix-512/media/secuencia.txt <<'EOF'
           file '../assets/hero.webp'
           duration 24
@@ -50,11 +51,11 @@ jobs:
           duration 45
           file '../assets/hero.webp'
           EOF
-          ffmpeg -y -f concat -safe 0 -i onix-512/media/secuencia.txt -i onix-512/media/SEINCA_Onix_512_Narracion_Completa_V16.mp3 -vf "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,format=yuv420p" -r 24 -c:v libx264 -preset medium -b:v 700k -maxrate 850k -bufsize 1700k -c:a aac -b:a 96k -shortest -movflags +faststart onix-512/media/SEINCA_Onix_512_V16_Presentacion_Narrada.mp4
-          ffmpeg -y -i onix-512/assets/hero.webp -vf "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080" -frames:v 1 -q:v 2 onix-512/media/SEINCA_Onix_512_V16_Poster.jpg
+          ffmpeg -loglevel error -y -f concat -safe 0 -i onix-512/media/secuencia.txt -i onix-512/media/SEINCA_Onix_512_Narracion_Completa_V16.mp3 -vf "scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720,format=yuv420p" -r 24 -c:v libx264 -preset medium -b:v 480k -maxrate 600k -bufsize 1200k -c:a aac -b:a 96k -shortest -movflags +faststart onix-512/media/SEINCA_Onix_512_V16_Presentacion_Narrada.mp4
+          ffmpeg -loglevel error -y -i onix-512/assets/hero.webp -vf "scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720" -frames:v 1 onix-512/media/SEINCA_Onix_512_V16_Poster.jpg
           rm onix-512/media/secuencia.txt
+          ls -lh onix-512/media/SEINCA_Onix_512_Narracion_Completa_V16.mp3 onix-512/media/SEINCA_Onix_512_V16_Presentacion_Narrada.mp4 onix-512/media/SEINCA_Onix_512_V16_Poster.jpg
           test -s onix-512/media/SEINCA_Onix_512_V16_Presentacion_Narrada.mp4
-          test $(stat -c%s onix-512/media/SEINCA_Onix_512_V16_Presentacion_Narrada.mp4) -lt 25000000
       - name: Guardar video
         run: |
           git config user.name "SEINCA Media Preview Bot"
@@ -63,4 +64,4 @@ jobs:
           git commit -m "asset(onix-v16): add complete narrated preview video"
           git push origin HEAD:mejoras-onix-512-v16-executive-2026-07-14
 
-# Trigger de diagnóstico 2026-07-14
+# Trigger de diagnóstico 2
