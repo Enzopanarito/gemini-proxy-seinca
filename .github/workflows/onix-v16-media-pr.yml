@@ -27,32 +27,14 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y ffmpeg
           pip install edge-tts==7.2.8 pillow
-      - name: Recuperar recursos oficiales V14
+      - name: Recuperar recursos oficiales desde V14
         run: |
           set -e
-          BASE='https://gemini-proxy-seinca.vercel.app/onix-512'
+          git worktree add /tmp/onix-v14 bd5544bbbfe2fe79a258c2c8c1356caad91037df
           mkdir -p onix-512/assets onix-512/documents onix-512/media/frames
-          curl -fsSL "$BASE/logo-seinca.png" -o onix-512/logo-seinca.png
-          for f in hero.webp render.webp planta.webp techo.webp luces.webp; do
-            curl -fsSL "$BASE/assets/$f" -o "onix-512/assets/$f"
-          done
-          for f in \
-            00_Indice_de_Entrega_Documental.pdf \
-            01_Dossier_Ejecutivo_SEINCA_Onix_512.pdf \
-            02_Presupuesto_APU_y_Computos_Metricos_SEINCA_Onix_512.pdf \
-            03_Memoria_Descriptiva_e_Informe_Tecnico_SEINCA_Onix_512.pdf \
-            04_Anexo_Computos_Metricos_SEINCA_Onix_512.pdf \
-            05_Ficha_Seleccion_y_Aprobacion_de_Acabados.pdf \
-            06_Acta_de_Aceptacion_Propuesta_SEINCA_Onix_512.pdf \
-            P00_Presentacion_Proyecto_Onix_512_SEINCA.pdf \
-            P01_Planta_General_Onix_512_SEINCA.pdf \
-            P02_Planta_Techo_Onix_512_SEINCA.pdf \
-            P03_Replanteo_Piso_Luminarias_Onix_512_SEINCA.pdf \
-            P04_Cortes_AA_BB_Onix_512_SEINCA.pdf \
-            P05_Revestimientos_Onix_512_SEINCA.pdf \
-            SEINCA_Onix_512_Entrega_Completa.zip; do
-            curl -fsSL "$BASE/documents/$f" -o "onix-512/documents/$f"
-          done
+          cp -a /tmp/onix-v14/onix-512/assets/. onix-512/assets/
+          cp -a /tmp/onix-v14/onix-512/documents/. onix-512/documents/
+          cp /tmp/onix-v14/onix-512/logo-seinca.png onix-512/logo-seinca.png
           file onix-512/assets/hero.webp onix-512/logo-seinca.png
           test -s onix-512/documents/01_Dossier_Ejecutivo_SEINCA_Onix_512.pdf
       - name: Generar narración natural completa
@@ -107,4 +89,4 @@ jobs:
           git commit -m 'asset(onix-v16): add complete resources and narrated video'
           git push origin HEAD:mejoras-onix-512-v16-executive-2026-07-14
 
-# Reconstrucción completa 2026-07-14
+# Reconstrucción completa desde commit V14
