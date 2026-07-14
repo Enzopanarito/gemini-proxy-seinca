@@ -1,4 +1,4 @@
-name: Diagnosticar y generar video Onix 512 V16
+name: Construir Preview completo Onix 512 V16
 
 on:
   pull_request:
@@ -11,9 +11,9 @@ permissions:
   contents: write
 
 jobs:
-  generar-video:
+  construir-preview:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,36 +27,58 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y ffmpeg
           pip install edge-tts==7.2.8 pillow
-      - name: Generar narración
+      - name: Recuperar recursos oficiales V14
         run: |
-          mkdir -p onix-512/media/frames
+          set -e
+          BASE='https://gemini-proxy-seinca.vercel.app/onix-512'
+          mkdir -p onix-512/assets onix-512/documents onix-512/media/frames
+          curl -fsSL "$BASE/logo-seinca.png" -o onix-512/logo-seinca.png
+          for f in hero.webp render.webp planta.webp techo.webp luces.webp; do
+            curl -fsSL "$BASE/assets/$f" -o "onix-512/assets/$f"
+          done
+          for f in \
+            00_Indice_de_Entrega_Documental.pdf \
+            01_Dossier_Ejecutivo_SEINCA_Onix_512.pdf \
+            02_Presupuesto_APU_y_Computos_Metricos_SEINCA_Onix_512.pdf \
+            03_Memoria_Descriptiva_e_Informe_Tecnico_SEINCA_Onix_512.pdf \
+            04_Anexo_Computos_Metricos_SEINCA_Onix_512.pdf \
+            05_Ficha_Seleccion_y_Aprobacion_de_Acabados.pdf \
+            06_Acta_de_Aceptacion_Propuesta_SEINCA_Onix_512.pdf \
+            P00_Presentacion_Proyecto_Onix_512_SEINCA.pdf \
+            P01_Planta_General_Onix_512_SEINCA.pdf \
+            P02_Planta_Techo_Onix_512_SEINCA.pdf \
+            P03_Replanteo_Piso_Luminarias_Onix_512_SEINCA.pdf \
+            P04_Cortes_AA_BB_Onix_512_SEINCA.pdf \
+            P05_Revestimientos_Onix_512_SEINCA.pdf \
+            SEINCA_Onix_512_Entrega_Completa.zip; do
+            curl -fsSL "$BASE/documents/$f" -o "onix-512/documents/$f"
+          done
+          file onix-512/assets/hero.webp onix-512/logo-seinca.png
+          test -s onix-512/documents/01_Dossier_Ejecutivo_SEINCA_Onix_512.pdf
+      - name: Generar narración natural completa
+        run: |
           python - <<'PY'
           import asyncio, edge_tts
           text = """En SEINCA entendemos que una buena obra comienza mucho antes de la construcción. Comienza con una idea clara, información confiable y decisiones tomadas en el momento correcto. Hoy presentamos Onix quinientos doce: una propuesta integral para transformar el área exterior de la residencia de la Familia Rivas en un espacio contemporáneo, funcional y cuidadosamente ejecutado. La solución articula el área social cubierta, la parrillera, las superficies, el paisajismo y la iluminación como un solo conjunto arquitectónico. Cada elemento fue concebido para aportar confort, durabilidad y una experiencia de uso coherente durante el día y la noche. El proyecto reúne diseño arquitectónico, ingeniería, planificación y control técnico. La documentación conecta la intención visual con la manera real de construirla, medirla, presupuestarla y aprobarla. El presupuesto está organizado en cuarenta y ocho partidas, respaldadas por análisis de precios unitarios y cómputos métricos trazables. El expediente incorpora memoria descriptiva, informe técnico, planos, selección de acabados y documentos de aceptación. La ejecución se planifica en un plazo estimado de diez a doce semanas. La secuencia comprende validación y procura, demoliciones y fundaciones, fabricación y montaje estructural, cubierta e instalaciones, superficies y acabados, pruebas y entrega. Antes de iniciar se deben cerrar decisiones clave: acabados y materiales; medidas, niveles y condiciones reales; ingeniería de detalle y planos de taller; equipos y requerimientos eléctricos; fecha de inicio y condiciones comerciales. La inversión total de la propuesta es de cuarenta y cinco mil novecientos diecisiete dólares con ocho centavos, IVA incluido. Onix quinientos doce no es solamente una imagen atractiva. Es una propuesta técnicamente organizada, económicamente trazable y preparada para avanzar hacia contratación y ejecución. SEINCA. Ingeniería, control y calidad para llevar el proyecto del concepto a la realidad."""
           async def main():
-              await edge_tts.Communicate(text, "es-VE-SebastianNeural", rate="-8%", pitch="-2Hz").save("onix-512/media/SEINCA_Onix_512_Narracion_Completa_V16.mp3")
+              await edge_tts.Communicate(text, 'es-VE-SebastianNeural', rate='-8%', pitch='-2Hz').save('onix-512/media/SEINCA_Onix_512_Narracion_Completa_V16.mp3')
           asyncio.run(main())
           PY
-      - name: Normalizar imágenes con Pillow
+      - name: Preparar fotogramas
         run: |
           python - <<'PY'
           from pathlib import Path
-          from PIL import Image
-
-          root = Path('onix-512')
-          output = root / 'media' / 'frames'
-          output.mkdir(parents=True, exist_ok=True)
-          names = ['hero.webp', 'render.webp', 'planta.webp', 'techo.webp', 'luces.webp']
-          for idx, name in enumerate(names, 1):
-              image = Image.open(root / 'assets' / name).convert('RGB')
-              ratio = min(1280 / image.width, 720 / image.height)
-              resized = image.resize((round(image.width * ratio), round(image.height * ratio)), Image.Resampling.LANCZOS)
-              canvas = Image.new('RGB', (1280, 720), 'black')
-              canvas.paste(resized, ((1280 - resized.width) // 2, (720 - resized.height) // 2))
-              canvas.save(output / f'{idx:02}.jpg', quality=92, optimize=True)
-          (root / 'media' / 'SEINCA_Onix_512_V16_Poster.jpg').write_bytes((output / '01.jpg').read_bytes())
+          from PIL import Image, ImageOps
+          root=Path('onix-512')
+          out=root/'media'/'frames'
+          names=['hero.webp','render.webp','planta.webp','techo.webp','luces.webp']
+          for i,name in enumerate(names,1):
+              im=Image.open(root/'assets'/name).convert('RGB')
+              frame=ImageOps.pad(im,(1280,720),method=Image.Resampling.LANCZOS,color='black',centering=(0.5,0.5))
+              frame.save(out/f'{i:02}.jpg',quality=91,optimize=True)
+          (root/'media'/'SEINCA_Onix_512_V16_Poster.jpg').write_bytes((out/'01.jpg').read_bytes())
           PY
-      - name: Generar video
+      - name: Renderizar video completo
         run: |
           cat > onix-512/media/secuencia.txt <<'EOF'
           file 'frames/01.jpg'
@@ -73,16 +95,16 @@ jobs:
           duration 45
           file 'frames/01.jpg'
           EOF
-          ffmpeg -loglevel error -y -f concat -safe 0 -i onix-512/media/secuencia.txt -i onix-512/media/SEINCA_Onix_512_Narracion_Completa_V16.mp3 -r 24 -c:v libx264 -pix_fmt yuv420p -preset medium -b:v 480k -maxrate 600k -bufsize 1200k -c:a aac -b:a 96k -shortest -movflags +faststart onix-512/media/SEINCA_Onix_512_V16_Presentacion_Narrada.mp4
+          ffmpeg -loglevel error -y -f concat -safe 0 -i onix-512/media/secuencia.txt -i onix-512/media/SEINCA_Onix_512_Narracion_Completa_V16.mp3 -r 24 -c:v libx264 -pix_fmt yuv420p -preset medium -b:v 500k -maxrate 650k -bufsize 1300k -c:a aac -b:a 96k -shortest -movflags +faststart onix-512/media/SEINCA_Onix_512_V16_Presentacion_Narrada.mp4
           rm -rf onix-512/media/secuencia.txt onix-512/media/frames
-          ls -lh onix-512/media/SEINCA_Onix_512_Narracion_Completa_V16.mp3 onix-512/media/SEINCA_Onix_512_V16_Presentacion_Narrada.mp4 onix-512/media/SEINCA_Onix_512_V16_Poster.jpg
           test -s onix-512/media/SEINCA_Onix_512_V16_Presentacion_Narrada.mp4
-      - name: Guardar video
+          ls -lh onix-512/media/SEINCA_Onix_512_V16_Presentacion_Narrada.mp4
+      - name: Guardar portal completo en Preview
         run: |
-          git config user.name "SEINCA Media Preview Bot"
-          git config user.email "enzopanarito@gmail.com"
-          git add onix-512/media/SEINCA_Onix_512_Narracion_Completa_V16.mp3 onix-512/media/SEINCA_Onix_512_V16_Presentacion_Narrada.mp4 onix-512/media/SEINCA_Onix_512_V16_Poster.jpg
-          git commit -m "asset(onix-v16): add complete narrated preview video"
+          git config user.name 'SEINCA Preview Builder'
+          git config user.email 'enzopanarito@gmail.com'
+          git add onix-512/assets onix-512/documents onix-512/logo-seinca.png onix-512/media/SEINCA_Onix_512_Narracion_Completa_V16.mp3 onix-512/media/SEINCA_Onix_512_V16_Presentacion_Narrada.mp4 onix-512/media/SEINCA_Onix_512_V16_Poster.jpg
+          git commit -m 'asset(onix-v16): add complete resources and narrated video'
           git push origin HEAD:mejoras-onix-512-v16-executive-2026-07-14
 
-# Trigger de diagnóstico 5
+# Reconstrucción completa 2026-07-14
