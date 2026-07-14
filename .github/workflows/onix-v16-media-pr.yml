@@ -29,7 +29,7 @@ jobs:
           pip install edge-tts==7.2.8
       - name: Generar narración
         run: |
-          mkdir -p onix-512/media
+          mkdir -p onix-512/media/frames
           python - <<'PY'
           import asyncio, edge_tts
           text = """En SEINCA entendemos que una buena obra comienza mucho antes de la construcción. Comienza con una idea clara, información confiable y decisiones tomadas en el momento correcto. Hoy presentamos Onix quinientos doce: una propuesta integral para transformar el área exterior de la residencia de la Familia Rivas en un espacio contemporáneo, funcional y cuidadosamente ejecutado. La solución articula el área social cubierta, la parrillera, las superficies, el paisajismo y la iluminación como un solo conjunto arquitectónico. Cada elemento fue concebido para aportar confort, durabilidad y una experiencia de uso coherente durante el día y la noche. El proyecto reúne diseño arquitectónico, ingeniería, planificación y control técnico. La documentación conecta la intención visual con la manera real de construirla, medirla, presupuestarla y aprobarla. El presupuesto está organizado en cuarenta y ocho partidas, respaldadas por análisis de precios unitarios y cómputos métricos trazables. El expediente incorpora memoria descriptiva, informe técnico, planos, selección de acabados y documentos de aceptación. La ejecución se planifica en un plazo estimado de diez a doce semanas. La secuencia comprende validación y procura, demoliciones y fundaciones, fabricación y montaje estructural, cubierta e instalaciones, superficies y acabados, pruebas y entrega. Antes de iniciar se deben cerrar decisiones clave: acabados y materiales; medidas, niveles y condiciones reales; ingeniería de detalle y planos de taller; equipos y requerimientos eléctricos; fecha de inicio y condiciones comerciales. La inversión total de la propuesta es de cuarenta y cinco mil novecientos diecisiete dólares con ocho centavos, IVA incluido. Onix quinientos doce no es solamente una imagen atractiva. Es una propuesta técnicamente organizada, económicamente trazable y preparada para avanzar hacia contratación y ejecución. SEINCA. Ingeniería, control y calidad para llevar el proyecto del concepto a la realidad."""
@@ -37,27 +37,33 @@ jobs:
               await edge_tts.Communicate(text, "es-VE-SebastianNeural", rate="-8%", pitch="-2Hz").save("onix-512/media/SEINCA_Onix_512_Narracion_Completa_V16.mp3")
           asyncio.run(main())
           PY
+      - name: Normalizar imágenes
+        run: |
+          ffmpeg -loglevel error -y -i onix-512/assets/hero.webp   -vf "scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720" -frames:v 1 onix-512/media/frames/01.jpg
+          ffmpeg -loglevel error -y -i onix-512/assets/render.webp -vf "scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720" -frames:v 1 onix-512/media/frames/02.jpg
+          ffmpeg -loglevel error -y -i onix-512/assets/planta.webp -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black" -frames:v 1 onix-512/media/frames/03.jpg
+          ffmpeg -loglevel error -y -i onix-512/assets/techo.webp  -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black" -frames:v 1 onix-512/media/frames/04.jpg
+          ffmpeg -loglevel error -y -i onix-512/assets/luces.webp  -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black" -frames:v 1 onix-512/media/frames/05.jpg
+          cp onix-512/media/frames/01.jpg onix-512/media/SEINCA_Onix_512_V16_Poster.jpg
       - name: Generar video
         run: |
-          set -e
           cat > onix-512/media/secuencia.txt <<'EOF'
-          file '../assets/hero.webp'
+          file 'frames/01.jpg'
           duration 24
-          file '../assets/render.webp'
+          file 'frames/02.jpg'
           duration 24
-          file '../assets/planta.webp'
+          file 'frames/03.jpg'
           duration 24
-          file '../assets/techo.webp'
+          file 'frames/04.jpg'
           duration 24
-          file '../assets/luces.webp'
+          file 'frames/05.jpg'
           duration 24
-          file '../assets/hero.webp'
+          file 'frames/01.jpg'
           duration 45
-          file '../assets/hero.webp'
+          file 'frames/01.jpg'
           EOF
-          ffmpeg -loglevel error -y -f concat -safe 0 -i onix-512/media/secuencia.txt -i onix-512/media/SEINCA_Onix_512_Narracion_Completa_V16.mp3 -vf "scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720,format=yuv420p" -r 24 -c:v libx264 -preset medium -b:v 480k -maxrate 600k -bufsize 1200k -c:a aac -b:a 96k -shortest -movflags +faststart onix-512/media/SEINCA_Onix_512_V16_Presentacion_Narrada.mp4
-          ffmpeg -loglevel error -y -i onix-512/assets/hero.webp -vf "scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720" -frames:v 1 onix-512/media/SEINCA_Onix_512_V16_Poster.jpg
-          rm onix-512/media/secuencia.txt
+          ffmpeg -loglevel error -y -f concat -safe 0 -i onix-512/media/secuencia.txt -i onix-512/media/SEINCA_Onix_512_Narracion_Completa_V16.mp3 -r 24 -c:v libx264 -pix_fmt yuv420p -preset medium -b:v 480k -maxrate 600k -bufsize 1200k -c:a aac -b:a 96k -shortest -movflags +faststart onix-512/media/SEINCA_Onix_512_V16_Presentacion_Narrada.mp4
+          rm -rf onix-512/media/secuencia.txt onix-512/media/frames
           ls -lh onix-512/media/SEINCA_Onix_512_Narracion_Completa_V16.mp3 onix-512/media/SEINCA_Onix_512_V16_Presentacion_Narrada.mp4 onix-512/media/SEINCA_Onix_512_V16_Poster.jpg
           test -s onix-512/media/SEINCA_Onix_512_V16_Presentacion_Narrada.mp4
       - name: Guardar video
@@ -68,4 +74,4 @@ jobs:
           git commit -m "asset(onix-v16): add complete narrated preview video"
           git push origin HEAD:mejoras-onix-512-v16-executive-2026-07-14
 
-# Trigger de diagnóstico 3
+# Trigger de diagnóstico 4
