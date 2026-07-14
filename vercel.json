@@ -2,8 +2,13 @@
   "functions": {
     "api/gemini.js": { "maxDuration": 60 },
     "api/health.js": { "maxDuration": 20 },
-    "api/pdf.js": { "maxDuration": 60 }
+    "api/pdf.js": { "maxDuration": 60 },
+    "api/onix-512.js": { "maxDuration": 20 }
   },
+  "rewrites": [
+    { "source": "/onix-512", "destination": "/api/onix-512" },
+    { "source": "/onix-512/", "destination": "/api/onix-512" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
