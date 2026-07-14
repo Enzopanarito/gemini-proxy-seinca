@@ -1,0 +1,50 @@
+name: Package Onix 512 V14 Backup
+
+on:
+  push:
+    branches:
+      - backup-package-onix-v14-final
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact production commit
+        uses: actions/checkout@v4
+        with:
+          ref: bd5544bbbfe2fe79a258c2c8c1356caad91037df
+
+      - name: Build exact restoration package
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p respaldo/portal
+          cp -a onix-512 respaldo/portal/
+          cp vercel.json respaldo/portal/vercel.json
+          [ -f package.json ] && cp package.json respaldo/portal/package.json || true
+          cat > respaldo/RESPALDO_BASE_APROBADO.txt <<'EOF'
+          Proyecto: SEINCA Onix 512
+          Respaldo: RESPALDO BASE APROBADO V14
+          Fecha: 2026-07-14
+          Dominio: https://gemini-proxy-seinca.vercel.app/onix-512
+          Repositorio: Enzopanarito/gemini-proxy-seinca
+          Commit exacto: bd5544bbbfe2fe79a258c2c8c1356caad91037df
+          Despliegue Vercel: dpl_31ycLraDJ9u4Lac4FVKuJyjztKrd
+          Rama inmutable: backup-onix-512-v14-2026-07-14
+          Comando acordado: APLICA RESPALDO
+          Acción de restauración: devolver main al commit exacto indicado y verificar producción.
+          EOF
+          (cd respaldo && find . -type f -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt)
+          zip -r SEINCA_Onix_512_RESPALDO_BASE_APROBADO_V14.zip respaldo
+
+      - name: Upload restoration package
+        uses: actions/upload-artifact@v4
+        with:
+          name: SEINCA_Onix_512_RESPALDO_BASE_APROBADO_V14
+          path: SEINCA_Onix_512_RESPALDO_BASE_APROBADO_V14.zip
+          if-no-files-found: error
+          retention-days: 90
