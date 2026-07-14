@@ -22,7 +22,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install edge-tts==7.2.8
+      - name: Instalar dependencias
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          pip install edge-tts==7.2.8
       - name: Generar narración
         run: |
           mkdir -p onix-512/media
@@ -64,4 +68,4 @@ jobs:
           git commit -m "asset(onix-v16): add complete narrated preview video"
           git push origin HEAD:mejoras-onix-512-v16-executive-2026-07-14
 
-# Trigger de diagnóstico 2
+# Trigger de diagnóstico 3
