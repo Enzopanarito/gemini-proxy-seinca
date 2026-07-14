@@ -27,21 +27,24 @@ jobs:
           pip install edge-tts==7.2.8 pillow
       - name: Extraer renders reales desde V14
         run: |
-          set -e
-          git fetch origin bd5544bbbfe2fe79a258c2c8c1356caad91037df
           mkdir -p onix-512/assets onix-512/media/frames
-          git show bd5544bbbfe2fe79a258c2c8c1356caad91037df:onix-512/asset-render.js > /tmp/render.js
-          git show bd5544bbbfe2fe79a258c2c8c1356caad91037df:onix-512/asset-planta.js > /tmp/planta.js
-          git show bd5544bbbfe2fe79a258c2c8c1356caad91037df:onix-512/asset-techo.js > /tmp/techo.js
+          git show origin/backup-onix-512-v14-2026-07-14:onix-512/asset-render.js > /tmp/render.js
+          git show origin/backup-onix-512-v14-2026-07-14:onix-512/asset-planta.js > /tmp/planta.js
+          git show origin/backup-onix-512-v14-2026-07-14:onix-512/asset-techo.js > /tmp/techo.js
           python - <<'PY'
           import re,base64
           from pathlib import Path
           out=Path('onix-512/assets')
           for name in ('render','planta','techo'):
               s=Path('/tmp/'+name+'.js').read_text()
-              m=re.search(r"base64,([^']+)",s)
-              if not m: raise SystemExit('No se encontró '+name)
-              (out/(name+'.webp')).write_bytes(base64.b64decode(m.group(1)))
+              m=re.search(r'base64,([^\'\"]+)',s)
+              if not m:
+                  raise SystemExit('No se encontró Base64 de '+name)
+              data=base64.b64decode(m.group(1))
+              if not data.startswith(b'RIFF'):
+                  raise SystemExit('Imagen WebP inválida: '+name)
+              (out/(name+'.webp')).write_bytes(data)
+              print(name,len(data))
           (out/'hero.webp').write_bytes((out/'render.webp').read_bytes())
           (out/'luces.webp').write_bytes((out/'planta.webp').read_bytes())
           PY
@@ -90,13 +93,15 @@ jobs:
           ffmpeg -loglevel error -y -f concat -safe 0 -i onix-512/media/secuencia.txt -i onix-512/media/SEINCA_Onix_512_Narracion_Completa_V16.mp3 -r 24 -c:v libx264 -pix_fmt yuv420p -preset medium -b:v 520k -maxrate 680k -bufsize 1360k -c:a aac -b:a 96k -shortest -movflags +faststart onix-512/media/SEINCA_Onix_512_V16_Presentacion_Narrada.mp4
           rm -rf onix-512/media/frames onix-512/media/secuencia.txt
           test -s onix-512/media/SEINCA_Onix_512_V16_Presentacion_Narrada.mp4
+          ls -lh onix-512/media/SEINCA_Onix_512_V16_Presentacion_Narrada.mp4
       - name: Integrar video y narración al portal
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path('onix-512/index.html'); s=p.read_text()
           block='''<section class="section black" id="video-ejecutivo"><div class="shell"><header class="section-head inverse"><div><span>00 / PRESENTACIÓN AUDIOVISUAL</span><h2>Proyecto Onix 512 en video.</h2></div><p>Narración ejecutiva completa con la voz natural aprobada.</p></header><video controls playsinline preload="metadata" poster="media/SEINCA_Onix_512_V16_Poster.jpg" style="width:100%;border-radius:18px;background:#000;box-shadow:0 30px 80px #0008"><source src="media/SEINCA_Onix_512_V16_Presentacion_Narrada.mp4" type="video/mp4"></video></div></section>'''
-          s=s.replace('<section class="section light" id="resumen">',block+'<section class="section light" id="resumen">',1)
+          if 'id="video-ejecutivo"' not in s:
+              s=s.replace('<section class="section light" id="resumen">',block+'<section class="section light" id="resumen">',1)
           p.write_text(s)
           js=Path('onix-512/v16.js')
           if js.exists():
