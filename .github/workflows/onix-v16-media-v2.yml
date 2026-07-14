@@ -1,0 +1,74 @@
+name: Generar medios finales Preview Onix V16
+
+on:
+  push:
+    branches: [mejoras-onix-512-v16-executive-2026-07-14]
+    paths: [.github/workflows/onix-v16-media-v2.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  media:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: mejoras-onix-512-v16-executive-2026-07-14
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Generar narración neural aprobada
+        run: |
+          pip install edge-tts==7.2.8
+          python - <<'PY'
+          import asyncio
+          from pathlib import Path
+          import edge_tts
+          p=Path('onix-512/control/GUION_NARRACION_V16.txt')
+          t=p.read_text(encoding='utf-8')
+          t=t[t.index('En SEINCA'):t.index('\n\nVoz aprobada')]
+          async def main():
+              out='onix-512/media/SEINCA_Onix_512_Narracion_Completa_V16.mp3'
+              await edge_tts.Communicate(t,'es-VE-SebastianNeural',rate='-8%',pitch='-2Hz').save(out)
+          asyncio.run(main())
+          PY
+      - name: Crear videos de prueba
+        run: |
+          ROOT="$GITHUB_WORKSPACE/onix-512"
+          cat > "$ROOT/media/slides.txt" <<EOF
+          file '$ROOT/assets/hero.webp'
+          duration 24
+          file '$ROOT/assets/render.webp'
+          duration 24
+          file '$ROOT/assets/planta.webp'
+          duration 24
+          file '$ROOT/assets/techo.webp'
+          duration 24
+          file '$ROOT/assets/luces.webp'
+          duration 24
+          file '$ROOT/assets/hero.webp'
+          duration 45
+          file '$ROOT/assets/hero.webp'
+          EOF
+          AUDIO="$ROOT/media/SEINCA_Onix_512_Narracion_Completa_V16.mp3"
+          DUR=$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "$AUDIO")
+          VF1080="scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,format=yuv420p"
+          VF720="scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720,format=yuv420p"
+          ffmpeg -y -i "$ROOT/assets/hero.webp" -vf "$VF1080" -frames:v 1 -q:v 2 "$ROOT/media/SEINCA_Onix_512_V16_Poster.jpg"
+          ffmpeg -y -f concat -safe 0 -i "$ROOT/media/slides.txt" -i "$AUDIO" -i "$ROOT/media/SEINCA_Onix_512_Subtitulos_V16.vtt" -map 0:v -map 1:a -map 2:0 -vf "$VF1080" -r 30 -c:v libx264 -preset veryfast -b:v 850k -maxrate 950k -bufsize 1900k -c:a aac -b:a 96k -c:s mov_text -shortest -movflags +faststart "$ROOT/media/SEINCA_Onix_512_V16_Presentacion_Narrada.mp4"
+          ffmpeg -y -f concat -safe 0 -i "$ROOT/media/slides.txt" -vf "$VF1080" -r 30 -c:v libx264 -preset veryfast -b:v 850k -maxrate 950k -bufsize 1900k -t "$DUR" -an -movflags +faststart "$ROOT/media/SEINCA_Onix_512_V16_Presentacion_Sin_Voz.mp4"
+          ffmpeg -y -f concat -safe 0 -i "$ROOT/media/slides.txt" -i "$AUDIO" -map 0:v -map 1:a -vf "$VF720" -r 25 -c:v libx264 -preset veryfast -b:v 520k -maxrate 620k -bufsize 1240k -c:a aac -b:a 80k -shortest -movflags +faststart "$ROOT/media/SEINCA_Onix_512_V16_WhatsApp.mp4"
+          rm -f "$ROOT/media/slides.txt"
+          for f in "$AUDIO" "$ROOT/media/SEINCA_Onix_512_V16_Presentacion_Narrada.mp4" "$ROOT/media/SEINCA_Onix_512_V16_Presentacion_Sin_Voz.mp4" "$ROOT/media/SEINCA_Onix_512_V16_WhatsApp.mp4" "$ROOT/media/SEINCA_Onix_512_V16_Poster.jpg"; do test -s "$f"; du -h "$f"; done
+          find "$ROOT/media" -type f -size +24M -print -quit | grep -q . && exit 1 || true
+      - name: Guardar medios en la rama Preview
+        run: |
+          git config user.name "SEINCA Media Preview Bot"
+          git config user.email "enzopanarito@gmail.com"
+          git add onix-512/media/SEINCA_Onix_512_Narracion_Completa_V16.mp3 onix-512/media/SEINCA_Onix_512_V16_Presentacion_Narrada.mp4 onix-512/media/SEINCA_Onix_512_V16_Presentacion_Sin_Voz.mp4 onix-512/media/SEINCA_Onix_512_V16_WhatsApp.mp4 onix-512/media/SEINCA_Onix_512_V16_Poster.jpg
+          git commit -m "asset(onix-v16): add approved narration and preview videos" || exit 0
+          git pull --rebase origin mejoras-onix-512-v16-executive-2026-07-14
+          git push origin HEAD:mejoras-onix-512-v16-executive-2026-07-14
