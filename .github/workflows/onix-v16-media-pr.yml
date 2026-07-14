@@ -26,7 +26,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y ffmpeg
-          pip install edge-tts==7.2.8
+          pip install edge-tts==7.2.8 pillow
       - name: Generar narración
         run: |
           mkdir -p onix-512/media/frames
@@ -37,14 +37,25 @@ jobs:
               await edge_tts.Communicate(text, "es-VE-SebastianNeural", rate="-8%", pitch="-2Hz").save("onix-512/media/SEINCA_Onix_512_Narracion_Completa_V16.mp3")
           asyncio.run(main())
           PY
-      - name: Normalizar imágenes
+      - name: Normalizar imágenes con Pillow
         run: |
-          ffmpeg -loglevel error -y -i onix-512/assets/hero.webp   -vf "scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720" -frames:v 1 onix-512/media/frames/01.jpg
-          ffmpeg -loglevel error -y -i onix-512/assets/render.webp -vf "scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720" -frames:v 1 onix-512/media/frames/02.jpg
-          ffmpeg -loglevel error -y -i onix-512/assets/planta.webp -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black" -frames:v 1 onix-512/media/frames/03.jpg
-          ffmpeg -loglevel error -y -i onix-512/assets/techo.webp  -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black" -frames:v 1 onix-512/media/frames/04.jpg
-          ffmpeg -loglevel error -y -i onix-512/assets/luces.webp  -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black" -frames:v 1 onix-512/media/frames/05.jpg
-          cp onix-512/media/frames/01.jpg onix-512/media/SEINCA_Onix_512_V16_Poster.jpg
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+
+          root = Path('onix-512')
+          output = root / 'media' / 'frames'
+          output.mkdir(parents=True, exist_ok=True)
+          names = ['hero.webp', 'render.webp', 'planta.webp', 'techo.webp', 'luces.webp']
+          for idx, name in enumerate(names, 1):
+              image = Image.open(root / 'assets' / name).convert('RGB')
+              ratio = min(1280 / image.width, 720 / image.height)
+              resized = image.resize((round(image.width * ratio), round(image.height * ratio)), Image.Resampling.LANCZOS)
+              canvas = Image.new('RGB', (1280, 720), 'black')
+              canvas.paste(resized, ((1280 - resized.width) // 2, (720 - resized.height) // 2))
+              canvas.save(output / f'{idx:02}.jpg', quality=92, optimize=True)
+          (root / 'media' / 'SEINCA_Onix_512_V16_Poster.jpg').write_bytes((output / '01.jpg').read_bytes())
+          PY
       - name: Generar video
         run: |
           cat > onix-512/media/secuencia.txt <<'EOF'
@@ -74,4 +85,4 @@ jobs:
           git commit -m "asset(onix-v16): add complete narrated preview video"
           git push origin HEAD:mejoras-onix-512-v16-executive-2026-07-14
 
-# Trigger de diagnóstico 4
+# Trigger de diagnóstico 5
