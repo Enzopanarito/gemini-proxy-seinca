@@ -62,3 +62,5 @@ jobs:
           git add onix-512/media/SEINCA_Onix_512_Narracion_Completa_V16.mp3 onix-512/media/SEINCA_Onix_512_V16_Presentacion_Narrada.mp4 onix-512/media/SEINCA_Onix_512_V16_Poster.jpg
           git commit -m "asset(onix-v16): add complete narrated preview video"
           git push origin HEAD:mejoras-onix-512-v16-executive-2026-07-14
+
+# Trigger de diagnóstico 2026-07-14
