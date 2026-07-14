@@ -1,4 +1,4 @@
-name: Diagnosticar recursos Onix 512 V14
+name: Guardar inventario Onix 512 V14
 
 on:
   pull_request:
@@ -8,18 +8,26 @@ on:
       - .github/workflows/onix-v16-media-pr.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  listar-recursos:
+  inventario:
     runs-on: ubuntu-latest
     steps:
-      - name: Descargar V14 exacta
+      - name: Descargar rama de diagnóstico
         uses: actions/checkout@v4
         with:
-          ref: bd5544bbbfe2fe79a258c2c8c1356caad91037df
-      - name: Mostrar estructura real
+          ref: test-onix-v16-video-workflow
+          fetch-depth: 0
+      - name: Crear inventario exacto de V14
         run: |
-          echo '--- ARCHIVOS ONIX 512 ---'
-          find onix-512 -maxdepth 4 -type f -printf '%p | %s bytes\n' | sort
-          echo '--- FIN ---'
+          git fetch origin bd5544bbbfe2fe79a258c2c8c1356caad91037df
+          git ls-tree -r --long bd5544bbbfe2fe79a258c2c8c1356caad91037df onix-512 > V14_ONIX_FILE_LIST.txt
+          cat V14_ONIX_FILE_LIST.txt
+      - name: Guardar inventario
+        run: |
+          git config user.name 'SEINCA Diagnostic Bot'
+          git config user.email 'enzopanarito@gmail.com'
+          git add V14_ONIX_FILE_LIST.txt
+          git commit -m 'diagnostic(onix-v16): save exact V14 file inventory' || exit 0
+          git push origin HEAD:test-onix-v16-video-workflow
