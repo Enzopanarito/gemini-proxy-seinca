@@ -4,11 +4,16 @@
     "api/health.js": { "maxDuration": 20 },
     "api/pdf.js": { "maxDuration": 60 },
     "api/onix-512.js": { "maxDuration": 20 },
-    "api/onix-v21.js": { "maxDuration": 20 }
+    "api/onix-v21.js": { "maxDuration": 20 },
+    "api/onix-document.js": { "maxDuration": 60 }
   },
   "rewrites": [
+    { "source": "/onix-512/v22", "destination": "/api/onix-v21" },
+    { "source": "/onix-512/v22/", "destination": "/api/onix-v21" },
     { "source": "/onix-512/v21", "destination": "/api/onix-v21" },
     { "source": "/onix-512/v21/", "destination": "/api/onix-v21" },
+    { "source": "/onix-512/documento", "destination": "/onix-512/documento.html" },
+    { "source": "/onix-512/documento/", "destination": "/onix-512/documento.html" },
     { "source": "/onix-512", "destination": "/onix-512/index.html" },
     { "source": "/onix-512/", "destination": "/onix-512/index.html" }
   ],
@@ -22,7 +27,7 @@
         { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://gemini-proxy-seinca.vercel.app https://drive.google.com https://drive.usercontent.google.com https://*.googleusercontent.com; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; worker-src 'self'"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self'; frame-src 'self'; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; worker-src 'self'"
         }
       ]
     },
