@@ -1,0 +1,42 @@
+n:relative;width:100vw;height:100vh;max-width:none;max-height:none;overflow:hidden;background:#08090b;color:#fff;box-shadow:none}
+.onix-elite .didactic-presentation .didactic-scene{position:absolute;inset:0 0 82px;display:block;overflow:hidden;opacity:0;visibility:hidden;transform:translateX(28px) scale(.99);transition:opacity .55s ease,transform .65s cubic-bezier(.2,.75,.2,1),visibility 0s .65s;background:#0a0b0d}
+.onix-elite .didactic-presentation .didactic-scene.active{opacity:1;visibility:visible;transform:none;transition-delay:0s;z-index:2}
+.onix-elite .didactic-presentation .slide-visual{position:relative;overflow:hidden;background:#111318}
+.onix-elite .didactic-presentation .slide-visual img{width:100%;height:100%;object-fit:cover;filter:none;transform:none}
+.onix-elite .didactic-presentation .didactic-scene.active .slide-visual img{animation:didacticImageMove 9s ease-out both}
+.onix-elite .didactic-presentation .slide-gradient{position:absolute;z-index:1;inset:0;background:linear-gradient(90deg,rgba(4,5,7,.96) 0%,rgba(4,5,7,.84) 34%,rgba(4,5,7,.25) 72%,rgba(4,5,7,.12) 100%),linear-gradient(0deg,rgba(4,5,7,.72),transparent 55%)}
+.onix-elite .didactic-presentation .slide-content{position:relative;z-index:3}
+.onix-elite .didactic-presentation .slide-kicker{display:block;color:#ed1c2e;font-size:clamp(.62rem,.8vw,.82rem);font-weight:900;letter-spacing:.2em;text-transform:uppercase}
+.onix-elite .didactic-presentation .slide-content h2,.onix-elite .didactic-presentation .slide-header h2{margin:.75rem 0 1rem;font-size:clamp(2.4rem,4.8vw,6.3rem);line-height:.94;letter-spacing:-.055em;text-wrap:balance}
+.onix-elite .didactic-presentation .slide-content h2 strong{color:#fff}
+.onix-elite .didactic-presentation .slide-content p{max-width:780px;margin:0;color:#d4d6da;font-size:clamp(.95rem,1.25vw,1.3rem);line-height:1.6}
+.onix-elite .didactic-presentation .slide-logo{width:clamp(150px,15vw,230px);height:auto;margin-bottom:2rem;filter:drop-shadow(0 10px 24px rgba(0,0,0,.5))}
+.onix-elite .didactic-presentation .scene-index{position:absolute;z-index:8;right:2.5vw;top:2.5vw;padding:.5rem .7rem;border:1px solid rgba(255,255,255,.2);background:rgba(5,6,8,.46);backdrop-filter:blur(10px);color:#fff;font-size:.68rem;font-weight:850;letter-spacing:.16em}
+.onix-elite .didactic-presentation .chapter-label{position:absolute;z-index:9;left:3vw;bottom:96px;color:#c9cbd0;font-size:.64rem;font-weight:850;letter-spacing:.14em;text-transform:uppercase}
+.onix-elite .didactic-presentation .chapter-bar{z-index:9;left:3vw;right:3vw;bottom:84px;gap:.35rem}
+.onix-elite .didactic-presentation .chapter-bar i{height:4px;border-radius:4px;background:rgba(255,255,255,.17)}
+.onix-elite .didactic-presentation .chapter-bar i.active{background:#ed1c2e;box-shadow:0 0 16px rgba(237,28,46,.52)}
+.onix-elite .didactic-presentation .didactic-controls{z-index:10;bottom:0;height:76px;padding:0 3vw;grid-template-columns:auto auto minmax(220px,1fr) auto auto auto auto;background:rgba(6,7,9,.97);border-top:1px solid rgba(255,255,255,.1);backdrop-filter:blur(18px)}
+.onix-elite .didactic-presentation .didactic-controls button{border:1px solid rgba(255,255,255,.14);background:#15171b;color:#fff;border-radius:3px;padding:.62rem .75rem;font-size:.68rem;font-weight:760}
+.onix-elite .didactic-presentation .didactic-controls button:hover{border-color:#ed1c2e;background:#1b1d22}
+.onix-elite .didactic-presentation .didactic-controls .progress{height:8px;border-radius:10px;background:#292c31;overflow:hidden}
+.onix-elite .didactic-presentation .didactic-controls .progress i{border-radius:10px;background:linear-gradient(90deg,#bd1423,#ff3345)}
+.onix-elite .didactic-presentation .caption{z-index:9;left:50%;bottom:116px;width:min(940px,82vw);transform:translateX(-50%);padding:.75rem 1.1rem;border:1px solid rgba(255,255,255,.1);border-radius:4px;background:rgba(4,5,7,.78);backdrop-filter:blur(14px);color:#fff;font-size:clamp(.75rem,.95vw,1rem);line-height:1.45;text-align:center}
+
+.onix-elite .didactic-presentation .scene-opening .slide-visual-full{position:absolute;inset:0}
+.onix-elite .didactic-presentation .scene-opening .slide-visual-full img{object-position:center 58%;filter:saturate(1.04) contrast(1.04)}
+.onix-elite .didactic-presentation .opening-content{position:absolute;left:6vw;top:50%;width:min(850px,62vw);transform:translateY(-50%)}
+.onix-elite .didactic-presentation .opening-content h2{font-size:clamp(4rem,8.6vw,10rem);line-height:.78;margin:.6rem 0 1.4rem}
+.onix-elite .didactic-presentation .opening-content h2 strong{color:#ed1c2e}
+.onix-elite .didactic-presentation .opening-content p{max-width:700px;font-size:clamp(1.05rem,1.55vw,1.55rem)}
+.onix-elite .didactic-presentation .slide-rule{display:flex;align-items:center;gap:1rem;margin-top:2rem;color:#e3e4e6;font-size:.72rem;font-weight:760;letter-spacing:.12em;text-transform:uppercase}
+.onix-elite .didactic-presentation .slide-rule i{display:block;width:90px;height:3px;background:#ed1c2e;box-shadow:0 0 18px rgba(237,28,46,.65)}
+
+.onix-elite .didactic-presentation .presentation-grid{display:grid;width:100%;height:100%}
+.onix-elite .didactic-presentation .two-column{grid-template-columns:1.14fr .86fr;background:#f2f2f0;color:#0b0c0e}
+.onix-elite .didactic-presentation .framed-render{margin:4.2vh 0 4.2vh 3.3vw;border-radius:3px;box-shadow:0 30px 70px rgba(0,0,0,.24)}
+.onix-elite .didactic-presentation .framed-render img{object-position:center}
+.onix-elite .didactic-presentation .image-label{position:absolute;left:1rem;bottom:1rem;padding:.65rem .8rem;background:rgba(6,7,9,.82);color:#fff;font-size:.62rem;font-weight:850;letter-spacing:.13em}
+.onix-elite .didactic-presentation .content-panel{display:flex;flex-direction:column;justify-content:center;padding:clamp(3rem,6vw,8rem)}
+.onix-elite .didactic-presentation .two-column .content-panel h2,.onix-elite .didactic-presentation .two-column .content-panel h2 strong{color:#0b0c0e}
+.onix-elite .didactic-presentation .two-column .content-panel p{color:

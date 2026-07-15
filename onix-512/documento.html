@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="theme-color" content="#07080a">
+<title>SEINCA | Expediente ONIX 512</title>
+<style>
+:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#fff;background:#07080a}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07080a}.viewer{display:grid;grid-template-rows:auto 1fr;width:100%;height:100%}.head{display:flex;align-items:center;justify-content:space-between;gap:1rem;min-height:88px;padding:12px 22px;background:linear-gradient(135deg,#111318,#07080a);border-bottom:3px solid #ed1c2e;box-shadow:0 12px 35px #0008;z-index:2}.brand{display:flex;align-items:center;gap:17px;min-width:0}.brand img{width:156px;height:auto}.brand div{display:grid;gap:3px;min-width:0}.brand small{color:#ed1c2e;font-size:.62rem;font-weight:900;letter-spacing:.15em}.brand strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:1rem}.actions{display:flex;gap:8px}.actions a{display:inline-flex;align-items:center;justify-content:center;padding:.75rem .95rem;border:1px solid #ffffff24;background:#17191e;color:#fff;text-decoration:none;font-size:.7rem;font-weight:850}.actions a.primary{background:#ed1c2e;border-color:#ed1c2e}.stage{min-height:0;background:#26282d}.stage iframe{display:block;width:100%;height:100%;border:0;background:#fff}.error{display:none;place-items:center;height:100%;padding:2rem;text-align:center}.error strong{display:block;margin-bottom:.5rem;font-size:1.3rem}.error a{color:#ff5361}@media(max-width:700px){.head{min-height:74px;padding:10px}.brand img{width:112px}.brand small{display:none}.brand strong{max-width:48vw;font-size:.76rem}.actions a:first-child{display:none}.actions a{padding:.65rem .72rem;font-size:.65rem}}
+</style>
+</head>
+<body>
+<main class="viewer">
+<header class="head">
+<div class="brand"><img src="/api/onix-media?key=logo&v=22" alt="SEINCA"><div><small>EXPEDIENTE TÉCNICO · PROYECTO ONIX 512</small><strong id="title">Documento SEINCA</strong></div></div>
+<nav class="actions"><a href="/onix-512/v22#documentos">Volver al portal</a><a class="primary" id="download" href="#">Descargar PDF</a></nav>
+</header>
+<section class="stage"><iframe id="frame" title="Documento técnico SEINCA"></iframe><div class="error" id="error"><div><strong>Documento no disponible</strong><p>La referencia solicitada no pertenece al expediente ONIX 512.</p><a href="/onix-512/v22#documentos">Regresar al portal</a></div></div></section>
+</main>
+<script>
+const documents={indice:'Índice de entrega documental',dossier:'Dossier ejecutivo',presupuesto:'Presupuesto, APU y cómputos métricos',memoria:'Memoria descriptiva e informe técnico',computos:'Anexo de cómputos métricos',acabados:'Selección y aprobación de acabados',acta:'Acta de aceptación',presentacion:'Presentación del proyecto',planta:'Planta general',techo:'Planta de techo',luminarias:'Replanteo de piso y luminarias',cortes:'Cortes A-A y B-B',revestimientos:'Revestimientos'};
+const key=new URLSearchParams(location.search).get('doc')||'';
+const title=document.getElementById('title'),frame=document.getElementById('frame'),download=document.getElementById('download'),error=document.getElementById('error');
+if(documents[key]){title.textContent=documents[key];document.title=`SEINCA | ${documents[key]}`;frame.src=`/api/onix-document?key=${encodeURIComponent(key)}#toolbar=0&navpanes=0&view=FitH`;download.href=`/api/onix-document?key=${encodeURIComponent(key)}&download=1`}else{frame.style.display='none';error.style.display='grid'}
+</script>
+</body>
+</html>

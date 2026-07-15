@@ -1,0 +1,149 @@
+contenido">
+<section class="hero elite-hero" id="inicio">
+<img alt="Render oficial de la propuesta arquitectónica del Proyecto Onix 512" class="hero-image" data-asset="hero" fetchpriority="high" src="https://gemini-proxy-seinca.vercel.app/api/onix-media?key=hero&v=20"/>
+<div class="hero-shade"></div>
+<div class="project-ribbon"><i></i><i></i><i></i><span>PROPUESTA TÉCNICA · ECONÓMICA · EJECUTIVA</span></div>
+<div class="hero-panel">
+<div class="hero-brand"><img alt="Logo oficial SEINCA" data-logo="" src="https://gemini-proxy-seinca.vercel.app/api/onix-media?key=logo&v=20"/></div>
+<p class="project-word">PROYECTO</p>
+<h1>ONIX 512</h1>
+<div class="executive-label">Ejecución integral, de principio a fin</div>
+<p class="hero-intro"><strong>Una obra civil no debería convertirse en un segundo trabajo para el cliente.</strong> SEINCA integra planificación, procura, personal, supervisión, control de calidad y entrega bajo una sola responsabilidad.</p>
+<div aria-label="Propuesta de valor" class="hero-promise">
+<span>USTED APRUEBA</span>
+<b>SEINCA COORDINA TODO LO DEMÁS</b>
+</div>
+<div class="hero-facts">
+<div><span class="fact-icon">$</span><p>INVERSIÓN TOTAL<strong>USD 45.917,08</strong><small>IVA incluido</small></p></div>
+<div><span class="fact-icon">◫</span><p>PLAZO ESTIMADO<strong>10–12 semanas</strong><small>Programación referencial</small></p></div>
+</div>
+<div class="hero-actions">
+<button data-presentation="" type="button">▶ Ver presentación guiada</button>
+<a data-doc-title="Dossier ejecutivo" href="https://drive.google.com/file/d/1w5gyygDTzk_4NLO7gKRzvVk_lg--ipuZ/view?usp=sharing" rel="noopener" target="_blank">Abrir dossier ↗</a>
+<a href="#garantia">Conocer la garantía ↓</a>
+</div>
+</div>
+<div class="narration-bar">
+<button aria-label="Iniciar presentación guiada" class="mic-button" data-presentation="" type="button">▶</button>
+<div aria-hidden="true" class="wave">▁▃▅▂▆▃▇▂▅▃▆▂▇▃▅▂▆▃▇▂▅▃▆▁</div>
+<p><strong>Presentación ejecutiva con narración personalizada para la Familia Rivas:</strong> un recorrido personalizado para la Familia Rivas, con imágenes, alcance, plazo y respaldo SEINCA.</p><small class="voice-disclosure">La narración utiliza la voz en español más natural disponible en el dispositivo y la pronunciación fonética indicada para Séinca.</small>
+<button class="launch" data-presentation="" type="button">VER PRESENTACIÓN <span>→</span></button>
+</div>
+</section><section class="section project-gallery-section" id="galeria"><div class="shell"><header class="section-head reveal"><div><span>VISTAS OFICIALES</span><h2>Arquitectura, coordinación y acabados en una sola lectura.</h2></div><p>Las imágenes se presentan fuera del bloque principal para garantizar legibilidad total de inversión, plazo y llamadas a la acción en cualquier tamaño de pantalla.</p></header><div aria-label="Vistas oficiales del proyecto" class="project-gallery-grid">
+<button data-caption="Vista general de la propuesta" data-lightbox-key="hero" type="button"><img alt="Vista general" data-asset="hero" src="https://gemini-proxy-seinca.vercel.app/api/onix-media?key=hero&v=20"/></button>
+<button data-caption="Área social y parrillera" data-lightbox-key="render" type="button"><img alt="Render del área social" data-asset="render" src="https://gemini-proxy-seinca.vercel.app/api/onix-media?key=render&v=20"/></button>
+<button data-caption="Planta general" data-lightbox-key="planta" type="button"><img alt="Planta general" data-asset="planta" src="https://gemini-proxy-seinca.vercel.app/api/onix-media?key=planta&v=20"/></button>
+<button data-caption="Replanteo de piso y luminarias" data-lightbox-key="luces" type="button"><img alt="Planta de luminarias" data-asset="luces" src="https://gemini-proxy-seinca.vercel.app/api/onix-media?key=luces&v=20"/></button>
+<button data-caption="Planta de techo" data-lightbox-key="techo" type="button"><img alt="Planta de techo" data-asset="techo" src="https://gemini-proxy-seinca.vercel.app/api/onix-media?key=techo&v=20"/></button>
+</div></div></section>
+<section class="section elite-summary" id="resumen">
+<div class="shell">
+<header class="section-head reveal">
+<div><span>01 / VISIÓN EJECUTIVA</span><h2>El proyecto no termina en un render.<br/>Termina cuando la obra funciona.</h2></div>
+<p>ONIX 512 plantea la realidad completa de una obra civil: diseño, cantidades, costos, secuencia, compras, coordinación de especialidades, control técnico, decisiones y cierre documental.</p>
+</header>
+<div class="executive-grid elite-grid">
+<article class="statement reveal">
+<span>PROPUESTA DE VALOR</span>
+<h3>Una sola empresa. Un solo plan. Una sola responsabilidad.</h3>
+<p>El cliente no necesita buscar materiales, comparar proveedores, coordinar entregas, contratar cuadrillas ni resolver interferencias entre oficios. SEINCA convierte todos esos frentes en un sistema de ejecución controlado.</p>
+<a href="#valor">Ver cómo protegemos su tiempo y su inversión ↓</a>
+</article>
+<div class="metric-stack reveal">
+<div><strong>48</strong><span>partidas definidas</span></div>
+<div><strong>13</strong><span>documentos de respaldo</span></div>
+<div><strong>6</strong><span>planos de coordinación</span></div>
+<div><strong>1</strong><span>responsable integral</span></div>
+</div>
+</div>
+</div>
+</section>
+<section class="section value-section" id="valor">
+<div class="shell">
+<header class="section-head reveal">
+<div><span>02 / POR QUÉ SEINCA</span><h2>Construir bien es coordinar cientos de decisiones antes de que se conviertan en problemas.</h2></div>
+<p>La diferencia entre “hacer una obra” y ejecutar profesionalmente está en la planificación, la trazabilidad y la capacidad de responder cuando la realidad del sitio exige decisiones.</p>
+</header>
+<div class="value-comparison">
+<article class="value-card value-card-client reveal">
+<small>LO QUE EL CLIENTE EVITA</small>
+<h3>La carga invisible de una obra.</h3>
+<ul>
+<li>Buscar y validar materiales y proveedores.</li>
+<li>Coordinar compras, fletes, entregas y almacenamiento.</li>
+<li>Contratar, supervisar y reemplazar personal.</li>
+<li>Resolver conflictos entre albañilería, electricidad, drenaje y acabados.</li>
+<li>Controlar desperdicios, retrabajos, cambios y pagos dispersos.</li>
+<li>Asumir solo el riesgo de decisiones técnicas improvisadas.</li>
+</ul>
+</article>
+<article class="value-card value-card-seinca reveal">
+<small>LO QUE SEINCA ASUME</small>
+<h3>Gestión integral con método y responsables.</h3>
+<ul>
+<li>Plan de ejecución, procura y secuencia de obra.</li>
+<li>Coordinación de cuadrillas, especialistas y proveedores.</li>
+<li>Supervisión técnica y controles de calidad por etapa.</li>
+<li>Seguimiento de costos, alcance y decisiones pendientes.</li>
+<li>Reportes de avance y control documentado de cambios.</li>
+<li>Pruebas, revisión final, entrega y atención de garantía.</li>
+</ul>
+</article>
+</div>
+<div class="value-manifesto reveal">
+<span>LA DIFERENCIA SEINCA</span>
+<p>No vendemos solamente mano de obra. Entregamos <strong>dirección, coordinación, control y capacidad de respuesta</strong> para que la inversión llegue a un resultado terminado, coherente y verificable.</p>
+</div>
+</div>
+</section>
+<section class="section execution-section" id="ejecucion">
+<div class="shell">
+<header class="section-head reveal">
+<div><span>03 / REALIDAD TOTAL DE LA OBRA</span><h2>Del expediente a la entrega, sin zonas grises.</h2></div>
+<p>Cada etapa tiene un objetivo, una secuencia y un control. Esa claridad reduce improvisación, retrabajos y decisiones costosas durante la ejecución.</p>
+</header>
+<div aria-label="Ruta de ejecución" class="execution-rail reveal">
+<article><b>01</b><span>APROBACIÓN</span><h3>Alcance y acabados</h3><p>Se formalizan decisiones, condiciones y responsables antes de movilizar.</p></article>
+<article><b>02</b><span>PLANIFICACIÓN</span><h3>Procura y logística</h3><p>Se ordenan materiales, proveedores, tiempos, cuadrillas y frentes de trabajo.</p></article>
+<article><b>03</b><span>OBRA BASE</span><h3>Demoliciones y estructura</h3><p>Se ejecuta la infraestructura que sostiene el resultado final.</p></article>
+<article><b>04</b><span>INTEGRACIÓN</span><h3>Instalaciones y drenaje</h3><p>Las especialidades se coordinan para evitar interferencias y retrabajos.</p></article>
+<article><b>05</b><span>TERMINACIÓN</span><h3>Acabados y paisajismo</h3><p>Se protege la intención de diseño con criterios de calidad verificables.</p></article>
+<article><b>06</b><span>CIERRE</span><h3>Pruebas y entrega</h3><p>Se revisa, documenta y entrega la obra con atención posterior definida.</p></article>
+</div>
+<div class="control-grid elite-control-grid">
+<article class="panel reveal"><span class="panel-tag">CRONOGRAMA</span><h3>10–12 semanas</h3><p>Una programación por fases permite anticipar compras, ordenar frentes y medir el avance real.</p><div class="timeline"><div><i></i><b>1–2</b><small>Planificación</small></div><div><i></i><b>3–4</b><small>Obra base</small></div><div><i></i><b>5–8</b><small>Integración</small></div><div><i></i><b>9–12</b><small>Acabados</small></div></div></article>
+<article class="panel reveal"><span class="panel-tag">CONTROL</span><h3>Decisiones visibles</h3><p>Iluminación, materiales, acabados, ubicación de elementos y fecha de inicio se validan antes de comprometer la ejecución.</p></article>
+<article class="panel reveal"><span class="panel-tag">TRAZABILIDAD</span><h3>Cambios con impacto claro</h3><p>Cualquier variación de alcance debe identificar motivo, costo, plazo y aprobación. Sin “extras” informales ni sorpresas al cierre.</p></article>
+</div>
+</div>
+</section>
+<section class="section guarantee-section" id="garantia">
+<div class="shell guarantee-layout">
+<div class="guarantee-copy reveal">
+<span>04 / GARANTÍA SEINCA</span>
+<h2>La garantía no comienza cuando aparece un problema. Comienza con la forma en que se planifica y controla la obra.</h2>
+<p>SEINCA respalda su ejecución mediante alcance documentado, criterios de calidad, inspecciones por etapas, registro de decisiones y un cierre formal. Las condiciones específicas de garantía y la corrección de defectos atribuibles a la ejecución quedan definidas en la contratación.</p>
+<div class="guarantee-seal"><b>RESPALDO SEINCA</b><span>Control antes, durante y después de la ejecución.</span></div>
+</div>
+<div class="guarantee-cards reveal">
+<article><span>01</span><div><h3>Alcance trazable</h3><p>Qué se ejecuta, con qué criterio y bajo cuáles condiciones.</p></div></article>
+<article><span>02</span><div><h3>Calidad verificable</h3><p>Revisión de materiales, procesos, tolerancias y terminaciones.</p></div></article>
+<article><span>03</span><div><h3>Responsable identificable</h3><p>Una empresa responde por la coordinación integral del resultado.</p></div></article>
+<article><span>04</span><div><h3>Cierre documentado</h3><p>Pruebas, observaciones, correcciones y acta de entrega.</p></div></article>
+<article><span>05</span><div><h3>Atención posterior</h3><p>Canal claro para reportar y atender condiciones cubiertas por garantía.</p></div></article>
+</div>
+</div>
+</section>
+<section class="section black scope-section" id="alcance">
+<div class="shell">
+<header class="section-head reveal">
+<div><span>05 / ALCANCE COORDINADO</span><h2>Quince frentes integrados en una sola solución.</h2></div>
+<p>Replanteo, demoliciones, fundaciones, estructura, cubierta, drenaje, instalaciones, iluminación, pisos, revestimientos, parrillera, carpinterías, paisajismo, pruebas y entrega.</p>
+</header>
+<figure class="statement scope-visual reveal"><img alt="Render oficial del área social propuesta" data-asset="render" src="https://gemini-proxy-seinca.vercel.app/api/onix-media?key=render&v=20"/><figcaption>Vista oficial de propuesta · Área social, paisajismo e iluminación integrados.</figcaption></figure>
+</div>
+</section>
+<section class="section documents" id="documentos">
+<div class="shell">
+<header class="section-head reveal">
+<div><span>06 / DOCUMENTACIÓN</span><h2>Decisiones respaldadas antes de construir.</h2></div>
