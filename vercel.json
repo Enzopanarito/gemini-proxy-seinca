@@ -5,11 +5,12 @@
     "api/pdf.js": { "maxDuration": 60 },
     "api/onix-512.js": { "maxDuration": 20 },
     "api/onix-v21.js": { "maxDuration": 20 },
+    "api/onix-v22.js": { "maxDuration": 20 },
     "api/onix-document.js": { "maxDuration": 60 }
   },
   "rewrites": [
-    { "source": "/onix-512/v22", "destination": "/api/onix-v21" },
-    { "source": "/onix-512/v22/", "destination": "/api/onix-v21" },
+    { "source": "/onix-512/v22", "destination": "/api/onix-v22" },
+    { "source": "/onix-512/v22/", "destination": "/api/onix-v22" },
     { "source": "/onix-512/v21", "destination": "/api/onix-v21" },
     { "source": "/onix-512/v21/", "destination": "/api/onix-v21" },
     { "source": "/onix-512/documento", "destination": "/onix-512/documento.html" },
