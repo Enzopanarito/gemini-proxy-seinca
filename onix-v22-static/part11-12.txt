@@ -1,0 +1,139 @@
+v><iframe id="document-frame" loading="eager" title="Documento SEINCA"></iframe></div>
+</div>
+</div>
+<div aria-label="Presentación guiada del Proyecto Onix 512" aria-modal="true" class="presentation elite-presentation didactic-presentation" hidden="" id="presentation" role="dialog">
+<button aria-label="Cerrar presentación" class="presentation-close" data-close-presentation="" type="button">×</button>
+<div class="cinema didactic-cinema">
+<div class="scene active didactic-scene scene-opening" data-scene="0">
+<div class="slide-visual slide-visual-full"><img alt="Render principal del Proyecto Onix 512" data-asset="hero" src="https://gemini-proxy-seinca.vercel.app/api/onix-media?key=hero&v=20"/></div>
+<div class="slide-gradient"></div>
+<div class="slide-content opening-content">
+<img alt="SEINCA" class="slide-logo" data-logo="" src="https://gemini-proxy-seinca.vercel.app/api/onix-media?key=logo&v=20"/>
+<span class="slide-kicker">PROPUESTA DE EJECUCIÓN INTEGRAL</span>
+<h2>PROYECTO<br/><strong>ONIX 512</strong></h2>
+<p>Una solución personalizada, desarrollada especialmente para la <b>Familia Rivas</b>.</p>
+<div class="slide-rule"><i></i><span>Diseño · Ingeniería · Presupuesto · Ejecución</span></div>
+</div>
+<div class="scene-index">01 / 06</div>
+</div>
+<div class="scene didactic-scene scene-family" data-scene="1">
+<div class="presentation-grid two-column">
+<div class="slide-visual framed-render"><img alt="Render del área social personalizada para la Familia Rivas" data-asset="render" src="https://gemini-proxy-seinca.vercel.app/api/onix-media?key=render&v=20"/><div class="image-label">RENDER OFICIAL · ÁREA SOCIAL</div></div>
+<div class="slide-content content-panel">
+<span class="slide-kicker">UN PROYECTO PERSONALIZADO</span>
+<h2>Diseñado para la forma de vivir de la Familia Rivas.</h2>
+<p>No es una solución genérica. La propuesta organiza arquitectura, funcionalidad, iluminación, paisajismo y acabados dentro de una visión coherente.</p>
+<div class="feature-chips"><span>Área social</span><span>Parrillera</span><span>Cubierta</span><span>Iluminación</span><span>Paisajismo</span><span>Acabados</span></div>
+</div>
+</div>
+<div class="scene-index">02 / 06</div>
+</div>
+<div class="scene didactic-scene scene-expedient" data-scene="2">
+<div class="presentation-grid plan-layout">
+<div class="slide-content content-panel">
+<span class="slide-kicker">LA OBRA ANTES DE CONSTRUIR</span>
+<h2>Un expediente que convierte la visión en decisiones ejecutables.</h2>
+<p>El proyecto hace visible la realidad técnica y económica antes de movilizar personal o comprar materiales.</p>
+<div class="scope-matrix">
+<article><b>48</b><span>partidas definidas</span></article>
+<article><b>APU</b><span>costos analizados</span></article>
+<article><b>CM</b><span>cómputos métricos</span></article>
+<article><b>6</b><span>planos coordinados</span></article>
+<article><b>13</b><span>documentos de respaldo</span></article>
+<article><b>100%</b><span>trazabilidad</span></article>
+</div>
+</div>
+<div class="slide-visual plan-board"><img alt="Planta general del Proyecto Onix 512" data-asset="planta" src="https://gemini-proxy-seinca.vercel.app/api/onix-media?key=planta&v=20"/><div class="plan-pins"><i style="--x:22%;--y:35%">01</i><i style="--x:65%;--y:27%">02</i><i style="--x:73%;--y:67%">03</i></div></div>
+</div>
+<div class="scene-index">03 / 06</div>
+</div>
+<div class="scene didactic-scene scene-numbers" data-scene="3">
+<div class="slide-header centered"><span class="slide-kicker">PLAZO DE EJECUCIÓN</span><h2>Una ruta estimada de 10 a 12 semanas.</h2></div>
+<div class="number-cards">
+<article><small>INVERSIÓN TOTAL</small><strong>USD 45.917,08</strong><span>IVA incluido</span></article>
+<article><small>PLAZO ESTIMADO</small><strong>10–12</strong><span>semanas de ejecución</span></article>
+<article class="guarantee-number"><small>RESPALDO SEINCA</small><strong>CONTROL</strong><span>antes, durante y después</span></article>
+</div>
+<div class="guarantee-ribbon"><b>GARANTÍA SEINCA</b><span>Alcance documentado · Calidad verificable · Entrega formal · Atención posterior</span></div>
+<div class="scene-index">04 / 06</div>
+</div><div class="scene didactic-scene scene-seinca" data-scene="4">
+<div class="presentation-grid seinca-layout">
+<div class="slide-visual technical-render"><img alt="Plano técnico de iluminación y replanteo" data-asset="luces" src="https://gemini-proxy-seinca.vercel.app/api/onix-media?key=luces&v=20"/><div class="scan-line"></div></div>
+<div class="slide-content content-panel">
+<span class="slide-kicker">DECISIONES ANTES DE INICIAR</span>
+<h2>Riesgos y decisiones validados antes de movilizar.</h2>
+<div class="responsibility-list"><article><i>01</i><div><b>Alcance y geometría</b><span>Medidas, ubicaciones y condiciones existentes verificadas.</span></div></article><article><i>02</i><div><b>Materiales y acabados</b><span>Selecciones aprobadas antes de comprometer compras.</span></div></article><article><i>03</i><div><b>Interferencias y secuencia</b><span>Estructura, drenaje, electricidad y terminaciones coordinadas.</span></div></article><article><i>04</i><div><b>Control de cambios</b><span>Cada variación identifica costo, plazo y aprobación.</span></div></article></div>
+</div>
+</div>
+<div class="scene-index">05 / 06</div>
+</div>
+<div class="scene didactic-scene scene-closing" data-scene="5">
+<div class="closing-gallery"><img alt="Vista general del proyecto" data-asset="hero" src="https://gemini-proxy-seinca.vercel.app/api/onix-media?key=hero&v=20"/><img alt="Vista del área social" data-asset="render" src="https://gemini-proxy-seinca.vercel.app/api/onix-media?key=render&v=20"/><img alt="Planta de techo" data-asset="techo" src="https://gemini-proxy-seinca.vercel.app/api/onix-media?key=techo&v=20"/></div>
+<div class="slide-gradient closing-gradient"></div>
+<div class="slide-content closing-content">
+<img alt="SEINCA" class="slide-logo" data-logo="" src="https://gemini-proxy-seinca.vercel.app/api/onix-media?key=logo&v=20"/>
+<span class="slide-kicker">PROYECTO ONIX 512</span>
+<h2>Usted aprueba.<br/><strong>SEINCA coordina y ejecuta.</strong></h2>
+<p>Una solución personalizada para la Familia Rivas, preparada para construirse con orden, control y respaldo profesional.</p>
+<a href="https://wa.me/584140554700?text=Hola%20Enzo%2C%20deseo%20conversar%20sobre%20la%20activaci%C3%B3n%20del%20Proyecto%20Onix%20512." rel="noopener" target="_blank">COORDINAR ACTIVACIÓN →</a>
+</div>
+<div class="scene-index">06 / 06</div>
+</div>
+<div class="chapter-label" id="chapter-label">01 · Presentación</div>
+<div aria-hidden="true" class="chapter-bar"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<div class="cinema-controls didactic-controls">
+<button id="play-pause" type="button">Pausar</button>
+<button id="replay" type="button">Reiniciar</button>
+<div aria-label="Progreso de la presentación" aria-valuemax="100" aria-valuemin="0" class="progress" role="slider" tabindex="0"><i id="progress"></i></div>
+<span id="time">0:00 / 0:31</span>
+<button aria-pressed="true" id="captions-toggle" type="button">Subtítulos</button>
+<button aria-pressed="true" id="audio-toggle" type="button">Narración: activa</button>
+<button id="fullscreen-toggle" type="button">Pantalla completa</button>
+</div>
+<div aria-live="polite" class="caption" id="caption"></div>
+</div>
+</div>
+<div aria-live="polite" class="toast" id="toast" role="status"></div>
+<script>const DOCS = [
+  ['01','Control documental','Índice de entrega','Relación de documentos, revisiones y páginas.','indice'],
+  ['02','Resumen ejecutivo','Dossier ejecutivo','Alcance, inversión, plazo, riesgos y ruta de aprobación.','dossier'],
+  ['03','Documento económico','Presupuesto, APU y cómputos métricos','48 partidas, análisis unitarios y trazabilidad de cantidades.','presupuesto'],
+  ['04','Documento técnico','Memoria descriptiva e informe técnico','Justificación integral del alcance, metodología y monto.','memoria'],
+  ['05','Anexo técnico','Cómputos métricos','Fórmulas, mediciones y niveles de certeza por partida.','computos'],
+  ['06','Control de acabados','Aprobación de acabados','Porcelanato, revestimientos, pinturas, luminarias y paisajismo.','acabados'],
+  ['07','Control contractual','Acta de aceptación','Documento para formalizar la aceptación de la propuesta.','acta']
+];
+const PLANS = [
+  ['P00','Presentación del proyecto','hero','presentacion'],
+  ['P01','Planta general','planta','planta'],
+  ['P02','Planta de techo','techo','techo'],
+  ['P03','Replanteo, piso y luminarias','luces','luminarias'],
+  ['P04','Cortes A-A y B-B','planta','cortes'],
+  ['P05','Revestimientos','render','revestimientos']
+];
+const CAPTIONS = [
+  'ONIX 512 es un proyecto desarrollado especialmente para la Familia Rivas, a partir de sus necesidades, su estilo de vida y su visión.',
+  'Diseño, ingeniería, presupuesto, APU, cómputos métricos, planos y acabados integrados en una sola solución ejecutable.',
+  'El expediente define 48 partidas, cantidades, costos, procura, logística, coordinación técnica y un plazo de 10 a 12 semanas.',
+  'La Familia Rivas evita encargarse de compras, proveedores, cuadrillas, improvisaciones y seguimiento operativo diario.',
+  'SEINCA asume planificación, procura, supervisión, control de calidad, especialidades y responsabilidad integral de la ejecución.',
+  'USD 45.917,08, IVA incluido. La Familia Rivas aprueba; SEINCA coordina, ejecuta y responde con garantía de ejecución.'
+];
+const CHAPTERS = ['01 · Familia Rivas','02 · Solución integral','03 · Expediente','04 · Gestión','05 · Responsabilidad SEINCA','06 · Inversión y garantía'];
+const SCENE_RATIOS = [0,0.18,0.35,0.52,0.69,0.85];
+const FALLBACK_DURATION = 72;
+const SPEECH_SEGMENTS = [
+  'ONIX quinientos doce es un proyecto desarrollado especialmente para la Familia Rivas, concebido a partir de sus necesidades, su estilo de vida y la visión que desean convertir en realidad.',
+  'La propuesta integra diseño, ingeniería, presupuesto, análisis de precios unitarios, cómputos métricos, planos y criterios de acabados dentro de una sola solución preparada para ejecutarse.',
+  'Antes de construir, el expediente define cuarenta y ocho partidas, cantidades, costos, procura, logística, coordinación técnica y un plazo estimado de diez a doce semanas.',
+  'De esta manera, la Familia Rivas no tiene que ocuparse de compras, proveedores, cuadrillas, improvisaciones ni del seguimiento operativo diario de la obra.',
+  'Séinca asume la planificación, la procura, la supervisión, el control de calidad, la coordinación de especialidades y la responsabilidad integral de la ejecución.',
+  'ONIX quinientos doce representa una inversión total de cuarenta y cinco mil novecientos diecisiete dólares con ocho centavos, IVA incluido. La Familia Rivas aprueba. Séinca coordina, ejecuta y responde, con control técnico, entrega formal y garantía de ejecución.'
+];
+const SEGMENT_SECONDS = [12,12,12,12,12,16];
+const DOC_IDS = {
+  indice:'1Bcj7V59afMCXICGGPwL-7vfmircg7f3-',dossier:'1w5gyygDTzk_4NLO7gKRzvVk_lg--ipuZ',presupuesto:'1AGFoyQOhE5-qc8Uz_vOlx5XnEPEaO2Ue',memoria:'12T2Wz7Ji8JvsqgdtQJolPeBZvM0TxIFK',computos:'1gNANfC8OJhgb9gwvBEKRqKAvnWxrwOnQ',acabados:'1mkuniCmJhhVjpB3s2wBhF1aIcy9hNASj',acta:'1ptAIFm4U6U3ajVgY8edcyrVPJiEttbSU',presentacion:'1d0Uk9tBzM96bXZov34C0fb0T2ifhC6c-',planta:'1keFABVLuOirLPQ_OXh63wq8vA9aRlIpe',techo:'1Wb641QTvAFNAn67vuOceSdZeS2q7Odhw',luminarias:'18Sn0W2JUKofsbC3U0FrNA5zO1dCZhT-j',cortes:'1KMU8AzvL7rh-oYFj30uBoAcKNcksLjTq',revestimientos:'1tuKJBKQYZnNdIGJNdVPH7gHaP_X5F6-F'
+};
+const $ = (selector, context = document) => context.querySelector(selector);
+const $$ = (selector, context = document) => [...context.querySelectorAll(selector)];
+const mediaUrl = key => ({logo:'https://gemini-proxy-seinca.vercel.app/api/onix-media?key=logo&v=20',hero:'https://gemini-proxy-seinca.vercel.app/api/onix-media?key=hero&v=20',render:'https://gemini-proxy-seinca.vercel.app/api/onix-media?key=render&v=20',planta:'https://gemini-proxy-seinca.vercel.app/api/onix-media?key=pla
