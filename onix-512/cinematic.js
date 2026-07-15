@@ -38,13 +38,28 @@ const ASSETS={
  techo:mediaUrl('techo'),
  audio:mediaUrl('audio')
 };
+const isMobilePdfDevice=()=>window.matchMedia('(max-width: 900px), (pointer: coarse)').matches;
 const driveView=id=>`https://drive.google.com/file/d/${id}/view?usp=sharing`;
-const driveDownload=id=>`https://drive.google.com/uc?export=download&id=${id}`;
+const driveDirectView=id=>`https://drive.google.com/uc?export=view&id=${encodeURIComponent(id)}`;
+const driveDownload=id=>`https://drive.google.com/uc?export=download&id=${encodeURIComponent(id)}`;
+const pdfOpenUrl=id=>isMobilePdfDevice()?driveDirectView(id):driveView(id);
+const pdfTargetAttributes=()=>isMobilePdfDevice()?'':' target="_blank" rel="noopener"';
 
 function buildCards(){
  const dg=$('#doc-grid'),pg=$('#plan-grid');
- dg.innerHTML=DOCS.map(d=>`<article class="doc-card reveal"><span class="doc-no">${d[0]}</span><small>${d[1]}</small><h3>${d[2]}</h3><p>${d[3]}</p><div class="doc-actions"><a href="${driveView(d[4])}" target="_blank" rel="noopener">Abrir ↗</a><a href="${driveDownload(d[4])}" target="_blank" rel="noopener">Descargar ↓</a></div></article>`).join('');
- pg.innerHTML=PLANS.map(p=>`<article class="plan-card reveal"><img data-asset="${p[2]}" alt="Vista previa: ${p[1]}" loading="lazy"><div><small>${p[0]}</small><h3>${p[1]}</h3><a href="${driveView(p[3])}" target="_blank" rel="noopener">Abrir plano ↗</a> · <a href="${driveDownload(p[3])}" target="_blank" rel="noopener">Descargar ↓</a></div></article>`).join('');
+ dg.innerHTML=DOCS.map(d=>`<article class="doc-card reveal"><span class="doc-no">${d[0]}</span><small>${d[1]}</small><h3>${d[2]}</h3><p>${d[3]}</p><div class="doc-actions"><a href="${pdfOpenUrl(d[4])}"${pdfTargetAttributes()}>Abrir ↗</a><a href="${driveDownload(d[4])}" target="_blank" rel="noopener">Descargar ↓</a></div></article>`).join('');
+ pg.innerHTML=PLANS.map(p=>`<article class="plan-card reveal"><img data-asset="${p[2]}" alt="Vista previa: ${p[1]}" loading="lazy"><div><small>${p[0]}</small><h3>${p[1]}</h3><a href="${pdfOpenUrl(p[3])}"${pdfTargetAttributes()}>Abrir plano ↗</a> · <a href="${driveDownload(p[3])}" target="_blank" rel="noopener">Descargar ↓</a></div></article>`).join('');
+}
+
+function initMobilePdfLinks(){
+ if(!isMobilePdfDevice()) return;
+ $$('a[href*="drive.google.com/file/d/"]').forEach(link=>{
+  const match=link.href.match(/\/file\/d\/([^/]+)/);
+  if(!match) return;
+  link.href=driveDirectView(match[1]);
+  link.removeAttribute('target');
+  link.removeAttribute('rel');
+ });
 }
 
 function hydrateAssets(){
@@ -177,4 +192,4 @@ function showToast(text){
  const toast=$('#toast');toast.textContent=text;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2600);
 }
 
-buildCards();hydrateAssets();initReveal();initNav();initLightbox();initPresentation();validateAssets();initDownloads();
+buildCards();initMobilePdfLinks();hydrateAssets();initReveal();initNav();initLightbox();initPresentation();validateAssets();initDownloads();
