@@ -3,7 +3,8 @@
     "api/gemini.js": { "maxDuration": 60 },
     "api/health.js": { "maxDuration": 20 },
     "api/pdf.js": { "maxDuration": 60 },
-    "api/onix-512.js": { "maxDuration": 20 }
+    "api/onix-512.js": { "maxDuration": 20 },
+    "api/onix-document.js": { "maxDuration": 60 }
   },
   "rewrites": [
     { "source": "/onix-512", "destination": "/onix-512/index.html" },
@@ -17,10 +18,7 @@
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
         { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=()" },
         { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
-        {
-          "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob: https://drive.google.com https://drive.usercontent.google.com https://*.googleusercontent.com; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; frame-src 'self' https://drive.google.com; frame-ancestors 'none'; form-action 'self'; worker-src 'self'"
-        }
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob: https://drive.google.com https://drive.usercontent.google.com https://*.googleusercontent.com; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; frame-src 'self' https://drive.google.com; frame-ancestors 'none'; form-action 'self'; worker-src 'self'" }
       ]
     },
     {
