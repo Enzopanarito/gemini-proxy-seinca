@@ -3,6 +3,13 @@ const PAGE = {
   type: 'text/html; charset=utf-8'
 };
 
+const HEADER_LOGO_FIX = `<style id="onix-header-logo-only-fix-runtime">
+/* ÚNICO AJUSTE: mantener el logo del encabezado dentro de la barra */
+.topbar{overflow:hidden}
+.topbar .brand{height:86px;overflow:hidden}
+.topbar .brand img[data-logo]{width:118px;max-width:118px;height:auto;flex:0 0 118px}
+</style>`;
+
 export default async function handler(req, res) {
   try {
     const source = `https://drive.google.com/uc?export=download&id=${PAGE.id}&v=23`;
@@ -12,14 +19,20 @@ export default async function handler(req, res) {
     const bytes = Buffer.from(await upstream.arrayBuffer());
     if (!bytes.length) throw new Error('Archivo vacío');
 
+    const html = bytes.toString('utf8');
+    const correctedHtml = html.includes('onix-header-logo-only-fix-runtime')
+      ? html
+      : html.replace('</head>', `${HEADER_LOGO_FIX}</head>`);
+    const output = Buffer.from(correctedHtml, 'utf8');
+
     res.setHeader('Content-Type', PAGE.type);
-    res.setHeader('Content-Length', String(bytes.length));
+    res.setHeader('Content-Length', String(output.length));
     res.setHeader('Cache-Control', 'no-store, max-age=0');
     res.setHeader('Surrogate-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
     res.setHeader('X-SEINCA-Build', 'ONIX-V22.2-NEURAL-PDF');
-    res.status(200).send(bytes);
+    res.status(200).send(output);
   } catch (error) {
     console.error('ONIX_V22_PAGE_ERROR', error);
     res.status(502).json({ error: 'No fue posible cargar el portal empresarial ONIX 512' });
