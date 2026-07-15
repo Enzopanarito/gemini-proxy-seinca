@@ -1,0 +1,65 @@
+name: Generar muestra de voz Onix 512
+
+on:
+  push:
+    branches:
+      - mejoras-onix-512-v15-2026-07-14
+    paths:
+      - .github/workflows/onix-voice-preview.yml
+
+permissions:
+  contents: write
+
+jobs:
+  generar-voz:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+        with:
+          ref: mejoras-onix-512-v15-2026-07-14
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar motor neural
+        run: pip install edge-tts==7.2.8
+
+      - name: Generar muestra MP3
+        run: |
+          mkdir -p onix-512/media
+          python - <<'PY'
+          import asyncio
+          import edge_tts
+
+          texto = (
+              "En SEINCA entendemos que una buena obra comienza mucho antes de la construcción. "
+              "Hoy presentamos Onix quinientos doce: una propuesta integral para transformar "
+              "el área exterior de la residencia en un espacio contemporáneo, funcional y cuidadosamente ejecutado. "
+              "El proyecto reúne diseño, ingeniería, planificación y control técnico, "
+              "con una inversión total de cuarenta y cinco mil novecientos diecisiete dólares con ocho centavos, "
+              "IVA incluido, y un plazo estimado de diez a doce semanas."
+          )
+
+          async def main():
+              voz = edge_tts.Communicate(
+                  texto,
+                  "es-VE-SebastianNeural",
+                  rate="-8%",
+                  pitch="-2Hz",
+                  volume="+0%",
+              )
+              await voz.save("onix-512/media/SEINCA_Onix_512_Muestra_Voz_Natural.mp3")
+
+          asyncio.run(main())
+          PY
+
+      - name: Guardar muestra en la rama de desarrollo
+        run: |
+          git config user.name "SEINCA Voice Preview Bot"
+          git config user.email "enzopanarito@gmail.com"
+          git add onix-512/media/SEINCA_Onix_512_Muestra_Voz_Natural.mp3
+          git commit -m "asset(onix-512): add natural neural voice sample" || exit 0
+          git push origin HEAD:mejoras-onix-512-v15-2026-07-14

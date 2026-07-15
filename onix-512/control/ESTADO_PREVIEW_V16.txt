@@ -1,0 +1,18 @@
+SEINCA — PROYECTO ONIX 512
+ESTADO DE LA VERSIÓN V16 EJECUTIVA
+
+Estado: PREVIEW PARA PRUEBAS
+Rama: mejoras-onix-512-v16-executive-2026-07-14
+Producción: NO MODIFICADA
+Comando requerido para publicar: PUBLICA
+
+Datos invariables verificados:
+- Cliente: Familia Rivas.
+- Inversión total: USD 45.917,08, IVA incluido.
+- Plazo estimado: 10–12 semanas.
+- Presupuesto: 48 partidas con APU.
+- Expediente: 13 documentos PDF oficiales.
+
+La presentación utiliza únicamente renders y documentos gráficos oficiales de propuesta. No contiene fotografías falsas del estado actual ni representaciones de antes y después.
+
+La voz aprobada es masculina venezolana neural, configurada con ritmo pausado y tono ejecutivo.

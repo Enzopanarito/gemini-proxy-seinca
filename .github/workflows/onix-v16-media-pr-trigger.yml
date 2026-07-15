@@ -1,0 +1,10 @@
+name: Activar generación de video Onix 512 V16
+
+on:
+  pull_request:
+    branches:
+      - mejoras-onix-512-v16-executive-2026-07-14
+
+jobs:
+  activar:
+    uses: ./.github/workflows/onix-v16-media-pr.yml
