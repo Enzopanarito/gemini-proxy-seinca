@@ -22,32 +22,58 @@ function setCommonHeaders(res) {
   res.setHeader('Cache-Control', 'private, no-store, max-age=0');
 }
 
-export default async function handler(req, res) {
-  const key = String(req.query.key || '').toLowerCase();
-  const document = DOCUMENTS[key];
-  if (!document) {
-    res.status(404).json({ error: 'Documento no encontrado' });
-    return;
+function isPdf(bytes) {
+  return bytes.length > 4 && bytes.subarray(0, 5).toString('ascii') === '%PDF-';
+}
+
+async function downloadPdf(id) {
+  const sources = [
+    `https://drive.google.com/uc?export=download&id=${encodeURIComponent(id)}`,
+    `https://drive.usercontent.google.com/download?id=${encodeURIComponent(id)}&export=download&confirm=t`
+  ];
+  const failures = [];
+
+  for (const source of sources) {
+    try {
+      const upstream = await fetch(source, {
+        redirect: 'follow',
+        cache: 'no-store',
+        headers: { 'User-Agent': 'SEINCA-ONIX-Document-Service/1.0' }
+      });
+      if (!upstream.ok) {
+        failures.push(`HTTP ${upstream.status}`);
+        continue;
+      }
+      const bytes = Buffer.from(await upstream.arrayBuffer());
+      if (isPdf(bytes)) return bytes;
+      failures.push(`contenido ${upstream.headers.get('content-type') || 'desconocido'}`);
+    } catch (error) {
+      failures.push(String(error?.message || error));
+    }
   }
 
+  throw new Error(`No se recibió un PDF válido: ${failures.join(' | ')}`);
+}
+
+export default async function handler(req, res) {
+  if (!['GET', 'HEAD'].includes(req.method)) {
+    res.setHeader('Allow', 'GET, HEAD');
+    return res.status(405).json({ error: 'Método no permitido' });
+  }
+
+  const key = String(req.query.key || '').toLowerCase();
+  const document = DOCUMENTS[key];
+  if (!document) return res.status(404).json({ error: 'Documento no encontrado' });
+
   try {
-    const source = `https://drive.google.com/uc?export=download&id=${document.id}`;
-    const upstream = await fetch(source, { redirect: 'follow', cache: 'no-store' });
-    if (!upstream.ok) throw new Error(`Drive respondió ${upstream.status}`);
-
-    const bytes = Buffer.from(await upstream.arrayBuffer());
-    if (!bytes.length || bytes.subarray(0, 4).toString() !== '%PDF') {
-      throw new Error('El recurso recibido no es un PDF válido');
-    }
-
+    const bytes = await downloadPdf(document.id);
     const download = String(req.query.download || '') === '1';
     setCommonHeaders(res);
     res.setHeader('Content-Disposition', `${download ? 'attachment' : 'inline'}; filename="${document.filename}"`);
 
     if (req.method === 'HEAD') {
       res.setHeader('Content-Length', String(bytes.length));
-      res.status(200).end();
-      return;
+      return res.status(200).end();
     }
 
     const range = req.headers.range;
@@ -73,9 +99,9 @@ export default async function handler(req, res) {
     }
 
     res.setHeader('Content-Length', String(bytes.length));
-    res.status(200).end(bytes);
+    return res.status(200).end(bytes);
   } catch (error) {
     console.error('ONIX_DOCUMENT_PROXY_ERROR', key, error);
-    res.status(502).json({ error: 'No fue posible cargar el documento solicitado' });
+    return res.status(502).json({ error: 'No fue posible cargar el documento solicitado' });
   }
 }
