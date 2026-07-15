@@ -7,10 +7,8 @@
     "api/onix-v21.js": { "maxDuration": 20 }
   },
   "rewrites": [
-    { "source": "/onix-512/v21.css", "destination": "/api/onix-v21?key=css" },
-    { "source": "/onix-512/v21.js", "destination": "/api/onix-v21?key=js" },
-    { "source": "/onix-512/v21", "destination": "/api/onix-v21?key=page" },
-    { "source": "/onix-512/v21/", "destination": "/api/onix-v21?key=page" },
+    { "source": "/onix-512/v21", "destination": "/api/onix-v21" },
+    { "source": "/onix-512/v21/", "destination": "/api/onix-v21" },
     { "source": "/onix-512", "destination": "/onix-512/index.html" },
     { "source": "/onix-512/", "destination": "/onix-512/index.html" }
   ],
@@ -24,7 +22,7 @@
         { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob: https://drive.google.com https://drive.usercontent.google.com https://*.googleusercontent.com; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; worker-src 'self'"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://gemini-proxy-seinca.vercel.app https://drive.google.com https://drive.usercontent.google.com https://*.googleusercontent.com; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; worker-src 'self'"
         }
       ]
     },
