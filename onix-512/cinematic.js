@@ -40,7 +40,7 @@ const ASSETS={
 };
 const isMobilePdfDevice=()=>window.matchMedia('(max-width: 900px), (pointer: coarse)').matches;
 const driveView=id=>`https://drive.google.com/file/d/${id}/view?usp=sharing`;
-const driveDirectView=id=>`https://drive.google.com/uc?export=view&id=${encodeURIComponent(id)}`;
+const driveDirectView=id=>`/onix-512/pdf-viewer.html?id=${encodeURIComponent(id)}`;
 const driveDownload=id=>`https://drive.google.com/uc?export=download&id=${encodeURIComponent(id)}`;
 const pdfOpenUrl=id=>isMobilePdfDevice()?driveDirectView(id):driveView(id);
 const pdfTargetAttributes=()=>isMobilePdfDevice()?'':' target="_blank" rel="noopener"';
