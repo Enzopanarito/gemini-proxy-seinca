@@ -5,7 +5,7 @@ const PAGE = {
 
 export default async function handler(req, res) {
   try {
-    const source = `https://drive.google.com/uc?export=download&id=${PAGE.id}&v=22`;
+    const source = `https://drive.google.com/uc?export=download&id=${PAGE.id}&v=23`;
     const upstream = await fetch(source, { redirect: 'follow', cache: 'no-store' });
     if (!upstream.ok) throw new Error(`Drive respondió ${upstream.status}`);
 
@@ -18,6 +18,7 @@ export default async function handler(req, res) {
     res.setHeader('Surrogate-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
+    res.setHeader('X-SEINCA-Build', 'ONIX-V22.2-NEURAL-PDF');
     res.status(200).send(bytes);
   } catch (error) {
     console.error('ONIX_V22_PAGE_ERROR', error);
