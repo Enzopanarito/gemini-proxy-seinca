@@ -101,7 +101,8 @@ function initPresentation(){
  let muted=false;
  let currentScene=-1;
  const fallbackDuration=30.984;
- const sceneStarts=[0,5.1,10.2,15.3,20.4,25.6];
+ // Transiciones ubicadas después de pausas reales detectadas en la pista de voz.
+ const sceneStarts=[0,5.285,7.677,16.358,21.284,27.678];
 
  const fmt=seconds=>`${Math.floor(seconds/60)}:${String(Math.floor(seconds%60)).padStart(2,'0')}`;
  const duration=()=>Number.isFinite(audio.duration)&&audio.duration>0?audio.duration:fallbackDuration;
