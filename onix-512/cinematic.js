@@ -18,33 +18,25 @@ const PLANS=[
 ];
 
 const captions=[
- 'Bienvenidos a la presentación ejecutiva del Proyecto Onix 512, desarrollado por SEINCA para transformar integralmente el área exterior de la Familia Rivas.',
- 'El diseño integra arquitectura, funcionalidad y una estética contemporánea, creando un espacio exterior elegante, cómodo y plenamente aprovechable.',
- 'El expediente reúne 48 partidas, APU, cómputos métricos, planos y criterios de acabados, garantizando trazabilidad técnica y control económico.',
- 'La ejecución se organiza en un plazo estimado de 10 a 12 semanas, desde la planificación y procura hasta las terminaciones, pruebas y entrega.',
- 'Antes de iniciar se validarán iluminación, materiales, ubicación de luminarias y fecha de arranque, reduciendo riesgos y manteniendo el alcance bajo control.',
- 'La inversión total es de USD 45.917,08, IVA incluido. SEINCA: ingeniería, control y calidad para convertir este proyecto en realidad.'
-];
-
-const narration=[
- 'Bienvenidos a la presentación ejecutiva del Proyecto Onix quinientos doce, desarrollado por SEINCA para transformar integralmente el área exterior de la Familia Rivas.',
- 'El diseño integra arquitectura, funcionalidad y una estética contemporánea, creando un espacio exterior elegante, cómodo y plenamente aprovechable.',
- 'El expediente reúne cuarenta y ocho partidas, análisis de precios unitarios, cómputos métricos, planos y criterios de acabados, garantizando trazabilidad técnica y control económico.',
- 'La ejecución se organiza en un plazo estimado de diez a doce semanas, desde la planificación y procura hasta las terminaciones, pruebas y entrega.',
- 'Antes de iniciar se validarán iluminación, materiales, ubicación de luminarias y fecha de arranque, reduciendo riesgos y manteniendo el alcance bajo control.',
- 'La inversión total es de cuarenta y cinco mil novecientos diecisiete dólares con ocho centavos, IVA incluido. SEINCA: ingeniería, control y calidad para convertir este proyecto en realidad.'
+ 'Proyecto Onix 512: presentación ejecutiva desarrollada por Seinca para la Familia Rivas.',
+ 'Una propuesta integral que combina arquitectura, funcionalidad y una estética contemporánea.',
+ 'El expediente reúne 48 partidas, APU, cómputos métricos, planos y criterios de acabados.',
+ 'La ejecución se organiza en un plazo estimado de 10 a 12 semanas.',
+ 'Las decisiones técnicas y los riesgos se validan antes de iniciar la obra.',
+ 'Seinca: ingeniería, control y calidad para convertir el proyecto en realidad.'
 ];
 
 const $=(selector,context=document)=>context.querySelector(selector);
 const $$=(selector,context=document)=>[...context.querySelectorAll(selector)];
-const driveImage=id=>`https://drive.google.com/uc?export=view&id=${id}`;
+const mediaUrl=key=>`/api/onix-media?key=${encodeURIComponent(key)}&v=18`;
 const ASSETS={
- logo:driveImage('1e1czm5osM-c_tFblB8QCbKG1rkyufA_j'),
- hero:driveImage('1_8vdhSzANaG4cWXiYMmSblDuKrhG-pi9'),
- render:driveImage('1b4Sgq2BJMWzEdN3Cm7MReUu0YizwdV00'),
- planta:driveImage('1Sl9I4VflEnWoIpGoaVhVCbZSHHOvsI0s'),
- luces:driveImage('1JsEuHkLszeQ_9yUEbwu6DQQvOQlrvT5L'),
- techo:driveImage('1K74S40jEMayDBdMDFugRDC900XsRN1Rl')
+ logo:mediaUrl('logo'),
+ hero:mediaUrl('hero'),
+ render:mediaUrl('render'),
+ planta:mediaUrl('planta'),
+ luces:mediaUrl('luces'),
+ techo:mediaUrl('techo'),
+ audio:mediaUrl('audio')
 };
 const driveView=id=>`https://drive.google.com/file/d/${id}/view?usp=sharing`;
 const driveDownload=id=>`https://drive.google.com/uc?export=download&id=${id}`;
@@ -56,15 +48,8 @@ function buildCards(){
 }
 
 function hydrateAssets(){
- const missing=[];
- $$('img[data-asset]').forEach(img=>{
-  const key=img.dataset.asset,source=ASSETS[key];
-  if(source) img.src=source; else {img.classList.add('asset-error');missing.push(key)}
- });
- $$('img[data-logo]').forEach(img=>{
-  if(ASSETS.logo) img.src=ASSETS.logo; else {img.classList.add('asset-error');missing.push('logo')}
- });
- if(missing.length) console.error('Recursos no disponibles:',[...new Set(missing)]);
+ $$('img[data-asset]').forEach(img=>{img.src=ASSETS[img.dataset.asset]||''});
+ $$('img[data-logo]').forEach(img=>{img.src=ASSETS.logo});
 }
 
 function initReveal(){
@@ -102,86 +87,83 @@ function initLightbox(){
 }
 
 function initPresentation(){
- const modal=$('#presentation'),scenes=$$('.scene',modal),play=$('#play-pause'),bar=$('#progress'),time=$('#time'),caption=$('#caption'),capBtn=$('#captions-toggle'),audioBtn=$('#audio-toggle');
- const synth='speechSynthesis' in window?window.speechSynthesis:null;
- let t=0,running=false,timer=null,caps=true,audioEnabled=true,lastScene=-1,voice=null;
- const duration=72,sceneDuration=12;
+ const modal=$('#presentation');
+ const scenes=$$('.scene',modal);
+ const play=$('#play-pause');
+ const bar=$('#progress');
+ const time=$('#time');
+ const caption=$('#caption');
+ const capBtn=$('#captions-toggle');
+ const audioBtn=$('#audio-toggle');
+ const audio=new Audio(ASSETS.audio);
+ audio.preload='auto';
+ let captionsEnabled=true;
+ let muted=false;
+ let currentScene=-1;
+ const fallbackDuration=30.984;
+ const sceneStarts=[0,5.1,10.2,15.3,20.4,25.6];
+
  const fmt=seconds=>`${Math.floor(seconds/60)}:${String(Math.floor(seconds%60)).padStart(2,'0')}`;
+ const duration=()=>Number.isFinite(audio.duration)&&audio.duration>0?audio.duration:fallbackDuration;
+ const sceneFor=t=>{
+  let index=0;
+  for(let i=0;i<sceneStarts.length;i+=1){if(t>=sceneStarts[i]) index=i}
+  return Math.min(index,scenes.length-1);
+ };
+ const render=()=>{
+  const d=duration();
+  const t=Math.min(audio.currentTime||0,d);
+  const index=sceneFor(t);
+  if(index!==currentScene){scenes.forEach((scene,i)=>scene.classList.toggle('active',i===index));currentScene=index}
+  bar.style.width=`${Math.min(100,(t/d)*100)}%`;
+  time.textContent=`${fmt(t)} / ${fmt(d)}`;
+  caption.textContent=captionsEnabled?captions[index]:'';
+  play.textContent=audio.paused?'Reproducir':'Pausar';
+ };
+ const start=async()=>{
+  try{await audio.play();render()}catch(error){console.error('ONIX_AUDIO_PLAY_ERROR',error);showToast('Pulsa nuevamente Reproducir para activar el audio.')}
+ };
+ const pause=()=>{audio.pause();render()};
+ const open=()=>{
+  modal.hidden=false;document.body.style.overflow='hidden';
+  audio.currentTime=0;currentScene=-1;render();start();
+ };
+ const close=()=>{
+  audio.pause();audio.currentTime=0;currentScene=-1;
+  modal.hidden=true;document.body.style.overflow='';render();
+ };
 
- function chooseVoice(){
-  if(!synth) return null;
-  const voices=synth.getVoices();
-  const priorities=['es-VE','es-419','es-US','es-MX','es-CO','es-ES'];
-  for(const lang of priorities){
-   const exact=voices.find(v=>v.lang.toLowerCase()===lang.toLowerCase()&&v.localService);
-   if(exact) return exact;
-   const any=voices.find(v=>v.lang.toLowerCase()===lang.toLowerCase());
-   if(any) return any;
-  }
-  return voices.find(v=>v.lang.toLowerCase().startsWith('es'))||null;
- }
- function refreshVoice(){voice=chooseVoice()}
- if(synth){refreshVoice();synth.addEventListener?.('voiceschanged',refreshVoice)}
-
- function speakScene(index,force=false){
-  if(!synth||!audioEnabled||!running) return;
-  if(index===lastScene&&!force) return;
-  synth.cancel();
-  const utterance=new SpeechSynthesisUtterance(narration[index]);
-  utterance.lang=voice?.lang||'es-419';
-  if(voice) utterance.voice=voice;
-  utterance.rate=.92;utterance.pitch=.96;utterance.volume=1;
-  synth.speak(utterance);
-  lastScene=index;
- }
-
- function update(forceVoice=false){
-  const index=Math.min(scenes.length-1,Math.floor(t/sceneDuration));
-  scenes.forEach((scene,i)=>scene.classList.toggle('active',i===index));
-  bar.style.width=`${t/duration*100}%`;
-  time.textContent=`${fmt(t)} / ${fmt(duration)}`;
-  caption.textContent=caps?captions[index]:'';
-  if(running) speakScene(index,forceVoice);
- }
-
- function pause(){
-  clearInterval(timer);timer=null;running=false;play.textContent='Reproducir';
-  if(synth?.speaking) synth.pause();
- }
- function start(){
-  if(running) return;
-  running=true;play.textContent='Pausar';
-  if(synth?.paused) synth.resume(); else speakScene(Math.min(scenes.length-1,Math.floor(t/sceneDuration)),true);
-  timer=setInterval(()=>{
-   t+=.1;
-   if(t>=duration){t=duration;update();clearInterval(timer);timer=null;running=false;play.textContent='Reproducir';synth?.cancel();return}
-   update();
-  },100);
- }
- function open(){
-  modal.hidden=false;document.body.style.overflow='hidden';t=0;lastScene=-1;update();start();
-  if(!synth) showToast('Este navegador no ofrece narración automática; los subtítulos permanecen activos.');
- }
- function close(){
-  clearInterval(timer);timer=null;running=false;t=0;lastScene=-1;synth?.cancel();modal.hidden=true;document.body.style.overflow='';play.textContent='Pausar';
- }
+ audio.addEventListener('loadedmetadata',render);
+ audio.addEventListener('timeupdate',render);
+ audio.addEventListener('play',render);
+ audio.addEventListener('pause',render);
+ audio.addEventListener('ended',()=>{render();play.textContent='Reproducir'});
+ audio.addEventListener('error',()=>{console.error('ONIX_AUDIO_LOAD_ERROR',audio.error);showToast('No fue posible cargar el audio de la presentación.')});
 
  $$('[data-presentation]').forEach(button=>button.addEventListener('click',open));
  $('[data-close-presentation]').addEventListener('click',close);
- play.addEventListener('click',()=>running?pause():start());
- capBtn.addEventListener('click',()=>{caps=!caps;capBtn.setAttribute('aria-pressed',String(caps));caption.hidden=!caps;update()});
+ play.addEventListener('click',()=>audio.paused?start():pause());
+ capBtn.addEventListener('click',()=>{
+  captionsEnabled=!captionsEnabled;
+  capBtn.setAttribute('aria-pressed',String(captionsEnabled));
+  caption.hidden=!captionsEnabled;
+  render();
+ });
  audioBtn.addEventListener('click',()=>{
-  audioEnabled=!audioEnabled;audioBtn.setAttribute('aria-pressed',String(audioEnabled));audioBtn.textContent=audioEnabled?'Audio: activo':'Audio: silenciado';
-  if(!audioEnabled){synth?.cancel();lastScene=-1}else if(running){speakScene(Math.min(scenes.length-1,Math.floor(t/sceneDuration)),true)}
+  muted=!muted;audio.muted=muted;
+  audioBtn.setAttribute('aria-pressed',String(!muted));
+  audioBtn.textContent=muted?'Audio: silenciado':'Audio: activo';
  });
  $('.progress').addEventListener('click',event=>{
   const rect=event.currentTarget.getBoundingClientRect();
-  t=Math.max(0,Math.min(duration,(event.clientX-rect.left)/rect.width*duration));lastScene=-1;update(true);
+  audio.currentTime=Math.max(0,Math.min(duration(),((event.clientX-rect.left)/rect.width)*duration()));
+  render();
  });
  document.addEventListener('keydown',event=>{
   if(event.key==='Escape'&&!modal.hidden) close();
   if(event.code==='Space'&&!modal.hidden){event.preventDefault();play.click()}
  });
+ render();
 }
 
 function validateAssets(){
