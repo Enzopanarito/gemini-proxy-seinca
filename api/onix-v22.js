@@ -15,6 +15,7 @@ export default async function handler(req, res) {
     res.setHeader('Content-Type', PAGE.type);
     res.setHeader('Content-Length', String(bytes.length));
     res.setHeader('Cache-Control', 'no-store, max-age=0');
+    res.setHeader('Surrogate-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
     res.status(200).send(bytes);
