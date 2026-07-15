@@ -40,10 +40,10 @@ const ASSETS={
 };
 const isMobilePdfDevice=()=>window.matchMedia('(max-width: 900px), (pointer: coarse)').matches;
 const driveView=id=>`https://drive.google.com/file/d/${id}/view?usp=sharing`;
-const driveDirectView=id=>`/onix-512/pdf-viewer.html?id=${encodeURIComponent(id)}`;
+const driveDirectView=id=>`https://drive.google.com/file/d/${id}/view?usp=drivesdk`;
 const driveDownload=id=>`https://drive.google.com/uc?export=download&id=${encodeURIComponent(id)}`;
 const pdfOpenUrl=id=>isMobilePdfDevice()?driveDirectView(id):driveView(id);
-const pdfTargetAttributes=()=>isMobilePdfDevice()?'':' target="_blank" rel="noopener"';
+const pdfTargetAttributes=()=> ' target="_blank" rel="noopener"';
 
 function buildCards(){
  const dg=$('#doc-grid'),pg=$('#plan-grid');
@@ -57,8 +57,8 @@ function initMobilePdfLinks(){
   const match=link.href.match(/\/file\/d\/([^/]+)/);
   if(!match) return;
   link.href=driveDirectView(match[1]);
-  link.removeAttribute('target');
-  link.removeAttribute('rel');
+  link.setAttribute('target','_blank');
+  link.setAttribute('rel','noopener');
  });
 }
 
