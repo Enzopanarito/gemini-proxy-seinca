@@ -1,5 +1,5 @@
 const ASSETS = {
-  page: { id: '1PxxsHvJxWJFkstVh5xIlZwMmHDaVFLvs', type: 'text/html; charset=utf-8', cache: 'no-store' },
+  page: { id: '1N0EtsEGxrvXLDksR46sEiWbJXnt9X5Gg', type: 'text/html; charset=utf-8', cache: 'no-store' },
   css: { id: '1j0YwqX13NMI_GJwkLy0vfk_jWU6J3Q0b', type: 'text/css; charset=utf-8', cache: 'public, max-age=3600, s-maxage=3600' },
   js: { id: '1AAM4yzqlGVPqfgAB9aciFXz651RPmept', type: 'text/javascript; charset=utf-8', cache: 'public, max-age=3600, s-maxage=3600' }
 };
