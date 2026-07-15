@@ -7,6 +7,8 @@
     "api/onix-v21.js": { "maxDuration": 20 }
   },
   "rewrites": [
+    { "source": "/onix-512/v21.css", "destination": "/api/onix-v21?key=css" },
+    { "source": "/onix-512/v21.js", "destination": "/api/onix-v21?key=js" },
     { "source": "/onix-512/v21", "destination": "/api/onix-v21?key=page" },
     { "source": "/onix-512/v21/", "destination": "/api/onix-v21?key=page" },
     { "source": "/onix-512", "destination": "/onix-512/index.html" },
