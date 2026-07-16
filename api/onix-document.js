@@ -34,7 +34,7 @@ async function downloadPdf(id) {
   const failures = [];
   for (const source of sources) {
     try {
-      const upstream = await fetch(source, { redirect: 'follow', cache: 'no-store', headers: { 'User-Agent': 'SEINCA-ONIX-Document-Service/1.1' } });
+      const upstream = await fetch(source, { redirect: 'follow', cache: 'no-store', headers: { 'User-Agent': 'SEINCA-ONIX-Document-Service/1.2' } });
       if (!upstream.ok) { failures.push(`HTTP ${upstream.status}`); continue; }
       const bytes = Buffer.from(await upstream.arrayBuffer());
       if (isPdf(bytes)) return bytes;
@@ -56,6 +56,11 @@ export default async function handler(req, res) {
   if (!document) return res.status(404).json({ error: 'Documento no encontrado' });
   try {
     const bytes = await downloadPdf(document.id);
+    if (String(req.query.probe || '') === '1') {
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
+      return res.status(200).json({ key, valid: isPdf(bytes), filename: document.filename, sizeBytes: bytes.length, signature: bytes.subarray(0, 5).toString('ascii') });
+    }
     const download = String(req.query.download || '') === '1';
     setCommonHeaders(res);
     res.setHeader('Content-Disposition', `${download ? 'attachment' : 'inline'}; filename="${document.filename}"`);
