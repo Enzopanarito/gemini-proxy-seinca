@@ -1,0 +1,47 @@
+name: Build SEINCA Corporativo
+
+on:
+  push:
+    branches:
+      - seinca-corporativo
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: seinca-corporativo
+      - name: Rebuild portal HTML
+        shell: bash
+        run: |
+          cat \
+            seinca-corporativo/data/gz0.txt \
+            seinca-corporativo/data/gz1.txt \
+            seinca-corporativo/data/gz2.txt \
+            seinca-corporativo/data/r0.txt \
+            seinca-corporativo/data/r1.txt \
+            seinca-corporativo/data/r2.txt \
+            seinca-corporativo/data/r3.txt \
+            seinca-corporativo/data/r4.txt \
+            seinca-corporativo/data/r5.txt \
+            seinca-corporativo/data/r6.txt \
+            seinca-corporativo/data/r7.txt \
+            | base64 --decode | gzip --decompress > seinca-corporativo/index.html
+      - name: Commit generated portal
+        shell: bash
+        run: |
+          git config user.name "SEINCA Build Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add seinca-corporativo/index.html
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Build SEINCA corporate portal"
+            git push origin HEAD:seinca-corporativo
+          fi
