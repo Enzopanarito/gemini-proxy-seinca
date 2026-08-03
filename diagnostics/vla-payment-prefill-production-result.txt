@@ -1,0 +1,4 @@
+checked_at=2026-08-03T09:15:02Z
+http_status=200
+response_body=
+{"success":true,"complete":true,"analysis":{"amount":123.45,"currency":"VES","reference":"123456789012","bank":"Mercantil","method":"MOBILE_PAYMENT_VE","transactionDate":"2026-08-03","transactionTime":"05:05:00","transactionStatus":"COMPLETED","recipient":"Villa Los Apamates","confidence":0.98,"warnings":[],"possibleVisualModification":false},"missing":[],"analysisProvider":"proxy:gemini-3.5-flash"}
