@@ -1,0 +1,113 @@
+name: Verify VLA payment proof prefill once
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/verify-vla-payment-prefill.yml
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build a synthetic payment proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pillow
+          python - <<'PY'
+          from PIL import Image, ImageDraw, ImageFont
+          import base64, io, json
+
+          image = Image.new('RGB', (1000, 700), 'white')
+          draw = ImageDraw.Draw(image)
+          regular = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 36)
+          bold = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 44)
+          rows = [
+              ('COMPROBANTE DE PAGO MOVIL', bold),
+              ('Banco: Mercantil', regular),
+              ('Monto: Bs 123,45', regular),
+              ('Fecha: 03/08/2026', regular),
+              ('Hora: 05:05:00', regular),
+              ('Referencia: 123456789012', regular),
+              ('Estado: COMPLETADO', regular),
+              ('Receptor: Villa Los Apamates', regular),
+          ]
+          y = 55
+          for text, font in rows:
+              draw.text((55, y), text, fill='black', font=font)
+              y += 76
+          output = io.BytesIO()
+          image.save(output, format='PNG', optimize=True)
+          payload = {
+              'ownerId': 'rec5z2pY1lFljVjnt',
+              'attachment': {
+                  'name': 'comprobante-prueba-controlada.png',
+                  'type': 'image/png',
+                  'size': len(output.getvalue()),
+                  'base64': base64.b64encode(output.getvalue()).decode('ascii'),
+              },
+          }
+          with open('/tmp/vla-payment-prefill-payload.json', 'w', encoding='utf-8') as handle:
+              json.dump(payload, handle, ensure_ascii=False)
+          PY
+
+      - name: Call the exact production route used by the iPhone
+        shell: bash
+        run: |
+          set -u -o pipefail
+          mkdir -p diagnostics
+          body_file=$(mktemp)
+          status=$(curl -sS --max-time 70 -o "$body_file" -w '%{http_code}' \
+            -X POST \
+            -H 'Content-Type: application/json' \
+            -H 'Cache-Control: no-cache' \
+            --data-binary @/tmp/vla-payment-prefill-payload.json \
+            'https://villalosapamates.netlify.app/api/vla/payment-proof-prefill' || true)
+          {
+            echo "checked_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "http_status=$status"
+            echo "response_body="
+            cat "$body_file" 2>/dev/null || true
+            echo
+          } > diagnostics/vla-payment-prefill-production-result.txt
+          cat diagnostics/vla-payment-prefill-production-result.txt
+
+      - name: Commit the production response
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'vla-diagnostic-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add diagnostics/vla-payment-prefill-production-result.txt
+          git commit -m 'Guardar prueba real del lector de comprobantes' || exit 0
+          git pull --rebase origin main
+          git push
+
+      - name: Require a successful intelligent extraction
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, pathlib, re
+          text = pathlib.Path('diagnostics/vla-payment-prefill-production-result.txt').read_text(encoding='utf-8')
+          status = re.search(r'^http_status=(\d+)$', text, re.M)
+          body = text.split('response_body=\n', 1)[1].strip()
+          payload = json.loads(body)
+          assert status and status.group(1) == '200', text
+          assert payload.get('success') is True, text
+          analysis = payload.get('analysis') or {}
+          assert analysis.get('currency') == 'VES', text
+          assert abs(float(analysis.get('amount') or 0) - 123.45) < 0.02, text
+          assert str(analysis.get('reference') or '').strip(), text
+          assert str(payload.get('analysisProvider') or '').startswith('proxy:'), text
+          print('VLA_PAYMENT_PREFILL_PRODUCTION_OK')
+          PY
