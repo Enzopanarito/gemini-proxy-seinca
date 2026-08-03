@@ -1,0 +1,52 @@
+name: Optimizar lector de comprobantes VLA
+
+on:
+  push:
+    paths:
+      - .github/workflows/vla-payment-ai-speed-hotfix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Priorizar modelo rápido
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('api/payment-proof.js')
+          text=path.read_text(encoding='utf-8')
+          changes={
+            "'gemini-3.5-flash,gemini-2.5-flash,gemini-2.5-flash-lite'":"'gemini-2.5-flash-lite,gemini-2.5-flash,gemini-3.5-flash'",
+            'const TIMEOUT_MS = 30000;':'const TIMEOUT_MS = 18000;',
+            "generationConfig: { temperature: 0, responseMimeType: 'application/json' }":"generationConfig: { temperature: 0, responseMimeType: 'application/json', maxOutputTokens: 1200 }"
+          }
+          for old,new in changes.items():
+            count=text.count(old)
+            if count!=1:
+              raise SystemExit(f'Se esperaba una coincidencia de {old!r} y se encontraron {count}')
+            text=text.replace(old,new,1)
+          path.write_text(text,encoding='utf-8')
+          PY
+
+      - name: Verificar sintaxis
+        run: node --check api/payment-proof.js
+
+      - name: Publicar optimización
+        run: |
+          git config user.name "SEINCA Build Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add api/payment-proof.js
+          git commit -m "Agilizar lectura de comprobantes de Villa Los Apamates"
+          git push origin HEAD:main
