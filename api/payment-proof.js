@@ -1,8 +1,8 @@
-const MODELS = String(process.env.GEMINI_MODELS || process.env.GEMINI_MODEL || 'gemini-3.5-flash,gemini-2.5-flash,gemini-2.5-flash-lite')
+const MODELS = String(process.env.GEMINI_MODELS || process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite,gemini-2.5-flash,gemini-3.5-flash')
   .split(',').map((value) => value.trim()).filter(Boolean);
 const CLIENT_ID = 'villa-los-apamates-payment-proof-v1';
 const MAX_BYTES = 3 * 1024 * 1024;
-const TIMEOUT_MS = 30000;
+const TIMEOUT_MS = 18000;
 const RATE_LIMIT_PER_MINUTE = 12;
 const buckets = new Map();
 
@@ -51,7 +51,7 @@ async function callGemini({ apiKey, model, content, contentType, promptVersion }
           { text: extractionPrompt(promptVersion) },
           { inlineData: { mimeType: contentType, data: content } }
         ] }],
-        generationConfig: { temperature: 0, responseMimeType: 'application/json' }
+        generationConfig: { temperature: 0, responseMimeType: 'application/json', maxOutputTokens: 1200 }
       })
     });
     const payload = await response.json().catch(() => ({}));
