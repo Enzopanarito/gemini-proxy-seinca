@@ -100,6 +100,26 @@ jobs:
           sha256sum VLA-Portal-Propietario-Produccion-df50f942.zip > VLA-Portal-Propietario-Produccion-df50f942.sha256
           sha256sum VLA-Admin-Produccion-df50f942.zip > VLA-Admin-Produccion-df50f942.sha256
 
+      - name: Upload owner package
+        uses: actions/upload-artifact@v4
+        with:
+          name: VLA-Portal-Propietario-Produccion-df50f942
+          path: |
+            exports/VLA-Portal-Propietario-Produccion-df50f942.zip
+            exports/VLA-Portal-Propietario-Produccion-df50f942.sha256
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload admin package
+        uses: actions/upload-artifact@v4
+        with:
+          name: VLA-Admin-Produccion-df50f942
+          path: |
+            exports/VLA-Admin-Produccion-df50f942.zip
+            exports/VLA-Admin-Produccion-df50f942.sha256
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Commit packages to export branch
         shell: bash
         run: |
@@ -107,5 +127,5 @@ jobs:
           git config user.name 'vla-export-bot'
           git config user.email 'actions@users.noreply.github.com'
           git add -f exports/
-          git commit -m 'Guardar paquetes descargables VLA [skip ci]'
+          git commit -m 'Guardar paquetes descargables VLA [skip ci]' || true
           git push origin HEAD:export/vla-active-source-df50f942-20260805
