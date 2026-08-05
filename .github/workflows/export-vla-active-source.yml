@@ -1,0 +1,111 @@
+name: Export VLA Active Source
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/export-vla-active-source.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  export-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout export branch
+        uses: actions/checkout@v4
+        with:
+          ref: export/vla-active-source-df50f942-20260805
+          fetch-depth: 0
+
+      - name: Checkout active VLA production commit
+        uses: actions/checkout@v4
+        with:
+          repository: Enzopanarito/portaldelpropietario
+          ref: df50f9424a80ed5aa05a4fca1623b0beaf7a1e36
+          path: source
+
+      - name: Verify exact commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git -C source rev-parse HEAD)"
+          test "$actual" = "df50f9424a80ed5aa05a4fca1623b0beaf7a1e36"
+          echo "Active source confirmed: $actual"
+
+      - name: Build owner and admin packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf exports export-work
+          mkdir -p exports export-work
+          cp -a source export-work/VLA-Portal-Propietario-Produccion
+          cp -a source export-work/VLA-Admin-Produccion
+
+          for dir in export-work/VLA-Portal-Propietario-Produccion export-work/VLA-Admin-Produccion; do
+            rm -rf "$dir/.git" "$dir/.github" "$dir/node_modules" "$dir/.netlify" "$dir/dist" "$dir/build"
+            find "$dir" -type f \( -name '.env' -o -name '.env.*' \) ! -name '.env.example' -delete
+            find "$dir" -type f \( -name '*.pem' -o -name '*.key' -o -name '*.p12' -o -name '*.pfx' \) -delete
+            find "$dir" -name '.DS_Store' -delete
+          done
+
+          cat > export-work/VLA-Portal-Propietario-Produccion/LEEME-PORTAL-PROPIETARIO.md <<'EOF'
+          # Portal del Propietario — Villa Los Apamates
+
+          Paquete del código fuente activo en producción.
+
+          - Entrada pública: `index.html`
+          - Repositorio: `Enzopanarito/portaldelpropietario`
+          - Commit activo: `df50f9424a80ed5aa05a4fca1623b0beaf7a1e36`
+          - Deploy Netlify: `6a71fe6069f9c82aab4e1350`
+          - Exportado: 2026-08-05
+
+          Se incluye el código completo porque el portal comparte funciones, configuración y lógica financiera con el administrador. No se incluyen contraseñas, tokens, claves API ni valores de variables de entorno. Para desplegar en otra cuenta deben configurarse nuevamente las variables privadas del hosting.
+          EOF
+
+          cat > export-work/VLA-Admin-Produccion/LEEME-ADMIN.md <<'EOF'
+          # Administrador — Villa Los Apamates
+
+          Paquete del código fuente activo en producción.
+
+          - Entrada administrativa: `admin.html`
+          - Repositorio: `Enzopanarito/portaldelpropietario`
+          - Commit activo: `df50f9424a80ed5aa05a4fca1623b0beaf7a1e36`
+          - Deploy Netlify: `6a71fe6069f9c82aab4e1350`
+          - Exportado: 2026-08-05
+
+          Se incluye el código completo porque el administrador comparte funciones, configuración y lógica financiera con el portal del propietario. No se incluyen contraseñas, tokens, claves API ni valores de variables de entorno. Para desplegar en otra cuenta deben configurarse nuevamente las variables privadas del hosting.
+          EOF
+
+          cat > export-work/VLA-Portal-Propietario-Produccion/VERSION-ACTIVA.txt <<'EOF'
+          Repository: Enzopanarito/portaldelpropietario
+          Commit: df50f9424a80ed5aa05a4fca1623b0beaf7a1e36
+          Netlify deploy: 6a71fe6069f9c82aab4e1350
+          Entry point: index.html
+          EOF
+
+          cat > export-work/VLA-Admin-Produccion/VERSION-ACTIVA.txt <<'EOF'
+          Repository: Enzopanarito/portaldelpropietario
+          Commit: df50f9424a80ed5aa05a4fca1623b0beaf7a1e36
+          Netlify deploy: 6a71fe6069f9c82aab4e1350
+          Entry point: admin.html
+          EOF
+
+          cd export-work
+          zip -q -r ../exports/VLA-Portal-Propietario-Produccion-df50f942.zip VLA-Portal-Propietario-Produccion
+          zip -q -r ../exports/VLA-Admin-Produccion-df50f942.zip VLA-Admin-Produccion
+          cd ../exports
+          sha256sum VLA-Portal-Propietario-Produccion-df50f942.zip > VLA-Portal-Propietario-Produccion-df50f942.sha256
+          sha256sum VLA-Admin-Produccion-df50f942.zip > VLA-Admin-Produccion-df50f942.sha256
+
+      - name: Commit packages to export branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'vla-export-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -f exports/
+          git commit -m 'Guardar paquetes descargables VLA [skip ci]'
+          git push origin HEAD:export/vla-active-source-df50f942-20260805
