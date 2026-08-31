@@ -1,10 +1,16 @@
-const MODELS = String(process.env.GEMINI_MODELS || process.env.GEMINI_MODEL || 'gemini-3.6-flash,gemini-3.5-flash,gemini-2.5-flash,gemini-2.5-flash-lite')
+const CONFIGURED_MODELS = String(process.env.GEMINI_MODELS || process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite,gemini-3.1-flash-lite,gemini-2.5-flash-lite,gemini-3.5-flash,gemini-2.5-flash')
   .split(',').map((value) => value.trim()).filter(Boolean);
+const MODELS_URL = 'https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000';
 const CLIENT_ID = 'villa-los-apamates-payment-proof-v1';
 const MAX_BYTES = 3 * 1024 * 1024;
-const TIMEOUT_MS = 18000;
+const TIMEOUT_MS = 14000;
+const DISCOVERY_TIMEOUT_MS = 3500;
+const CATALOG_TTL_MS = 24 * 60 * 60 * 1000;
+const MAX_MODEL_CANDIDATES = 4;
+const PARALLEL_MODEL_ATTEMPTS = 2;
 const RATE_LIMIT_PER_MINUTE = 12;
 const buckets = new Map();
+let catalogCache = null;
 
 const METHODS = new Set(['TRANSFER_VE', 'MOBILE_PAYMENT_VE', 'ZELLE', 'TRANSFER_US', 'BINANCE_PAY', 'CRYPTO_TRANSFER', 'OTHER', 'UNKNOWN']);
 const CURRENCIES = new Set(['VES', 'USD', 'UNKNOWN']);
@@ -16,6 +22,67 @@ const OUTPUT_KEYS = Object.freeze([
 ]);
 
 function clean(value) { return String(value ?? '').trim(); }
+function modelId(value) { return clean(value?.baseModelId || value?.name || value).replace(/^models\//, ''); }
+function modelVersion(value) {
+  const match = modelId(value).toLowerCase().match(/^gemini-(\d+)(?:\.(\d+))?/);
+  return match ? Number(match[1]) * 100 + Number(match[2] || 0) : 0;
+}
+function modelScore(value) {
+  const id = modelId(value).toLowerCase();
+  const methods = Array.isArray(value?.supportedGenerationMethods) ? value.supportedGenerationMethods : ['generateContent'];
+  if (!id.startsWith('gemini-') || !methods.includes('generateContent')) return -1;
+  if (/(?:preview|experimental|exp|embedding|embed|aqa|tts|live|image|imagen|audio|robotics|computer-use|deep-research)/.test(id)) return -1;
+  let score = modelVersion(id);
+  if (id.includes('flash-lite')) score += 1200;
+  else if (id.includes('flash')) score += 800;
+  else if (id.includes('pro')) score += 250;
+  else score += 100;
+  return score;
+}
+export function compatiblePaymentModels(models) {
+  return [...new Map((models || [])
+    .map((model) => ({ id: modelId(model), score: modelScore(model) }))
+    .filter((item) => item.id && item.score >= 0)
+    .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id))
+    .map((item) => [item.id, item])).values()].map((item) => item.id);
+}
+function fallbackModels() {
+  const modeled = CONFIGURED_MODELS.map((id) => ({ name: `models/${id}`, baseModelId: id, supportedGenerationMethods: ['generateContent'] }));
+  return compatiblePaymentModels(modeled).slice(0, MAX_MODEL_CANDIDATES);
+}
+export function thinkingConfigFor(model) {
+  const id = modelId(model).toLowerCase();
+  if (/^gemini-(?:[3-9]|[1-9]\d)(?:\.|-)/.test(id)) return { thinkingLevel: 'minimal' };
+  if (/^gemini-2\.5(?:\.|-)/.test(id)) return { thinkingBudget: 0 };
+  return null;
+}
+export async function fetchModelCatalog({ apiKey, fetchFn = fetch, timeoutMs = DISCOVERY_TIMEOUT_MS } = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), Math.max(1500, Math.min(8000, Number(timeoutMs) || DISCOVERY_TIMEOUT_MS)));
+  try {
+    const response = await fetchFn(MODELS_URL, { headers: { 'x-goog-api-key': apiKey }, signal: controller.signal });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw Object.assign(new Error(clean(payload?.error?.message) || `HTTP ${response.status}`), { status: response.status, code: 'MODEL_DISCOVERY_FAILED' });
+    return Array.isArray(payload.models) ? payload.models : [];
+  } finally {
+    clearTimeout(timer);
+  }
+}
+export async function discoverPaymentModels({ apiKey, fetchFn = fetch, now = Date.now } = {}) {
+  const current = Number(now());
+  if (catalogCache?.expiresAt > current && catalogCache.models?.length) return { models: catalogCache.models, source: 'memory-catalog' };
+  try {
+    const models = compatiblePaymentModels(await fetchModelCatalog({ apiKey, fetchFn })).slice(0, MAX_MODEL_CANDIDATES);
+    if (!models.length) throw Object.assign(new Error('Gemini no reportó modelos de extracción compatibles.'), { code: 'NO_COMPATIBLE_MODELS' });
+    catalogCache = { models, expiresAt: current + CATALOG_TTL_MS };
+    return { models, source: 'live-catalog' };
+  } catch (error) {
+    const models = fallbackModels();
+    if (!models.length) throw error;
+    return { models, source: 'configured-fallback', discoveryError: clean(error?.code || error?.message).slice(0, 120) };
+  }
+}
+export function clearPaymentModelCache() { catalogCache = null; }
 function requestIp(req) { return clean(req.headers['x-forwarded-for']).split(',')[0] || clean(req.socket?.remoteAddress) || 'unknown'; }
 function rateAllowed(req) {
   const minute = Math.floor(Date.now() / 60000);
@@ -265,11 +332,25 @@ export function paymentProofNormalizerSelfTest() {
   return 4;
 }
 
-async function callGemini({ apiKey, model, content, contentType, promptVersion }) {
+function providerCode(status, message = '') {
+  const text = clean(message).toLowerCase();
+  if (status === 401 || status === 403) return 'AI_AUTH_FAILED';
+  if (status === 404 || status === 400 && /model|not found|unsupported/.test(text)) return 'AI_MODEL_NOT_FOUND';
+  if (status === 408) return 'TIMEOUT';
+  if (status === 429) return 'RATE_LIMIT';
+  if (status >= 500) return 'PROVIDER_UNAVAILABLE';
+  return 'AI_PROVIDER_ERROR';
+}
+
+export async function callGemini({ apiKey, model, content, contentType, promptVersion, fetchFn = fetch, signal }) {
   const controller = new AbortController();
+  const abort = () => controller.abort();
+  if (signal?.aborted) controller.abort();
+  else signal?.addEventListener('abort', abort, { once: true });
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+    const thinkingConfig = thinkingConfigFor(model);
+    const response = await fetchFn(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
       signal: controller.signal,
@@ -278,21 +359,66 @@ async function callGemini({ apiKey, model, content, contentType, promptVersion }
           { text: extractionPrompt(promptVersion) },
           { inlineData: { mimeType: contentType, data: content } }
         ] }],
-        generationConfig: { temperature: 0, responseMimeType: 'application/json', maxOutputTokens: 1600 }
+        generationConfig: {
+          responseMimeType: 'application/json',
+          maxOutputTokens: 1600,
+          ...(thinkingConfig ? { thinkingConfig } : {})
+        }
       })
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const error = new Error(clean(payload?.error?.message) || `HTTP ${response.status}`);
+      const message = clean(payload?.error?.message) || `HTTP ${response.status}`;
+      const error = new Error(message);
       error.status = response.status;
+      error.code = providerCode(response.status, message);
       throw error;
     }
     const raw = responseText(payload);
-    if (!raw) throw Object.assign(new Error('Gemini no devolvió contenido.'), { status: 502 });
+    if (!raw) throw Object.assign(new Error('Gemini no devolvió contenido.'), { status: 502, code: 'EMPTY_OUTPUT' });
     return raw;
+  } catch (error) {
+    if (error?.name === 'AbortError') throw Object.assign(new Error('Gemini excedió el tiempo máximo.'), { status: 408, code: 'TIMEOUT' });
+    throw error;
   } finally {
     clearTimeout(timer);
+    signal?.removeEventListener('abort', abort);
   }
+}
+
+export async function analyzeWithHealthyModels({ apiKey, models, content, contentType, promptVersion, callFn = callGemini } = {}) {
+  const candidates = [...new Set((models || []).map(modelId).filter(Boolean))].slice(0, MAX_MODEL_CANDIDATES);
+  const attempts = [];
+  const run = async (model, cancellation) => {
+    const started = Date.now();
+    try {
+      const raw = await callFn({ apiKey, model, content, contentType, promptVersion, signal: cancellation?.signal });
+      const normalized = normalizePaymentProofRaw(raw);
+      cancellation?.abort();
+      return { raw: JSON.stringify(normalized), model, latencyMs: Date.now() - started };
+    } catch (error) {
+      attempts.push({ model, status: Number(error?.status) || 0, code: clean(error?.code), message: clean(error?.message).slice(0, 220), latencyMs: Date.now() - started });
+      throw error;
+    }
+  };
+
+  const firstWave = candidates.slice(0, PARALLEL_MODEL_ATTEMPTS);
+  if (firstWave.length) {
+    const cancellation = new AbortController();
+    try {
+      const result = await Promise.any(firstWave.map((model) => run(model, cancellation)));
+      return { ...result, attempts };
+    } catch (_) {
+      // Los candidatos restantes todavía pueden estar sanos aunque la primera ola falle.
+    }
+  }
+  for (const model of candidates.slice(PARALLEL_MODEL_ATTEMPTS)) {
+    try {
+      const result = await run(model, null);
+      return { ...result, attempts };
+    } catch (_) {}
+  }
+  throw Object.assign(new Error('No fue posible analizar el comprobante.'), { code: attempts.some((item) => item.code === 'RATE_LIMIT') ? 'RATE_LIMIT' : 'AI_PROVIDER_ERROR', attempts });
 }
 
 export default async function handler(req, res) {
@@ -326,18 +452,15 @@ export default async function handler(req, res) {
   try { bytes = Buffer.from(content, 'base64'); } catch { return res.status(400).json({ ok: false, code: 'INVALID_ATTACHMENT' }); }
   if (!bytes.length || bytes.length > MAX_BYTES) return res.status(413).json({ ok: false, code: 'ATTACHMENT_TOO_LARGE', message: 'El comprobante supera 3 MB.' });
 
-  const attempts = [];
-  for (const model of [...new Set(MODELS)].slice(0, 4)) {
-    try {
-      const raw = await callGemini({ apiKey, model, content, contentType, promptVersion: req.body?.promptVersion });
-      const normalized = normalizePaymentProofRaw(raw);
-      return res.status(200).json({ ok: true, raw: JSON.stringify(normalized), model, normalized: true });
-    } catch (error) {
-      attempts.push({ model, status: Number(error?.status) || 0, code: clean(error?.code), message: clean(error?.message).slice(0, 220) });
-      if (Number(error?.status) === 401 || Number(error?.status) === 403 || Number(error?.status) === 429) break;
-    }
+  let selection = null;
+  try {
+    selection = await discoverPaymentModels({ apiKey });
+    const result = await analyzeWithHealthyModels({ apiKey, models: selection.models, content, contentType, promptVersion: req.body?.promptVersion });
+    return res.status(200).json({ ok: true, raw: result.raw, model: result.model, normalized: true, modelSelectionSource: selection.source });
+  } catch (error) {
+    const attempts = Array.isArray(error?.attempts) ? error.attempts : [];
+    console.error('[VLA payment proof]', { selectionSource: selection?.source || 'unavailable', attempts });
+    const rateLimited = error?.code === 'RATE_LIMIT' || attempts.some((item) => item.status === 429);
+    return res.status(rateLimited ? 429 : 502).json({ ok: false, code: rateLimited ? 'RATE_LIMIT' : clean(error?.code) || 'AI_PROVIDER_ERROR', message: 'No fue posible analizar el comprobante.', attempts });
   }
-  console.error('[VLA payment proof]', attempts);
-  const status = attempts.some((item) => item.status === 429) ? 429 : 502;
-  return res.status(status).json({ ok: false, code: status === 429 ? 'RATE_LIMIT' : 'AI_PROVIDER_ERROR', message: 'No fue posible analizar el comprobante.', attempts });
 }
