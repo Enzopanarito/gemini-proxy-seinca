@@ -82,8 +82,25 @@ async function callGemini(apiKey, model, mimeType, data) {
           ] }],
           generationConfig: {
             temperature: 0,
-            responseMimeType: 'application/json',
-            maxOutputTokens: 700
+            maxOutputTokens: 1200,
+            responseFormat: {
+              text: {
+                mimeType: 'application/json',
+                schema: {
+                  type: 'object',
+                  properties: {
+                    signature_found: { type: 'boolean' },
+                    confidence: { type: 'number' },
+                    signature_box_2d: { type: ['array','null'], items: { type: 'integer' }, minItems: 4, maxItems: 4 },
+                    document_box_2d: { type: ['array','null'], items: { type: 'integer' }, minItems: 4, maxItems: 4 },
+                    document_type: { type: 'string' },
+                    document_number: { type: 'string' },
+                    holder_name: { type: 'string' }
+                  },
+                  required: ['signature_found','confidence','signature_box_2d','document_box_2d','document_type','document_number','holder_name']
+                }
+              }
+            }
           }
         })
       }
