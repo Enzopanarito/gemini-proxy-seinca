@@ -85,7 +85,7 @@ async function callGemini(apiKey, model, mimeType, data) {
             maxOutputTokens: 1200,
             responseFormat: {
               text: {
-                mimeType: 'application/json',
+                mimeType: 'APPLICATION_JSON',
                 schema: {
                   type: 'object',
                   properties: {
