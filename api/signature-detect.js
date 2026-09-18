@@ -1,4 +1,4 @@
-const MODELS = ['gemini-3.8-flash', 'gemini-2.5-flash'];
+const MODELS = ['gemini-2.5-flash'];
 const MAX_IMAGE_CHARS = 3_800_000;
 const buckets = new Map();
 
@@ -95,7 +95,7 @@ async function callGemini(apiKey, model, mimeType, data) {
     'Add only a very small margin around the signature strokes.'
   ].join(' ');
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 9000);
+  const timer = setTimeout(() => controller.abort(), 10000);
   try {
     const response = await fetch(
       'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent',
@@ -110,25 +110,9 @@ async function callGemini(apiKey, model, mimeType, data) {
           ] }],
           generationConfig: {
             temperature: 0,
-            maxOutputTokens: 500,
-            responseFormat: {
-              text: {
-                mimeType: 'APPLICATION_JSON',
-                schema: {
-                  type: 'object',
-                  properties: {
-                    signature_found: { type: 'boolean' },
-                    confidence: { type: 'number' },
-                    signature_box_2d: { type: ['array','null'], items: { type: 'integer' }, minItems: 4, maxItems: 4 },
-                    document_box_2d: { type: ['array','null'], items: { type: 'integer' }, minItems: 4, maxItems: 4 },
-                    document_type: { type: 'string' },
-                    document_number: { type: 'string' },
-                    holder_name: { type: 'string' }
-                  },
-                  required: ['signature_found','confidence','signature_box_2d','document_box_2d','document_type','document_number','holder_name']
-                }
-              }
-            }
+            maxOutputTokens: 800,
+            responseMimeType: 'application/json',
+            thinkingConfig: { thinkingBudget: 0 }
           }
         })
       }
