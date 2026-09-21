@@ -1,4 +1,4 @@
-const MODELS = ['gemini-2.5-flash'];
+const MODELS = ['gemini-2.5-flash-lite', 'gemini-2.5-flash'];
 const MAX_IMAGE_CHARS = 3_800_000;
 const buckets = new Map();
 
@@ -51,6 +51,7 @@ function parseJson(text) {
     // the whole detection and forcing the user to wait for another request.
     const out = {};
     const bool = candidate.match(/["']?signature_found["']?\s*:\s*(true|false)/i);
+    const identityBool = candidate.match(/["']?is_identity_document["']?\s*:\s*(true|false)/i);
     const confidence = candidate.match(/["']?confidence["']?\s*:\s*([0-9]*\.?[0-9]+)/i);
     const box = (name) => {
       const re = new RegExp('["\\\']?' + name + '["\\\']?\\s*:\\s*\\[\\s*(-?\\d+(?:\\.\\d+)?)\\s*,\\s*(-?\\d+(?:\\.\\d+)?)\\s*,\\s*(-?\\d+(?:\\.\\d+)?)\\s*,\\s*(-?\\d+(?:\\.\\d+)?)\\s*\\]', 'i');
@@ -62,6 +63,7 @@ function parseJson(text) {
       return candidate.match(re)?.[1] || '';
     };
     if (bool) out.signature_found = bool[1].toLowerCase() === 'true';
+    if (identityBool) out.is_identity_document = identityBool[1].toLowerCase() === 'true';
     if (confidence) out.confidence = Number(confidence[1]);
     out.signature_box_2d = box('signature_box_2d');
     out.document_box_2d = box('document_box_2d');
@@ -84,13 +86,18 @@ function validBox(box) {
 
 async function callGemini(apiKey, model, mimeType, data) {
   const prompt = [
-    'Analyze this identity-document image.',
+    'Analyze this image first as a strict identity-document validator.',
+    'Accepted documents are ONLY: (1) a national identity card / cedula / carta d identita, front or back, or (2) the biographical/data page of a passport.',
+    'A standalone portrait, selfie, passport-style headshot, driver license, work badge, membership card, screenshot, or unrelated photo is NOT an accepted identity document.',
+    'Set is_identity_document=true only when the image visibly contains one of the accepted documents. Otherwise set it false.',
+    'If is_identity_document=false, set signature_found=false, signature_box_2d=null, document_box_2d=null, document_type="NOT_IDENTITY_DOCUMENT", document_number="", holder_name="".',
+    'For accepted documents use document_type="PASSPORT" or document_type="NATIONAL_ID_CARD".',
     'Locate the handwritten signature of the DOCUMENT HOLDER only.',
     'Ignore printed text, fingerprints, portraits, stamps, barcodes, seals, and signatures of officials/directors.',
     'On Venezuelan cedulas, prefer the handwriting next to or above the label FIRMA TITULAR.',
     'Also locate the outer visible boundary of the identity card itself, excluding table/background around the card.',
     'Read the document type, document number, and holder name if clearly visible.',
-    'Return ONLY JSON with: signature_found (boolean), confidence (0..1), signature_box_2d, document_box_2d, document_type, document_number, holder_name.',
+    'Return ONLY JSON with: is_identity_document (boolean), signature_found (boolean), confidence (0..1), signature_box_2d, document_box_2d, document_type, document_number, holder_name.',
     'Boxes must be [ymin, xmin, ymax, xmax] normalized 0..1000 and tight around the requested object.',
     'Add only a very small margin around the signature strokes.'
   ].join(' ');
@@ -149,11 +156,13 @@ export default async function handler(req, res) {
     try {
       const out = await callGemini(apiKey, model, mimeType, image.data);
       const signatureBox = validBox(out?.signature_box_2d);
-      const documentBox = validBox(out?.document_box_2d) || [0, 0, 1000, 1000];
-      const found = Boolean(out?.signature_found && signatureBox);
+      const identityDocument = out?.is_identity_document !== false && /^(PASSPORT|NATIONAL_ID_CARD)$/i.test(String(out?.document_type || '').trim());
+      const documentBox = identityDocument ? (validBox(out?.document_box_2d) || [0, 0, 1000, 1000]) : null;
+      const found = Boolean(identityDocument && out?.signature_found && signatureBox);
       return res.status(200).json({
         ok: true,
         model,
+        is_identity_document: identityDocument,
         signature_found: found,
         confidence: Math.max(0, Math.min(1, Number(out?.confidence) || 0)),
         signature_box_2d: found ? signatureBox : null,
@@ -166,6 +175,10 @@ export default async function handler(req, res) {
       lastError = error;
     }
   }
-  console.error('[signature-detect]', String(lastError?.message || lastError || 'unknown'));
-  return res.status(502).json({ ok: false, error: 'No se pudo analizar el documento' });
+  const lastMessage = String(lastError?.message || lastError || 'unknown');
+  console.error('[signature-detect]', lastMessage);
+  if (/Gemini\s+429/i.test(lastMessage)) {
+    return res.status(503).json({ ok: false, code: 'AI_QUOTA', error: 'Servicio de IA temporalmente no disponible' });
+  }
+  return res.status(502).json({ ok: false, code: 'AI_UNAVAILABLE', error: 'No se pudo analizar el documento' });
 }
