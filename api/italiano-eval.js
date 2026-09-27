@@ -26,7 +26,7 @@ async function callModel(model,key,prompt){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         contents:[{role:'user',parts:[{text:prompt}]}],
-        generationConfig:{temperature:0.15,maxOutputTokens:900,responseMimeType:'application/json'}
+        generationConfig:{temperature:0.15,maxOutputTokens:1400,thinkingConfig:{thinkingBudget:0},responseMimeType:'application/json',responseSchema:{type:'OBJECT',properties:{points:{type:'NUMBER'},conceptualError:{type:'BOOLEAN'},feedback:{type:'STRING'},correction:{type:'STRING'},strength:{type:'STRING'}},required:['points','conceptualError','feedback','correction','strength']}}
       })
     });
     const payload=await response.json();
