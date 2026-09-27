@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07111f">
+  <meta name="description" content="Italiano Mariana B1: estudio por metas, ejercicios interactivos y evaluación inteligente.">
+  <title>Italiano Mariana · B1</title>
+  <link rel="stylesheet" href="/italiano-mariana/styles.css">
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+  <header class="topbar">
+    <a class="brand" href="/italiano-mariana/" aria-label="Inicio Italiano Mariana">
+      <span class="flag" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span><strong>ITALIANO</strong><small>MARIANA · B1</small></span>
+    </a>
+    <div class="top-actions">
+      <span id="syncPill" class="pill">Progreso local</span>
+      <button id="resetBtn" class="icon-btn" type="button" title="Reiniciar datos de práctica" aria-label="Reiniciar datos">↻</button>
+    </div>
+  </header>
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">OBIETTIVO · CERTIFICAZIONE B1</p>
+        <h1>Impara. Pratica.<br><span>Dimostra di saperlo.</span></h1>
+        <p class="hero-copy">Curso por dominio: no avanzas por calendario, avanzas cuando realmente manejas el tema. La meta de cada bloque es <strong>18/20</strong> o más, sin errores conceptuales graves.</p>
+        <div class="hero-actions">
+          <button id="continueBtn" class="btn btn-primary" type="button">Continuar con IN articolata</button>
+          <button id="surpriseBtn" class="btn btn-ghost" type="button">Prueba sorpresa</button>
+        </div>
+      </div>
+      <div class="score-orbit" aria-label="Progreso general">
+        <div class="orbit-ring"></div>
+        <div class="orbit-core"><span id="masteryPct">42%</span><small>RUTA B1</small></div>
+        <span class="orbit-dot d1"></span><span class="orbit-dot d2"></span><span class="orbit-dot d3"></span>
+      </div>
+    </section>
+    <nav class="tabs" aria-label="Secciones">
+      <button class="tab active" data-view="dashboard">Inicio</button>
+      <button class="tab" data-view="lesson">Lección</button>
+      <button class="tab" data-view="practice">Práctica</button>
+      <button class="tab" data-view="exam">Examen</button>
+      <button class="tab" data-view="history">Historial</button>
+    </nav>
+    <section id="dashboardView" class="view active">
+      <div class="grid stats-grid">
+        <article class="card stat"><span class="stat-icon">◎</span><div><small>NIVEL ACTUAL</small><strong>A2 alto → B1</strong><p>Comprensión fuerte; precisión gramatical en construcción.</p></div></article>
+        <article class="card stat"><span class="stat-icon">✓</span><div><small>ÚLTIMA NOTA</small><strong id="lastScore">19/20</strong><p>DI articolata · dominio alcanzado.</p></div></article>
+        <article class="card stat"><span class="stat-icon">→</span><div><small>AHORA</small><strong>IN articolata</strong><p>nel · nello · nella · nell’ · nei · negli · nelle</p></div></article>
+      </div>
+      <div class="dashboard-grid">
+        <article class="card current-card">
+          <div class="card-head"><div><p class="eyebrow">META ACTUAL</p><h2>Preposizione <span>IN + articolo</span></h2></div><span class="status current">EN CURSO</span></div>
+          <div class="formula-row"><span>IN + IL</span><b>NEL</b><span>IN + LO</span><b>NELLO</b><span>IN + LA</span><b>NELLA</b></div>
+          <div class="formula-row"><span>IN + L’</span><b>NELL’</b><span>IN + I</span><b>NEI</b><span>IN + GLI</span><b>NEGLI</b><span>IN + LE</span><b>NELLE</b></div>
+          <div class="mastery-line"><span>Objetivo de dominio</span><strong>≥ 18/20</strong></div>
+          <button class="btn btn-primary wide" data-jump="lesson">Estudiar esta meta</button>
+        </article>
+        <article class="card ai-card">
+          <div class="ai-spark">✦</div><p class="eyebrow">TUTOR IA</p><h2>Correzione intelligente</h2>
+          <p>Las respuestas abiertas se corrigen con Gemini desde el servidor. Evalúa gramática, uso de la preposición, naturalidad y explicación del error.</p>
+          <div class="mini-points"><span>✓ Nota /20</span><span>✓ Feedback</span><span>✓ Error conceptual</span></div>
+          <button class="btn btn-ghost wide" data-jump="exam">Ir a evaluación IA</button>
+        </article>
+      </div>
+      <article class="card roadmap-card">
+        <div class="card-head"><div><p class="eyebrow">RUTA DE DOMINIO</p><h2>Cammino verso il B1</h2></div><span id="roadmapSummary" class="pill"></span></div>
+        <div id="roadmap" class="roadmap"></div>
+      </article>
+    </section>
+    <section id="lessonView" class="view">
+      <article class="card lesson-hero"><div><p class="eyebrow">LEZIONE ATTUALE</p><h2>IN articolata</h2><p>Primero entiendes la lógica. Después automatizas. Memorizar siete palabras sin entenderlas es una manera muy humana de fabricar errores.</p></div><div class="lesson-badge"><span>06</span><small>META</small></div></article>
+      <div class="lesson-grid">
+        <article class="card theory"><h3>La regla visual</h3><div class="rule-table">
+          <div><span>in + il</span><strong>nel</strong><em>nel parco</em></div><div><span>in + lo</span><strong>nello</strong><em>nello studio</em></div>
+          <div><span>in + la</span><strong>nella</strong><em>nella scuola</em></div><div><span>in + l’</span><strong>nell’</strong><em>nell’ufficio</em></div>
+          <div><span>in + i</span><strong>nei</strong><em>nei negozi</em></div><div><span>in + gli</span><strong>negli</strong><em>negli alberghi</em></div>
+          <div><span>in + le</span><strong>nelle</strong><em>nelle città</em></div>
+        </div></article>
+        <article class="card theory"><h3>Lo que ya debes conservar</h3><div class="knowledge-stack">
+          <div><b>Città → A</b><span>Sono a Roma.</span></div><div><b>Paese / regione → IN</b><span>Vivo in Italia.</span></div>
+          <div><b>Persona / professionista → DA</b><span>Vado dal medico. Sono dallo zio.</span></div>
+          <div><b>Origine / possesso / materiale → DI</b><span>Sono di Mérida. La porta di legno.</span></div>
+          <div><b>Luoghi comuni</b><span>al ristorante · al cinema · al bar · in hotel</span></div>
+        </div></article>
+      </div>
+      <article class="card examples-card"><div class="card-head"><div><p class="eyebrow">MICRO-PRATICA</p><h2>Toca la respuesta correcta</h2></div><span id="microScore" class="pill">0/5</span></div><div id="microPractice" class="micro-practice"></div></article>
+    </section>
+    <section id="practiceView" class="view">
+      <article class="card"><div class="card-head"><div><p class="eyebrow">ALLENAMENTO</p><h2>20 domande · 20 punti</h2><p>Se corrige al instante. Puedes practicar cuantas veces quieras; solo los exámenes van al historial oficial.</p></div><button id="newPracticeBtn" class="btn btn-ghost" type="button">Nueva práctica</button></div><div id="practiceProgress" class="progress"><i></i></div><div id="practiceArea"></div></article>
+    </section>
+    <section id="examView" class="view">
+      <div class="exam-layout">
+        <article class="card exam-card"><div class="card-head"><div><p class="eyebrow">ESAME DI PADRONANZA</p><h2>IN articolata</h2></div><span class="status current">20 PUNTI</span></div>
+          <div class="exam-intro"><p>12 preguntas objetivas + 2 respuestas de producción. Las objetivas valen 12 puntos; Gemini evalúa las abiertas con una rúbrica de 8 puntos. Total: 20.</p><div class="exam-rules"><span>18/20 para dominar</span><span>Sin error conceptual grave</span><span>Resultado guardado</span></div></div><div id="examArea"></div>
+        </article>
+        <aside class="card exam-side"><p class="eyebrow">ESTADO</p><div class="big-score"><span id="examScore">—</span><small>/20</small></div><p id="examStatusText">Aún no has enviado este examen.</p><button id="submitExamBtn" class="btn btn-primary wide" type="button">Corregir examen</button><button id="advanceBtn" class="btn btn-success wide hidden" type="button">Confirmo: avanzar</button><div id="aiFeedback" class="ai-feedback"></div></aside>
+      </div>
+    </section>
+    <section id="historyView" class="view"><article class="card"><div class="card-head"><div><p class="eyebrow">REGISTRO</p><h2>Historial de evaluaciones</h2></div><span id="bestScorePill" class="pill">Mejor —</span></div><div id="historyList" class="history-list"></div></article></section>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/italiano-mariana/app.js" defer></script>
+</body>
+</html>
