@@ -19,9 +19,9 @@
   ];
 
   const bank=[
-    {q:'Vado ___ supermercato dopo il lavoro.',a:'nel',o:['nel','nello','nella','nei'],rule:'in + il = nel'},
+    {q:'Sono ___ supermercato e sto cercando il latte.',a:'nel',o:['nel','nello','nella','nei'],rule:'in + il = nel'},
     {q:'Studio ___ studio di mio padre.',a:'nello',o:['nello','nel','nell\'','negli'],rule:'in + lo = nello'},
-    {q:'I bambini sono ___ scuola.',a:'nella',o:['nella','nel','nelle','in'],rule:'in + la = nella'},
+    {q:'C'è una biblioteca ___ scuola nuova.',a:'nella',o:['nella','nel','nelle','in'],rule:'in + la = nella'},
     {q:'Lavoro ___ ufficio vicino a casa.',a:'nell\'',o:['nell\'','nello','nel','negli'],rule:'in + l’ = nell’'},
     {q:'Compro spesso ___ negozi del centro.',a:'nei',o:['nei','negli','nel','nelle'],rule:'in + i = nei'},
     {q:'Dormiamo ___ alberghi vicino alla stazione.',a:'negli',o:['negli','nei','nell\'','nello'],rule:'in + gli = negli'},
@@ -29,7 +29,7 @@
     {q:'La macchina è ___ garage.',a:'nel',o:['nel','nello','nella','in'],rule:'garage usa il: nel garage'},
     {q:'Il documento è ___ zaino nero.',a:'nello',o:['nello','nel','nell\'','nei'],rule:'zaino usa lo: nello zaino'},
     {q:'Metto il latte ___ frigorifero.',a:'nel',o:['nel','nello','nella','nei'],rule:'frigorifero usa il'},
-    {q:'Ci vediamo ___ piazza principale.',a:'nella',o:['nella','nel','nelle','in'],rule:'in + la'},
+    {q:'C'è una fontana ___ piazza principale.',a:'nella',o:['nella','nel','nelle','in'],rule:'in + la'},
     {q:'I libri sono ___ scaffali.',a:'negli',o:['negli','nei','nelle','nello'],rule:'scaffali usa gli'},
     {q:'Le chiavi sono ___ borse.',a:'nelle',o:['nelle','nei','nella','negli'],rule:'borse usa le'},
     {q:'Mangiamo ___ ristorante dell\'hotel.',a:'nel',o:['nel','al','in','nello'],rule:'qui indica dentro uno specifico ristorante'},
@@ -129,7 +129,7 @@
       if(mastered.has(x.id)) status='done';
       return '<div class="road-step '+status+'"><span class="n">'+x.n+'</span><b>'+escapeHtml(x.title)+'</b><small>'+escapeHtml(status==='done'?'✓ '+x.score:x.sub)+'</small></div>';
     }).join('');
-    const completed=(state.mastered||[]).length+(state.confirmedAdvance?1:0);
+    const completed=(state.mastered||[]).length;
     qs('#roadmapSummary').textContent=completed+' / '+data.length+' metas';
     qs('#masteryPct').textContent=Math.round((completed/data.length)*100)+'%';
   }
