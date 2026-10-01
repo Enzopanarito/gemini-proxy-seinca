@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Probactis Germina en Venezuela. Probiótico con Bacillus clausii UBBC-07 y vitamina B6, en 10 mini-viales de 5 mL.">
+  <title>Probactis Germina Venezuela</title>
+  <style>
+    :root{--ink:#26313a;--muted:#60707b;--green:#78bd43;--green2:#a7d95f;--navy:#0e3342;--cream:#f7fbf2;--white:#fff;--line:#e7eee3;--shadow:0 18px 50px rgba(35,67,47,.12)}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:#fff;line-height:1.6}
+    img{max-width:100%;display:block}a{text-decoration:none;color:inherit}.wrap{width:min(1160px,calc(100% - 40px));margin:auto}
+    .top{background:var(--navy);color:#fff;text-align:center;padding:8px 16px;font-size:.86rem;letter-spacing:.02em}
+    header{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.93);backdrop-filter:blur(16px);border-bottom:1px solid rgba(231,238,227,.9)}
+    nav{height:76px;display:flex;align-items:center;justify-content:space-between;gap:26px}.brand img{width:175px}.links{display:flex;gap:26px;align-items:center;font-weight:700;font-size:.94rem}
+    .pill,.cta{border-radius:999px;padding:12px 20px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;gap:8px}.pill{background:var(--green);color:#fff}.cta.secondary{border:1px solid #cbd9c3;background:#fff}
+    .hero{background:radial-gradient(circle at 85% 20%,#e1f3c9 0,transparent 35%),linear-gradient(135deg,#fbfdf8 0,#f2faea 100%);padding:72px 0 54px;overflow:hidden}
+    .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;align-items:center;gap:52px}.eyebrow{font-weight:900;color:#5c9d2e;text-transform:uppercase;letter-spacing:.12em;font-size:.78rem}
+    h1{font-size:clamp(2.9rem,6vw,5.8rem);line-height:.95;letter-spacing:-.055em;margin:16px 0 18px;color:var(--navy)}h1 span{color:var(--green)}
+    .lead{font-size:1.15rem;color:var(--muted);max-width:620px}.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+    .product-stage{position:relative;min-height:470px;display:grid;place-items:center}.product-stage:before{content:"";position:absolute;width:390px;height:390px;border-radius:50%;background:#fff;box-shadow:var(--shadow)}
+    .product-stage img{position:relative;z-index:2;width:min(590px,100%);filter:drop-shadow(0 20px 25px rgba(40,73,48,.18))}
+    .badges{display:flex;flex-wrap:wrap;gap:10px;margin-top:25px}.badge{background:#fff;border:1px solid var(--line);padding:8px 13px;border-radius:999px;font-size:.88rem;font-weight:800}
+    section{padding:86px 0}.section-title{text-align:center;max-width:780px;margin:0 auto 46px}.section-title h2{font-size:clamp(2rem,4vw,3.35rem);line-height:1.05;letter-spacing:-.04em;margin:8px 0 14px;color:var(--navy)}.section-title p{color:var(--muted);font-size:1.05rem}
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.card{border:1px solid var(--line);border-radius:24px;padding:28px;background:#fff;box-shadow:0 8px 28px rgba(31,62,42,.05)}.icon{width:48px;height:48px;border-radius:15px;background:#edf7e4;display:grid;place-items:center;font-size:1.5rem;margin-bottom:16px}.card h3{margin:0 0 8px;color:var(--navy)}
+    .soft{background:var(--cream)}.split{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}.split h2{font-size:clamp(2.1rem,4vw,3.8rem);line-height:1.05;letter-spacing:-.045em;margin:0 0 18px;color:var(--navy)}.feature-list{display:grid;gap:13px;margin-top:25px}.feature{display:flex;gap:12px;align-items:flex-start}.check{flex:0 0 28px;width:28px;height:28px;border-radius:50%;background:var(--green);color:white;display:grid;place-items:center;font-weight:900}
+    .formula{background:var(--navy);color:#fff}.formula .section-title h2,.formula h3{color:#fff}.formula .section-title p{color:#c8d5d9}.formula-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}.formula-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:26px;padding:30px}.formula-card img{height:130px;object-fit:contain;margin-bottom:20px}.formula-card p{color:#dbe5e7}
+    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}.step{background:#fff;border:1px solid var(--line);border-radius:24px;overflow:hidden}.step img{width:100%;aspect-ratio:1.35/1;object-fit:cover}.step div{padding:22px}.step b{font-size:1.1rem;color:var(--navy)}
+    .faq{max-width:900px;margin:auto}.faq details{border-bottom:1px solid var(--line);padding:0}.faq summary{list-style:none;cursor:pointer;font-weight:850;color:var(--navy);padding:20px 4px;display:flex;justify-content:space-between;gap:20px}.faq summary::-webkit-details-marker{display:none}.faq summary:after{content:"+";font-size:1.35rem;color:var(--green)}.faq details[open] summary:after{content:"–"}.faq details p{margin:0 4px 20px;color:var(--muted)}
+    .venezuela{padding-top:0}.vz-box{background:linear-gradient(135deg,#f4faed,#eaf7dc);border:1px solid #dbeaca;border-radius:34px;padding:48px;display:grid;grid-template-columns:1.2fr .8fr;gap:34px;align-items:center}.vz-box h2{font-size:clamp(2rem,4vw,3.5rem);line-height:1.05;letter-spacing:-.04em;margin:0 0 12px;color:var(--navy)}.placeholder{background:#fff;border:1px dashed #aab9a0;border-radius:22px;padding:24px}.placeholder strong{display:block;color:var(--navy);margin-bottom:8px}
+    footer{background:#092731;color:#dce8e8;padding:46px 0 30px}.foot{display:grid;grid-template-columns:1.2fr .8fr .8fr;gap:34px}.foot img{width:180px;filter:brightness(0) invert(1);opacity:.95}.foot h4{color:#fff;margin-top:0}.foot p,.foot a{color:#b9cccc;font-size:.92rem}.legal{margin-top:32px;padding-top:22px;border-top:1px solid rgba(255,255,255,.12);font-size:.8rem;color:#9db2b5}
+    @media(max-width:900px){.links a:not(.pill){display:none}.hero{padding-top:46px}.hero-grid,.split,.vz-box{grid-template-columns:1fr}.hero-grid{gap:16px}.product-stage{min-height:350px}.product-stage:before{width:290px;height:290px}.cards,.steps,.formula-grid{grid-template-columns:1fr}.split{gap:32px}.foot{grid-template-columns:1fr}.brand img{width:145px}}
+    @media(max-width:520px){.wrap{width:min(100% - 28px,1160px)}nav{height:66px}.hero{padding-bottom:38px}h1{font-size:3.15rem}.product-stage{min-height:280px}.product-stage:before{width:235px;height:235px}section{padding:64px 0}.vz-box{padding:30px 22px;border-radius:26px}}
+  </style>
+</head>
+<body>
+  <div class="top">Sitio informativo para Venezuela · Distribución local en preparación</div>
+  <header><div class="wrap"><nav><a class="brand" href="#inicio"><img src="https://probactis.com/wp-content/uploads/2024/07/logo_probactis_baseline.png" alt="Probactis"></a><div class="links"><a href="#beneficios">Beneficios</a><a href="#formula">Fórmula</a><a href="#uso">Cómo tomar</a><a href="#faq">Preguntas</a><a class="pill" href="#venezuela">En Venezuela</a></div></nav></div></header>
+
+  <main id="inicio">
+    <section class="hero"><div class="wrap hero-grid">
+      <div><div class="eyebrow">Probactis Germina® · Venezuela</div><h1>El bienestar comienza en el <span>intestino.</span></h1><p class="lead">Probiótico con <strong>Bacillus clausii UBBC-07®</strong> y vitamina B6, presentado en mini-viales listos para tomar. Una fórmula práctica para acompañar el equilibrio de la microbiota intestinal de niños y adultos.</p>
+        <div class="hero-actions"><a class="pill" href="#venezuela">Dónde conseguirlo</a><a class="cta secondary" href="#uso">Conoce cómo se toma</a></div>
+        <div class="badges"><span class="badge">10 mini-viales de 5 mL</span><span class="badge">Sin sabor</span><span class="badge">No necesita frío</span></div>
+      </div>
+      <div class="product-stage"><img src="https://probactis.com/wp-content/uploads/2025/07/Caja_Probactis_Germina-Lateral-Cabecera_web_01.png" alt="Caja de Probactis Germina"></div>
+    </div></section>
+
+    <section id="beneficios"><div class="wrap"><div class="section-title"><div class="eyebrow">Tu microbiota también tiene días complicados</div><h2>Una rutina simple para cuidar el equilibrio intestinal</h2><p>Viajes, cambios de alimentación, estrés, infecciones o el uso de antibióticos pueden alterar temporalmente la microbiota. Germina está formulado para acompañar su equilibrio y bienestar digestivo.</p></div>
+      <div class="cards">
+        <article class="card"><div class="icon">🦠</div><h3>Esporas resistentes</h3><p>Bacillus clausii UBBC-07® se presenta en forma de esporas capaces de resistir las condiciones del tracto digestivo.</p></article>
+        <article class="card"><div class="icon">🌿</div><h3>Bienestar intestinal</h3><p>Diseñado para apoyar el equilibrio de la microbiota en situaciones en las que puede verse alterada.</p></article>
+        <article class="card"><div class="icon">🥤</div><h3>Muy fácil de tomar</h3><p>Puede beberse directamente o mezclarse con alimentos y bebidas. Su sabor neutro simplifica la toma diaria.</p></article>
+      </div>
+    </div></section>
+
+    <section class="soft"><div class="wrap split">
+      <div><img src="https://probactis.com/wp-content/uploads/2025/07/Probactis-Germina-foto-intestino.png" alt="Ilustración del sistema digestivo y Probactis Germina"></div>
+      <div><div class="eyebrow">Diseñado para el día a día</div><h2>Práctico en casa, en el colegio o de viaje</h2><p>Los mini-viales son monodosis, fáciles de transportar y no requieren refrigeración.</p>
+        <div class="feature-list"><div class="feature"><span class="check">✓</span><div><strong>Niños y adultos</strong><br><span>Presentación adaptable a la rutina familiar.</span></div></div><div class="feature"><span class="check">✓</span><div><strong>2 × 10⁹ UFC por vial</strong><br><span>Bacillus clausii UBBC-07® por mini-vial.</span></div></div><div class="feature"><span class="check">✓</span><div><strong>Vitamina B6</strong><br><span>0,85 mg por vial según el prospecto oficial.</span></div></div></div>
+      </div>
+    </div></section>
+
+    <section id="formula" class="formula"><div class="wrap"><div class="section-title"><div class="eyebrow" style="color:#a9db75">Qué contiene</div><h2>Una fórmula corta. Porque el intestino ya tiene suficiente drama.</h2><p>La composición técnica se mantiene alineada con la información oficial del producto.</p></div>
+      <div class="formula-grid"><article class="formula-card"><img src="https://probactis.com/wp-content/uploads/2025/07/BACILLUS-CLAUSII-UBBC-07.png" alt="Bacillus clausii UBBC-07"><h3>Bacillus clausii UBBC-07®</h3><p>2 × 10⁹ UFC por vial. Cepa probiótica que llega al intestino en forma de esporas.</p></article><article class="formula-card"><div style="height:130px;display:grid;place-items:center;font-size:4.2rem">B6</div><h3>Vitamina B6</h3><p>0,85 mg por vial. Nutriente que contribuye al funcionamiento normal del sistema inmunitario y nervioso.</p></article></div>
+    </div></section>
+
+    <section id="uso"><div class="wrap"><div class="section-title"><div class="eyebrow">Cómo tomarlo</div><h2>Tres pasos y cero ceremonias</h2><p>El mini-vial puede tomarse directamente o mezclarse con alimentos o bebidas.</p></div>
+      <div class="steps"><article class="step"><img src="https://probactis.com/wp-content/uploads/2025/07/Agitar.jpg" alt="Agitar el mini-vial"><div><b>1. Agitar</b><p>Agita bien el mini-vial antes de usar.</p></div></article><article class="step"><img src="https://probactis.com/wp-content/uploads/2025/07/Abrir.jpg" alt="Abrir el mini-vial"><div><b>2. Abrir</b><p>Gira la parte superior hasta abrir el envase.</p></div></article><article class="step"><img src="https://probactis.com/wp-content/uploads/2025/07/Tomar.jpg" alt="Tomar el mini-vial"><div><b>3. Tomar</b><p>Bébelo directamente o mézclalo con comida o bebida.</p></div></article></div>
+    </div></section>
+
+    <section id="faq" class="soft"><div class="wrap"><div class="section-title"><div class="eyebrow">Preguntas frecuentes</div><h2>Lo que normalmente quieres saber antes de empezar</h2></div>
+      <div class="faq">
+        <details open><summary>¿Cuál es la presentación?</summary><p>Una caja contiene 10 mini-viales bebibles de 5 mL cada uno.</p></details>
+        <details><summary>¿Cuál es la posología indicada por el fabricante?</summary><p>El prospecto oficial indica 1 o 2 mini-viales al día para adultos y niños. Ante cualquier duda, consulta a tu médico o farmacéutico.</p></details>
+        <details><summary>¿Necesita refrigeración?</summary><p>No. El producto está diseñado para conservarse sin frío y puede transportarse con facilidad.</p></details>
+        <details><summary>¿Puede mezclarse con alimentos o bebidas?</summary><p>Sí. Puede tomarse directamente o mezclarse con alimentos o bebidas.</p></details>
+        <details><summary>¿Puede usarse durante embarazo o lactancia?</summary><p>El fabricante recomienda tomarlo bajo supervisión médica durante el embarazo y la lactancia.</p></details>
+      </div>
+    </div></section>
+
+    <section id="venezuela" class="venezuela"><div class="wrap"><div class="vz-box">
+      <div><div class="eyebrow">Distribución en Venezuela</div><h2>Probactis Germina®, ahora más cerca.</h2><p>Esta sección quedará conectada con los datos oficiales de la distribuidora venezolana, puntos de venta, WhatsApp, Instagram y cobertura nacional.</p><div class="hero-actions"><span class="pill">Próximamente: puntos de venta</span></div></div>
+      <div class="placeholder"><strong>Datos por incorporar</strong><span>Razón social de la distribuidora<br>RIF<br>Teléfono / WhatsApp<br>Instagram<br>Correo comercial<br>Dirección<br>Red de farmacias y cobertura</span></div>
+    </div></div></section>
+  </main>
+
+  <footer><div class="wrap"><div class="foot"><div><img src="https://probactis.com/wp-content/uploads/2024/07/logo_probactis_baseline.png" alt="Probactis"><p>Versión Venezuela en preparación. Información de producto basada en la documentación oficial de Probactis Germina®.</p></div><div><h4>Navegación</h4><p><a href="#beneficios">Beneficios</a><br><a href="#formula">Fórmula</a><br><a href="#uso">Cómo tomar</a><br><a href="#faq">Preguntas frecuentes</a></p></div><div><h4>Venezuela</h4><p>Distribuidor autorizado: pendiente de datos.<br>Atención al cliente: pendiente.</p></div></div><div class="legal">Este sitio no sustituye el consejo médico. Consulta a un profesional sanitario ante dudas de uso, embarazo, lactancia, condiciones médicas o tratamientos concomitantes. Probactis® y Germina® son marcas de sus respectivos titulares.</div></div></footer>
+  <script>document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{const t=document.querySelector(a.getAttribute('href'));if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth'})}}));</script>
+</body></html>
